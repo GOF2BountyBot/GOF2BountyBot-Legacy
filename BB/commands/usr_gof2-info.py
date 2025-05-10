@@ -551,8 +551,8 @@ async def cmd_info(message : discord.Message, args : str, isDM : bool):
         return
 
     argsSplit = args.split(" ")
-    if argsSplit[0] not in ["system", "criminal", "ship", "weapon", "module", "turret", "commodity", "skin"]:
-        await message.channel.send(":x: Invalid object type! (system/criminal/ship/weapon/module/turret/commodity/skin)")
+    if argsSplit[0] not in ["system", "criminal", "ship", "weapon", "module", "turret", "commodity"]:
+        await message.channel.send(":x: Invalid object type! (system/criminal/ship/weapon/module/turret/commodity)")
         return
 
     if argsSplit[0] == "system":
@@ -568,11 +568,9 @@ async def cmd_info(message : discord.Message, args : str, isDM : bool):
     elif argsSplit[0] == "turret":
         await cmd_info_turret(message, args[7:], isDM)
     elif argsSplit[0] == "commodity":
-        await cmd_info_commodity(message, args[10:], isDM)	
-    elif argsSplit[0] == "skin":	
-        await cmd_info_skin(message, args[5:], isDM)
+        await cmd_info_commodity(message, args[10:], isDM)
     else:
-        await message.channel.send(":x: Unknown object type! (system/criminal/ship/weapon/module/turret/commodity/skin)")
+        await message.channel.send(":x: Unknown object type! (system/criminal/ship/weapon/module/turret/commodity)")
 
 bbCommands.register("info", cmd_info, 0, allowDM=True, helpSection="gof2 info", signatureStr="**info <object-type> <name>**", shortHelp="Display information about something from GOF2. Also gives useful aliases for things.", longHelp="Display information about something from GOF2. object-type must be criminal, system, ship, weapon, module, or turret. Also gives the a list of aliases that can be used to refer to your object in commands.")
 

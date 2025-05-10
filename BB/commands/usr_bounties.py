@@ -469,4 +469,4 @@ async def cmd_use(message : discord.Message, args : str, isDM : bool):
             await message.channel.send(result)
 
 
-bbCommands.register("use", cmd_use, 0, allowDM=False, helpSection="bounties", signatureStr="**use [tool number]**", shortHelp="Use the tool in your hangar with the given number. See `$COMMANDPREFIX$hangar` for tool numbers.", longHelp="Use the tool in your hangar with the given number. Tool numbers can be seen next your items in `$COMMANDPREFIX$hangar tool`. For example, if tool number `1` is a ship skin, `$COMMANDPREFIX$use 1` will apply the skin to your active ship.")
+bbCommands.register("use", cmd_use, 0, allowDM=False, helpSection="bounties", signatureStr="**use [tool number]**", shortHelp="Use the tool in your hangar with the given number. See `$COMMANDPREFIX$hangar` for tool numbers.", longHelp="Use the tool in your hangar with the given number. Tool numbers can be seen next your items in `$COMMANDPREFIX$hangar tool`.")
