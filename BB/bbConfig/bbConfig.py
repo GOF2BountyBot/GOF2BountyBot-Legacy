@@ -276,7 +276,7 @@ skinRendersChannel = 770036783026667540
 # Channel to send showme-prompted ship skin renders to and link from
 showmeSkinRendersChannel = 771368555019108352
 # Resolution of skin render icons
-skinRenderIconResolution = [600, 600]
+skinRenderIconResolution = [800, 600]
 # Resolution of skin render emojis (currently unused)
 skinRenderEmojiResolution = [400, 400]
 # Resolution of skin renders from cmd_showme_ship calls
