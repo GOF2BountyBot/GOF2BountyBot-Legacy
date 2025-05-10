@@ -370,13 +370,13 @@ async def cmd_source(message : discord.Message, args : str, isDM : bool):
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    srcEmbed = lib.discordUtil.makeEmbed(authorName="BB Source Code", desc="I am written using the rewrite branch of discord's python API.\n",
-                         col=discord.Colour.purple(), footerTxt="BountyBot Source", icon="https://image.flaticon.com/icons/png/512/25/25231.png")
+    srcEmbed = lib.discordUtil.makeEmbed(authorName="BB Source Code", desc="This is the Legacy branch of BountyBot beta v0.9.3.",
+                         col=discord.Colour.purple(), footerTxt="BountyBot Source")
     srcEmbed.add_field(name="__GitHub Repository__",
-                       value="My source code is public, and open to community contribution.\n[Click here](https://github.com/Trimatix/GOF2BountyBot/) to view my GitHub repo - please note, the project's readme file has not been written yet!", inline=False)
+                       value="This branch is **legacy code** with a poor architecture. The code is not maintained. You are welcome to read it here, regardless: \n[GitHub](https://github.com/Trimatix/GOF2BountyBot/tree/legacy)", inline=False)
     srcEmbed.add_field(name="__Upcoming Features__",
-                       value="To see a list of upcoming goodies, take a look at the [todo list](https://github.com/Trimatix/GOF2BountyBot/projects/1).\nIf you would like to make a feature request or suggestion, please ping or DM `Trimatix#2244`.\nIf you would like to help contribute to BountyBot, the todo list is a solid place to start!", inline=False)
-    srcEmbed.add_field(name="__Special Thanks__", value=" • **DeepSilver FishLabs**, for building the fantastic game franchise that this bot is dedicated to. I don't own any Galaxy on Fire assets intellectual property, nor rights to any assets the bot references.\n • **The BountyBot testing team** who have all been lovely and supportive since the beginning, and who will *always* find a way to break things ;)\n • **NovahKiin22**, for his upcoming major feature release, along with minor bug fixes and *brilliant* insight throughout development\n • **Poisonwasp**, for another minor bug fix, but mostly for his continuous support\n • **You!** The community is what makes developing this bot so fun :)", inline=False)
+                       value="This project is no longer maintained. *Minor bugs will not be fixed.* Please report major bugs by pinging ", inline=False)
+    srcEmbed.add_field(name="__Special Thanks__", value=" • **DeepSilver FishLabs**, for building the fantastic game franchise that this bot is dedicated to. I don't own any Galaxy on Fire assets intellectual property, nor rights to any assets the bot references.\n • **The BountyBot testing team** who have all been lovely and supportive since the beginning, and who will *always* find a way to break things ;)\n • **NovahKiin22**, **benslv** and **untildawn**, for the wonderful continuous support/code contributions.", inline=False)
     await message.channel.send(embed=srcEmbed)
 
 bbCommands.register("source", cmd_source, 0, allowDM=True, signatureStr="**source**", shortHelp="Show links to the project's GitHub page and todo list, and some information about the people behind BountyBot.")
