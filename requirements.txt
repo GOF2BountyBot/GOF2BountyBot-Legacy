@@ -1,0 +1,5 @@
+discord.py==1.7.3
+emoji==1.7.0
+aiohttp[speedups]
+typing-extensions
+pillow
