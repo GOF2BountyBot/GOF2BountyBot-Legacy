@@ -198,7 +198,7 @@ def dumbEmojiFromStr(s : str) -> dumbEmoji:
     if type(s) == dumbEmoji:
         return s
     if type(s) == dict:
-        return dumbEmojiFromDict(s)
+        return dumbEmoji.fromDict(s)
     if isUnicodeEmoji(s):
         return dumbEmoji(unicode=s)
     elif isCustomEmoji(s):
