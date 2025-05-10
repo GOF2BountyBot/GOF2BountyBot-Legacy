@@ -375,7 +375,7 @@ async def cmd_source(message : discord.Message, args : str, isDM : bool):
     srcEmbed.add_field(name="__GitHub Repository__",
                        value="This branch is **legacy code** with a poor architecture. The code is not maintained. You are welcome to read it here, regardless: \n[GitHub](https://github.com/Trimatix/GOF2BountyBot/tree/legacy)", inline=False)
     srcEmbed.add_field(name="__Upcoming Features__",
-                       value="This project is no longer maintained. *Minor bugs will not be fixed.* Please report major bugs by pinging ", inline=False)
+                       value="This project is no longer maintained. *Minor bugs will not be fixed.* Please report major bugs by pinging <@188618589102669826>.", inline=False)
     srcEmbed.add_field(name="__Special Thanks__", value=" • **DeepSilver FishLabs**, for building the fantastic game franchise that this bot is dedicated to. I don't own any Galaxy on Fire assets intellectual property, nor rights to any assets the bot references.\n • **The BountyBot testing team** who have all been lovely and supportive since the beginning, and who will *always* find a way to break things ;)\n • **NovahKiin22**, **benslv** and **untildawn**, for the wonderful continuous support/code contributions.", inline=False)
     await message.channel.send(embed=srcEmbed)
 
