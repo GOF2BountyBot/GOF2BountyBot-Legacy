@@ -189,7 +189,7 @@ class BountyConfig:
         if self.issueTime == -1.0:
             self.issueTime = datetime.now(timezone.utc).replace(second=0).timestamp()
         if self.endTime == -1.0:
-            self.endTime = (datetime.utcfromtimestamp(self.issueTime) + timedelta(days=len(self.route))).timestamp()
+            self.endTime = (datetime.fromtimestamp(self.issueTime, timezone.utc) + timedelta(days=len(self.route))).timestamp()
 
         if not forceKeepChecked:
             self.checked = {}

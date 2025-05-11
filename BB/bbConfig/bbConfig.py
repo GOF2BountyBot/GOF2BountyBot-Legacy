@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import math, random
-import os
 from ..lib.emojis import dumbEmoji, UninitializedDumbEmoji
+from . import bbPRIVATE
 
 ##### UTIL #####
 
@@ -262,13 +262,13 @@ bbcHTTPErrRetryDelaySeconds = 1
 savePeriod = {"hours":1}
 
 # path to JSON files for database saves
-userDBPath = os.environ.get("BOUNTYBOT_USERDB_PATH", "saveData/users.json")
-guildDBPath = os.environ.get("BOUNTYBOT_GUILDDB_PATH", "saveData/guilds.json")
-bountyDBPath = os.environ.get("BOUNTYBOT_BOUNTYDB_PATH", "saveData/bounties.json")
-reactionMenusDBPath = os.environ.get("BOUNTYBOT_REACTIONMENUDB_PATH", "saveData/reactionMenus.json")
+userDBPath = bbPRIVATE.userDBPath
+guildDBPath = bbPRIVATE.guildDBPath
+bountyDBPath = bbPRIVATE.bountyDBPath
+reactionMenusDBPath = bbPRIVATE.reactionMenusDBPath
 
 # path to folder to save log txts to
-loggingFolderPath = os.environ.get("BOUNTYBOT_LOGS_DIR", "saveData/logs")
+loggingFolderPath = bbPRIVATE.loggingFolderPath
 
 # Discord server containing the skinRendersChannel
 mediaServer = 699744305274945650
@@ -352,8 +352,7 @@ maxConcurrentRenders = 1
 ##### ADMINISTRATION #####
 
 # discord user IDs of all developers
-developersRaw = os.environ.get("BOUNTYBOT_DEVELOPERIDS", "188618589102669826")
-developers = [int(i.strip()) for i in developersRaw.split(",")] # [188618589102669826, 448491245296418817]
+developers = bbPRIVATE.developers
 
 # Names to assign to each access level
 accessLevelNames = ["User", "Administrator", "Developer"]

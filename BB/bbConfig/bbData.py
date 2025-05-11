@@ -5,9 +5,10 @@ from discord import Colour
 # Used for importing items
 import os
 import json
+from . import bbPRIVATE
 
-shipsDir = os.environ.get("BOUNTYBOT_ASSETSDIR_SHIPS", os.path.join("items", "ships"))
-skinsDir = os.environ.get("BOUNTYBOT_ASSETSDIR_SHIP_SKINS", os.path.join("items", "ship skins"))
+shipsDir = bbPRIVATE.shipsDir
+skinsDir = bbPRIVATE.skinsDir
 CWD = os.getcwd()
 
 
