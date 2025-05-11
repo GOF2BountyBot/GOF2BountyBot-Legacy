@@ -39,7 +39,7 @@ async def removeEmbedAndOptions(menuID : int):
         for react in menu.options:
             await menu.msg.remove_reaction(react.sendable, menu.msg.guild.me)
         
-        del bbGlobals.reactionMenusDB[menu.msg.id]
+        del bbGlobals.reactionMenusDB[menuID]
 
 
 async def markExpiredMenu(menuID : int):
