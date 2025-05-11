@@ -263,7 +263,7 @@ savePeriod = {"hours":1}
 
 # path to JSON files for database saves
 userDBPath = os.environ.get("BOUNTYBOT_USERDB_PATH", "saveData/users.json")
-guildDBPath = os.environ.get("BOUNTYBOT_GUIDDB_PATH", "saveData/guilds.json")
+guildDBPath = os.environ.get("BOUNTYBOT_GUILDDB_PATH", "saveData/guilds.json")
 bountyDBPath = os.environ.get("BOUNTYBOT_BOUNTYDB_PATH", "saveData/bounties.json")
 reactionMenusDBPath = os.environ.get("BOUNTYBOT_REACTIONMENUDB_PATH", "saveData/reactionMenus.json")
 
