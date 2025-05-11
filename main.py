@@ -28,7 +28,7 @@ if "loggingFolderPath" in cfg:
     bbPRIVATE.loggingFolderPath = cfg["loggingFolderPath"]
 
 if "developers" in cfg:
-    bbPRIVATE.developers = cfg["developers"]
+    bbPRIVATE.developers = [int(i.strip()) for i in cfg["developers"].split(",")]
 
 if "shipsDir" in cfg:
     bbPRIVATE.shipsDir = cfg["shipsDir"]
