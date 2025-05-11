@@ -39,7 +39,7 @@ class bbClient(ClientBaseClass):
         intents.members = True
         intents.messages = True
 
-        super().__init__(command_prefix="‎", intents=intents)
+        super().__init__(command_prefix="$", intents=intents)
         self.bb_loggedIn = False
 
     
