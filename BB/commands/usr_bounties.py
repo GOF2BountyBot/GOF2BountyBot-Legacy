@@ -361,9 +361,7 @@ async def cmd_duel(message : discord.Message, args : str, isDM : bool):
             await message.channel.send(":woozy_face: An unexpected error occurred! Tri, what did you do...")
             return
 
-        expiryTimesSplit = duelTT.expiryTime.strftime("%d %B %H %M").split(" ")
-        duelExpiryTimeString = "This duel request will expire on the **" + expiryTimesSplit[0].lstrip('0') + lib.stringTyping.getNumExtension(int(
-            expiryTimesSplit[0])) + "** of **" + expiryTimesSplit[1] + "**, at **" + expiryTimesSplit[2] + ":" + expiryTimesSplit[3] + "** UTC."
+        duelExpiryTimeString = f"This duel request will expire <t:{duelTT.expiryTime.timestamp()}:f>."
 
         sentMsgs = []
 
