@@ -41,7 +41,7 @@ class bbClient(ClientBaseClass):
 
         super().__init__(command_prefix="$", intents=intents)
         self.bb_loggedIn = False
-
+        
     
     def bb_saveAllDBs(self):
         """Save all of the bot's savedata to file.
