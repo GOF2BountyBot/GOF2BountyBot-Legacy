@@ -69,6 +69,10 @@ class TimedTask:
         self.asyncExpiryFunction = inspect.iscoroutinefunction(expiryFunction)
 
 
+    @property
+    def nextExpiry(self) -> datetime:
+        return self.expiryTime or self.issueTime + self.expiryDelta
+
     
     def __lt__(self, other : TimedTask) -> bool:
         """< Overload, to be used in TimedTask heaps.

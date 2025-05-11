@@ -223,6 +223,40 @@ async def dev_cmd_resetnewbountycool(message : discord.Message, args : str, isDM
 bbCommands.register("resetnewbountycool", dev_cmd_resetnewbountycool, 2, allowDM=True, helpSection="bounties", useDoc=True)
 
 
+async def dev_cmd_getnewbountycool(message : discord.Message, args : str, isDM : bool):
+    """developer command getting the current bounty generation period
+
+    :param discord.Message message: the discord message calling the command
+    :param str args: ignored
+    :param bool isDM: Whether or not the command is being called from a DM channel
+    """
+    guildStr = args
+
+    if guildStr == "":
+        if isDM:
+            await message.channel.send("Either give a guild id or call from within a guild")
+            return
+        callingBBGuild = bbGlobals.guildsDB.getGuild(message.guild.id)
+        if callingBBGuild.bountiesDisabled:
+            await message.channel.send("This guild has bounties disabled.")
+            return
+    elif lib.stringTyping.isInt(guildStr):
+        if not bbGlobals.guildsDB.guildsDB.guildIdExists(int(guildStr)):
+            await message.channel.send("Unrecognised guild")
+            return
+        callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
+        if callingBBGuild.bountiesDisabled:
+            await message.channel.send((("'" + callingBBGuild.dcGuild.name + "' ") if callingBBGuild.dcGuild is not None else "The requested guild ") + " has bounties disabled.")
+            return
+    else:
+        await message.channel.send(":x: Unrecognised parameter: " + guildStr)
+        return
+
+    await message.channel.send("Next bounty: '" + callingBBGuild.newBountyTT.nextExpiry.strftime("%m/%d/%Y, %H:%M:%S") + "'")
+
+bbCommands.register("getnewbountycool", dev_cmd_getnewbountycool, 2, allowDM=True, helpSection="bounties", useDoc=True)
+
+
 async def dev_cmd_canmakebounty(message : discord.Message, args : str, isDM : bool):
     """developer command printing whether or not the given faction can accept new bounties
     If no guild ID is given, bounty spawning ability is checked for the calling guild
