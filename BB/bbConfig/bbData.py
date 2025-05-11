@@ -6,8 +6,8 @@ from discord import Colour
 import os
 import json
 
-shipsDir = "items" + os.sep + "ships"
-skinsDir = "items" + os.sep + "ship skins"
+shipsDir = os.environ.get("BOUNTYBOT_ASSETSDIR_SHIPS", os.path.join("items", "ships"))
+skinsDir = os.environ.get("BOUNTYBOT_ASSETSDIR_SHIP_SKINS", os.path.join("items", "ship skins"))
 CWD = os.getcwd()
 
 
