@@ -202,7 +202,7 @@ class ReactionPollMenu(ReactionMenu.ReactionMenu):
 
         timeoutTT = None
         if "timeout" in rmDict:
-            expiryTime = datetime.utcfromtimestamp(rmDict["timeout"])
+            expiryTime = datetime.fromtimestamp(rmDict["timeout"], timezone.utc)
             bbGlobals.reactionMenusTTDB.scheduleTask(TimedTask.TimedTask(expiryTime=expiryTime, expiryFunction=printAndExpirePollResults, expiryFunctionArgs=msg.id))
 
         return ReactionPollMenu(msg, options, timeoutTT, multipleChoice=rmDict["multipleChoice"] if "multipleChoice" in rmDict else False,

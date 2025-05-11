@@ -77,7 +77,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         return
 
     # ensure the calling user is not on checking cooldown
-    if datetime.utcfromtimestamp(requestedBBUser.bountyCooldownEnd) < datetime.now(timezone.utc):
+    if datetime.fromtimestamp(requestedBBUser.bountyCooldownEnd, timezone.utc) < datetime.now(timezone.utc):
         bountyWon = False
         systemInBountyRoute = False
         dailyBountiesMaxReached = False
@@ -151,8 +151,8 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
     # If the calling user is on checking cooldown
     else:
         # Print an error message with the remaining time on the calling user's cooldown
-        diff = datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(
-            message.author.id).bountyCooldownEnd) - datetime.now(timezone.utc)
+        diff = datetime.fromtimestamp(bbGlobals.usersDB.getUser(
+            message.author.id).bountyCooldownEnd, timezone.utc) - datetime.now(timezone.utc)
         minutes = int(diff.total_seconds() / 60)
         seconds = int(diff.total_seconds() % 60)
         await message.channel.send(":stopwatch: **" + message.author.display_name + "**, your *Khador Drive* is still charging! please wait **" + str(minutes) + "m " + str(seconds) + "s.**")
@@ -221,8 +221,8 @@ async def cmd_bounties(message : discord.Message, args : str, isDM : bool):
             outmessage = "__**Active " + requestedFaction.title() + \
                 " Bounties**__\nTimes given in UTC.```css"
             for bounty in callingBBGuild.bountiesDB.getFactionBounties(requestedFaction):
-                endTimeStr = datetime.utcfromtimestamp(
-                    bounty.endTime).strftime("%B %d %H %M %S").split(" ")
+                endTimeStr = datetime.fromtimestamp(
+                    bounty.endTime, timezone.utc).strftime("%B %d %H %M %S").split(" ")
                 outmessage += "\n • [" + lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + "]" + " " * (bbData.longestBountyNameLength + 1 - len(lib.discordUtil.criminalNameOrDiscrim(bounty.criminal))) + ": " + str(
                     int(bounty.reward)) + " Credits - Ending " + endTimeStr[0] + " " + endTimeStr[1] + lib.stringTyping.getNumExtension(int(endTimeStr[1])) + " at :" + endTimeStr[2] + ":" + endTimeStr[3]
                 if endTimeStr[4] != "00":

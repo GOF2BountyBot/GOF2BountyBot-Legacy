@@ -60,12 +60,12 @@ async def dev_cmd_get_cooldown(message : discord.Message, args : str, isDM : boo
     :param str args: ignore
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    diff = datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(
-        message.author.id).bountyCooldownEnd) - datetime.now(timezone.utc)
+    diff = datetime.fromtimestamp(bbGlobals.usersDB.getUser(
+        message.author.id).bountyCooldownEnd, timezone.utc) - datetime.now(timezone.utc)
     minutes = int(diff.total_seconds() / 60)
     seconds = int(diff.total_seconds() % 60)
     await message.channel.send(str(bbGlobals.usersDB.getUser(message.author.id).bountyCooldownEnd) + " = " + str(minutes) + "m, " + str(seconds) + "s.")
-    await message.channel.send(datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(message.author.id).bountyCooldownEnd).strftime("%Hh%Mm%Ss"))
+    await message.channel.send(datetime.fromtimestamp(bbGlobals.usersDB.getUser(message.author.id).bountyCooldownEnd, timezone.utc).strftime("%Hh%Mm%Ss"))
     await message.channel.send(datetime.now(timezone.utc).strftime("%Hh%Mm%Ss"))
 
 bbCommands.register("get-cool", dev_cmd_get_cooldown, 2, allowDM=True, helpSection="bounties", useDoc=True)

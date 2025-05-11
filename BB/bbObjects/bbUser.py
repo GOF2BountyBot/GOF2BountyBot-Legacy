@@ -736,7 +736,7 @@ class bbUser(bbSerializable.bbSerializable):
                         duelCreditsLosses=userDict["duelCreditsLosses"] if "duelCreditsLosses" in userDict else 0,
                         alerts=userDict["alerts"] if "alerts" in userDict else {},
                         bountyWinsToday=userDict["bountyWinsToday"] if "bountyWinsToday" in userDict else 0,
-                        dailyBountyWinsReset=datetime.utcfromtimestamp(userDict["dailyBountyWinsReset"]) if "dailyBountyWinsReset" in userDict else datetime.now(timezone.utc),
+                        dailyBountyWinsReset=datetime.fromtimestamp(userDict["dailyBountyWinsReset"], timezone.utc) if "dailyBountyWinsReset" in userDict else datetime.now(timezone.utc),
                         pollOwned=userDict["pollOwned"] if "pollOwned" in userDict else False,
                         homeGuildID=userDict["homeGuildID"] if "homeGuildID" in userDict else -1,
-                        guildTransferCooldownEnd=datetime.utcfromtimestamp(userDict["guildTransferCooldownEnd"]) if "guildTransferCooldownEnd" in userDict else datetime.now(timezone.utc))
+                        guildTransferCooldownEnd=datetime.fromtimestamp(userDict["guildTransferCooldownEnd"], timezone.utc) if "guildTransferCooldownEnd" in userDict else datetime.now(timezone.utc))
