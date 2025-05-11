@@ -36,9 +36,9 @@ async def util_autohelp(message : discord.Message, args : str, isDM : bool, user
     try:
         if args == "":
             owningBBUser = bbGlobals.usersDB.getOrAddID(message.author.id)
-            if owningBBUser.helpMenuOwned:
-                await message.channel.send(":x: Please close your existing help menu before making a new one!\nIn case you can't find it, help menus auto exire after **" + lib.timeUtil.td_format_noYM(lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout)) + "**.")
-                return
+            # if owningBBUser.helpMenuOwned:
+            #     await message.channel.send(":x: Please close your existing help menu before making a new one!\nIn case you can't find it, help menus auto exire after **" + lib.timeUtil.td_format_noYM(lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout)) + "**.")
+            #     return
             owningBBUser.helpMenuOwned = True
             menuMsg = await sendChannel.send("‎")
             helpTT = TimedTask.TimedTask(expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout), expiryFunction=PagedReactionMenu.expireHelpMenu, expiryFunctionArgs=menuMsg.id)
@@ -67,9 +67,9 @@ async def util_autohelp(message : discord.Message, args : str, isDM : bool, user
                 await sendChannel.send(embed=bbCommands.helpSectionEmbeds[userAccessLevel][args][0])
             else:
                 owningBBUser = bbGlobals.usersDB.getOrAddID(message.author.id)
-                if owningBBUser.helpMenuOwned:
-                    await message.channel.send(":x: Please close your existing help menu before making a new one!\nIn case you can't find it, help menus auto exire after **" + lib.timeUtil.td_format_noYM(lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout)) + "**.")
-                    return
+                # if owningBBUser.helpMenuOwned:
+                #     await message.channel.send(":x: Please close your existing help menu before making a new one!\nIn case you can't find it, help menus auto exire after **" + lib.timeUtil.td_format_noYM(lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout)) + "**.")
+                #     return
                 owningBBUser.helpMenuOwned = True
                 menuMsg = await sendChannel.send("‎")
                 helpTT = TimedTask.TimedTask(expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout), expiryFunction=PagedReactionMenu.expireHelpMenu, expiryFunctionArgs=menuMsg.id)
