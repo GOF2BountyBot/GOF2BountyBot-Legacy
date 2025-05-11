@@ -252,7 +252,7 @@ async def dev_cmd_getnewbountycool(message : discord.Message, args : str, isDM :
         await message.channel.send(":x: Unrecognised parameter: " + guildStr)
         return
 
-    await message.channel.send("Next bounty: '" + callingBBGuild.newBountyTT.nextExpiry.strftime("%m/%d/%Y, %H:%M:%S") + "'")
+    await message.channel.send("Next bounty: '" + callingBBGuild.newBountyTT.nextExpiry.strftime("%d/%m/%Y, %H:%M:%S") + "'")
 
 bbCommands.register("getnewbountycool", dev_cmd_getnewbountycool, 2, allowDM=True, helpSection="bounties", useDoc=True)
 
