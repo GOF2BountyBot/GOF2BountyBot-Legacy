@@ -1,5 +1,5 @@
 import discord
-from datetime import datetime
+from datetime import datetime, timezone
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
@@ -61,12 +61,12 @@ async def dev_cmd_get_cooldown(message : discord.Message, args : str, isDM : boo
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
     diff = datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(
-        message.author.id).bountyCooldownEnd) - datetime.utcnow()
+        message.author.id).bountyCooldownEnd) - datetime.now(timezone.utc)
     minutes = int(diff.total_seconds() / 60)
     seconds = int(diff.total_seconds() % 60)
     await message.channel.send(str(bbGlobals.usersDB.getUser(message.author.id).bountyCooldownEnd) + " = " + str(minutes) + "m, " + str(seconds) + "s.")
     await message.channel.send(datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(message.author.id).bountyCooldownEnd).strftime("%Hh%Mm%Ss"))
-    await message.channel.send(datetime.utcnow().strftime("%Hh%Mm%Ss"))
+    await message.channel.send(datetime.now(timezone.utc).strftime("%Hh%Mm%Ss"))
 
 bbCommands.register("get-cool", dev_cmd_get_cooldown, 2, allowDM=True, helpSection="bounties", useDoc=True)
 
@@ -81,12 +81,12 @@ async def dev_cmd_reset_cooldown(message : discord.Message, args : str, isDM : b
     # reset the calling user's cooldown if no user is specified
     if args == "":
         bbGlobals.usersDB.getUser(
-            message.author.id).bountyCooldownEnd = datetime.utcnow().timestamp()
+            message.author.id).bountyCooldownEnd = datetime.now(timezone.utc).timestamp()
     # otherwise get the specified user's discord object and reset their cooldown.
     # [!] no validation is done.
     else:
         bbGlobals.usersDB.getUser(int(args.lstrip("<@!").rstrip(">"))
-                        ).bountyCooldownEnd = datetime.utcnow().timestamp()
+                        ).bountyCooldownEnd = datetime.now(timezone.utc).timestamp()
     await message.channel.send("Done!")
 
 bbCommands.register("reset-cool", dev_cmd_reset_cooldown, 2, allowDM=True, helpSection="bounties", useDoc=True)
@@ -105,7 +105,7 @@ async def dev_cmd_reset_daily_wins(message : discord.Message, args : str, isDM :
     else:
         # [!] no validation is done.
         requestedBBUser = bbGlobals.usersDB.getUser(int(args.lstrip("<@!").rstrip(">")))
-    requestedBBUser.dailyBountyWinsReset = datetime.utcnow()
+    requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc)
     requestedBBUser.bountyWinsToday = 0
     # otherwise get the specified user's discord object and reset their cooldown.
 

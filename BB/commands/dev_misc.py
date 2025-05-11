@@ -1,6 +1,6 @@
 import discord
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
@@ -51,7 +51,7 @@ async def dev_cmd_save(message : discord.Message, args : str, isDM : bool):
         print(traceback.format_exc())
         await message.channel.send("failed!")
         return
-    print(datetime.now().strftime("%H:%M:%S: Data saved manually!"))
+    print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved manually!"))
     await message.channel.send("saved!")
 
 bbCommands.register("save", dev_cmd_save, 2, allowDM=True, useDoc=True)
@@ -387,12 +387,12 @@ async def dev_cmd_reset_transfer_cool(message : discord.Message, args : str, isD
     # reset the calling user's cooldown if no user is specified
     if args == "":
         bbGlobals.usersDB.getUser(
-            message.author.id).guildTransferCooldownEnd = datetime.utcnow()
+            message.author.id).guildTransferCooldownEnd = datetime.now(timezone.utc)
     # otherwise get the specified user's discord object and reset their cooldown.
     # [!] no validation is done.
     else:
         bbGlobals.usersDB.getUser(int(args.lstrip("<@!").rstrip(">"))
-                        ).guildTransferCooldownEnd = datetime.utcnow()
+                        ).guildTransferCooldownEnd = datetime.now(timezone.utc)
     await message.channel.send("Done!")
     
 

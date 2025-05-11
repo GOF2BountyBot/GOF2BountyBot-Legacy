@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ..items import bbShip
 
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ...bbConfig import bbData, bbConfig
 from ... import lib
@@ -187,7 +187,7 @@ class BountyConfig:
         elif self.reward < 0:
             raise ValueError("Bounty constructor: Invalid reward requested '" + str(self.reward) + "'")
         if self.issueTime == -1.0:
-            self.issueTime = datetime.utcnow().replace(second=0).timestamp()
+            self.issueTime = datetime.now(timezone.utc).replace(second=0).timestamp()
         if self.endTime == -1.0:
             self.endTime = (datetime.utcfromtimestamp(self.issueTime) + timedelta(days=len(self.route))).timestamp()
 

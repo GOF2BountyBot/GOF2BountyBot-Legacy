@@ -1,7 +1,7 @@
 # Typing imports
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import inspect
 from types import FunctionType
 
@@ -49,7 +49,7 @@ class TimedTask:
             raise ValueError("No expiry time given, both expiryTime and expiryDelta are None")
         
         # Calculate issueTime as now if none is given
-        self.issueTime = datetime.utcnow() if issueTime is None else issueTime
+        self.issueTime = datetime.now(timezone.utc) if issueTime is None else issueTime
         # Calculate expiryTime as issueTime + expiryDelta if none is given
         self.expiryTime = self.issueTime + expiryDelta if expiryTime is None else expiryTime
         # Calculate expiryDelta as expiryTime - issueTime if none is given. This is needed for rescheduling.
@@ -137,7 +137,7 @@ class TimedTask:
         :return: True if this timedTask has been manually expired, or has reached its expiryTime. False otherwise
         :rtype: bool
         """
-        self.gravestone = self.gravestone or self.expiryTime <= datetime.utcnow()
+        self.gravestone = self.gravestone or self.expiryTime <= datetime.now(timezone.utc)
         return self.gravestone
 
 
@@ -191,7 +191,7 @@ class TimedTask:
         :param datetime.timedelta expiryDelta: The amount of time to wait until the task's next expiry. Default: now + self.expiryTime
         """
         # Update the task's issueTime to now
-        self.issueTime = datetime.utcnow()
+        self.issueTime = datetime.now(timezone.utc)
         # Create the new expiryTime from now + expirydelta
         self.expiryTime = self.issueTime + (self.expiryDelta if expiryDelta is None else expiryDelta) if expiryTime is None else expiryTime
         # reset the gravestone to False, in case the task had been expired and marked for removal
@@ -207,7 +207,7 @@ class TimedTask:
         :return: The result of the expiry function, if it is called
         """
         # Update expiryTime
-        self.expiryTime = datetime.utcnow()
+        self.expiryTime = datetime.now(timezone.utc)
         # Call expiryFunction and reschedule if specified
         if callExpiryFunc and self.hasExpiryFunction:
             expiryFuncResults = await self.callExpiryFunction()
@@ -274,7 +274,7 @@ class DynamicRescheduleTask(TimedTask):
         """Override. Start a new scheduling period for this task using the timedelta produced by delayTimeGenerator.
         """
         # Update the task's issueTime to now
-        self.issueTime = datetime.utcnow()
+        self.issueTime = datetime.now(timezone.utc)
         # Create the new expiryTime from now + delayTimeGenerator result
         self.expiryTime = self.issueTime + await self.callDelayTimeGenerator()
         # reset the gravestone to False, in case the task had been expired and marked for removal

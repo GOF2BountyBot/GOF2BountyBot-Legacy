@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
@@ -22,7 +22,7 @@ async def cmd_transfer(message : discord.Message, args : str, isDM : bool):
     if message.guild.id == requestedBBUser.homeGuildID:
         await message.channel.send(":x: This is already your home server!")
     elif not requestedBBUser.canTransferGuild():
-        await message.channel.send(":x: This command is still on cooldown. (" + lib.timeUtil.td_format_noYM(requestedBBUser.guildTransferCooldownEnd - datetime.utcnow()) + " left)")
+        await message.channel.send(":x: This command is still on cooldown. (" + lib.timeUtil.td_format_noYM(requestedBBUser.guildTransferCooldownEnd - datetime.now(timezone.utc)) + " left)")
     else:
         confirmMsg = await message.channel.send("Move your home server to '" + message.guild.name + "'?") 
         confirmation = await InlineConfirmationMenu(confirmMsg, message.author, bbConfig.toolUseConfirmTimeoutSeconds,

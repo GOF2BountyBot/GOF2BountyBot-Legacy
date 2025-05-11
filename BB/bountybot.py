@@ -5,7 +5,7 @@ from discord.ext.commands import Bot as ClientBaseClass
 
 # Utility Imports
 
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import traceback
 import os
@@ -51,7 +51,7 @@ class bbClient(ClientBaseClass):
         lib.jsonHandler.saveDB(bbConfig.guildDBPath, bbGlobals.guildsDB)
         lib.jsonHandler.saveDB(bbConfig.reactionMenusDBPath, bbGlobals.reactionMenusDB)
         bbLogger.save()
-        print(datetime.now().strftime("%H:%M:%S: Data saved!"))
+        print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
 
 
     async def bb_shutdown(self):
@@ -69,7 +69,7 @@ class bbClient(ClientBaseClass):
         self.bb_loggedIn = False
         await self.logout()
         self.bb_saveAllDBs()
-        print(datetime.now().strftime("%H:%M:%S: Data saved!"))
+        print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
 
 
 

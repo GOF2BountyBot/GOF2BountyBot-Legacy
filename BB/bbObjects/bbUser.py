@@ -10,7 +10,7 @@ from .items.modules import bbModule
 from ..bbConfig import bbConfig
 from . import bbInventory
 from ..userAlerts import UserAlerts
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from discord import Guild, Member
 from . import bbGuild
 from ..logging import bbLogger
@@ -118,7 +118,7 @@ class bbUser(bbSerializable.bbSerializable):
         :param alerts: A dictionary mapping either (UserAlerts.UABase subtypes or string UA ids from UserAlerts.userAlertsIDsTypes) to either (instances of that subtype or booleans representing the alert state) (Default {})
         :type alerts: dict[type or str, UserAlerts.UABase or bool]
         :param int bountyWinsToday: The number of bounties the user has won today (Default 0)
-        :param datetime.datetime dailyBountyWinsReset: A datetime.datetime representing the time at which the user's bountyWinsToday should be reset to zero (Default datetime.utcnow())
+        :param datetime.datetime dailyBountyWinsReset: A datetime.datetime representing the time at which the user's bountyWinsToday should be reset to zero (Default datetime.now(timezone.utc))
         :param bool pollOwned: Whether or not this user has a running ReactionPollMenu (Default False)
         :param Guild homeGuildID: The ID of this user's 'home guild' - the only guild from which they may use several commands e.g buy and check.
         :param datetime.datetime guildTransferCooldownEnd: A timestamp after which this user is allowed to transfer their homeGuildID.
@@ -155,9 +155,9 @@ class bbUser(bbSerializable.bbSerializable):
             raise TypeError("bountyWins must be int, given " + str(type(bountyWins)))
 
         if dailyBountyWinsReset is None:
-            dailyBountyWinsReset = datetime.utcnow()
+            dailyBountyWinsReset = datetime.now(timezone.utc)
         if guildTransferCooldownEnd is None:
-            guildTransferCooldownEnd = datetime.utcnow()
+            guildTransferCooldownEnd = datetime.now(timezone.utc)
 
         self.id = id
         self.credits = credits
@@ -237,7 +237,7 @@ class bbUser(bbSerializable.bbSerializable):
         self.duelCreditsLosses = 0
         self.pollOwned = False
         self.homeGuildID = -1
-        self.guildTransferCooldownEnd = datetime.utcnow()
+        self.guildTransferCooldownEnd = datetime.now(timezone.utc)
 
 
     def numInventoryPages(self, item : str, maxPerPage : int) -> int:
@@ -643,7 +643,7 @@ class bbUser(bbSerializable.bbSerializable):
         :rtype: bool
         """
         if now is None:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
         return (not self.hasHomeGuild()) or now > self.guildTransferCooldownEnd
 
     
@@ -655,7 +655,7 @@ class bbUser(bbSerializable.bbSerializable):
         :raise ValueError: When this user is still in guild transfer cooldown
         :raise NameError: When this user is not a member of newGuild
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if not self.canTransferGuild(now=now):
             raise ValueError("This user cannot transfer guild again yet (" + lib.timeUtil.td_format_noYM(self.guildTransferCooldownEnd) + " remaining)")
         if await newGuild.fetch_member(self.id) is None:
@@ -736,7 +736,7 @@ class bbUser(bbSerializable.bbSerializable):
                         duelCreditsLosses=userDict["duelCreditsLosses"] if "duelCreditsLosses" in userDict else 0,
                         alerts=userDict["alerts"] if "alerts" in userDict else {},
                         bountyWinsToday=userDict["bountyWinsToday"] if "bountyWinsToday" in userDict else 0,
-                        dailyBountyWinsReset=datetime.utcfromtimestamp(userDict["dailyBountyWinsReset"]) if "dailyBountyWinsReset" in userDict else datetime.utcnow(),
+                        dailyBountyWinsReset=datetime.utcfromtimestamp(userDict["dailyBountyWinsReset"]) if "dailyBountyWinsReset" in userDict else datetime.now(timezone.utc),
                         pollOwned=userDict["pollOwned"] if "pollOwned" in userDict else False,
                         homeGuildID=userDict["homeGuildID"] if "homeGuildID" in userDict else -1,
-                        guildTransferCooldownEnd=datetime.utcfromtimestamp(userDict["guildTransferCooldownEnd"]) if "guildTransferCooldownEnd" in userDict else datetime.utcnow())
+                        guildTransferCooldownEnd=datetime.utcfromtimestamp(userDict["guildTransferCooldownEnd"]) if "guildTransferCooldownEnd" in userDict else datetime.now(timezone.utc))

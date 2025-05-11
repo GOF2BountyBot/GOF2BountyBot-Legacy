@@ -1,6 +1,6 @@
 from .bbConfig import bbConfig
 from os import path
-from datetime import datetime
+from datetime import datetime, timezone
 import traceback
 from typing import Tuple
 
@@ -92,7 +92,7 @@ class logger:
 
         logsSaved = ""
         files = {}
-        nowStr = datetime.utcnow().strftime("(%d/%m/%H:%M)")
+        nowStr = datetime.now(timezone.utc).strftime("(%d/%m/%H:%M)")
         
         for category in self.logs:
             if bool(self.logs[category]):
@@ -148,7 +148,7 @@ class logger:
         if category not in self.logs:
             self.log("misc", "Log", "log", "ATTEMPTED TO LOG TO AN UNKNOWN CATEGORY '" + str(category) + "' -> Redirected to misc.", eventType="UNKWN_CTGR")
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if noPrintEvent:
             eventStr = now.strftime("(%d/%m/%H:%M)") + "-[" + str(classStr).upper() + "::" + str(funcStr).upper() + "]>" + str(eventType)
             if not noPrint:

@@ -1,5 +1,5 @@
 import discord
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
@@ -67,9 +67,9 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         return
 
     # Restrict the number of bounties a player may win in a single day
-    if requestedBBUser.dailyBountyWinsReset < datetime.utcnow():
+    if requestedBBUser.dailyBountyWinsReset < datetime.now(timezone.utc):
         requestedBBUser.bountyWinsToday = 0
-        requestedBBUser.dailyBountyWinsReset = datetime.utcnow().replace(
+        requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
                             hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
 
     if requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
@@ -77,7 +77,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         return
 
     # ensure the calling user is not on checking cooldown
-    if datetime.utcfromtimestamp(requestedBBUser.bountyCooldownEnd) < datetime.utcnow():
+    if datetime.utcfromtimestamp(requestedBBUser.bountyCooldownEnd) < datetime.now(timezone.utc):
         bountyWon = False
         systemInBountyRoute = False
         dailyBountiesMaxReached = False
@@ -94,7 +94,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
                 if checkResult == 3:
                     requestedBBUser.bountyWinsToday += 1
                     if not dailyBountiesMaxReached and requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
-                        requestedBBUser.dailyBountyWinsReset = datetime.utcnow().replace(
+                        requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
                             hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
                         dailyBountiesMaxReached = True
 
@@ -145,14 +145,14 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         if systemInBountyRoute:
             requestedBBUser.systemsChecked += 1
             # Put the calling user on checking cooldown
-            requestedBBUser.bountyCooldownEnd = (datetime.utcnow() +
+            requestedBBUser.bountyCooldownEnd = (datetime.now(timezone.utc) +
                                                  timedelta(minutes=bbConfig.checkCooldown["minutes"])).timestamp()
 
     # If the calling user is on checking cooldown
     else:
         # Print an error message with the remaining time on the calling user's cooldown
         diff = datetime.utcfromtimestamp(bbGlobals.usersDB.getUser(
-            message.author.id).bountyCooldownEnd) - datetime.utcnow()
+            message.author.id).bountyCooldownEnd) - datetime.now(timezone.utc)
         minutes = int(diff.total_seconds() / 60)
         seconds = int(diff.total_seconds() % 60)
         await message.channel.send(":stopwatch: **" + message.author.display_name + "**, your *Khador Drive* is still charging! please wait **" + str(minutes) + "m " + str(seconds) + "s.**")
@@ -191,9 +191,9 @@ async def cmd_bounties(message : discord.Message, args : str, isDM : bool):
             outmessage += "\n[  No currently active bounties! Please check back later.  ]"
         # Restrict the number of bounties a player may win in a single day
         requestedBBUser = bbGlobals.usersDB.getOrAddID(message.author.id)
-        if requestedBBUser.dailyBountyWinsReset < datetime.utcnow():
+        if requestedBBUser.dailyBountyWinsReset < datetime.now(timezone.utc):
             requestedBBUser.bountyWinsToday = 0
-            requestedBBUser.dailyBountyWinsReset = datetime.utcnow().replace(
+            requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
                     hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
         if requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
             maxBountiesMsg = "\nYou have reached the maximum number of bounty wins allowed for today! Check back tomorrow."
@@ -237,9 +237,9 @@ async def cmd_bounties(message : discord.Message, args : str, isDM : bool):
             if bbGlobals.usersDB.userIDExists(message.author.id):
                 requestedBBUser = bbGlobals.usersDB.getUser(message.author.id)
                 # Restrict the number of bounties a player may win in a single day
-                if requestedBBUser.dailyBountyWinsReset < datetime.utcnow():
+                if requestedBBUser.dailyBountyWinsReset < datetime.now(timezone.utc):
                     requestedBBUser.bountyWinsToday = 0
-                    requestedBBUser.dailyBountyWinsReset = datetime.utcnow().replace(
+                    requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
                             hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
                 if requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
                     maxBountiesMsg = "\nYou have reached the maximum number of bounty wins allowed for today! Check back tomorrow."
