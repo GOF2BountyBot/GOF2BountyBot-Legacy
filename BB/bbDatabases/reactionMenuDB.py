@@ -18,9 +18,8 @@ class ReactionMenuDB(dict):
         """
         data = {}
         for msgID in self:
-            menuData = self[msgID].toDict(**kwargs)
             if menuData["type"] not in unsaveableMenuTypes:
-                data[msgID] = menuData
+                data[msgID] = self[msgID].toDict(**kwargs)
         return data
 
 
