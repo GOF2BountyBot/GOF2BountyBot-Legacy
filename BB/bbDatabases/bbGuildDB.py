@@ -92,7 +92,7 @@ class bbGuildDB(bbSerializable.bbSerializable):
         """
         # Ensure guild is not yet in the database
         if self.guildObjExists(guild):
-            raise KeyError("Attempted to add a guild that already exists: " + guild.id)
+            raise KeyError(f"Attempted to add a guild that already exists: {guild.id}")
         self.guilds[guild.id] = guild
 
     
@@ -108,7 +108,7 @@ class bbGuildDB(bbSerializable.bbSerializable):
         """
         # Ensure the requested ID does not yet exist in the database
         if self.guildIdExists(id):
-            raise KeyError("Attempted to add a guild that already exists: " + id)
+            raise KeyError(f"Attempted to add a guild that already exists: {id}")
         # Create and return a bbGuild for the requested ID
         self.guilds[id] = bbGuild.bbGuild(id, bbBountyDB.bbBountyDB(bbData.bountyFactions), bbGlobals.client.get_guild(id))
         return self.guilds[id]
@@ -190,6 +190,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
                 newDB.addGuildObj(bbGuild.bbGuild.fromDict(guildsDBDict[id], id=int(id), dbReload=dbReload))
             # Ignore guilds that don't have a corresponding dcGuild
             except bbGuild.NoneDCGuildObj:
-                bbLogger.log("bbGuildDB", "fromDict", "no corresponding discord guild found for ID " + id + ", guild removed from database",
+                bbLogger.log("bbGuildDB", "fromDict", f"no corresponding discord guild found for ID {id}, guild removed from database",
                     category="guildsDB", eventType="NULL_GLD")
         return newDB
