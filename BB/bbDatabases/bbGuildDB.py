@@ -20,7 +20,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         # Store guilds as a dict of guild.id: guild
         self.guilds = {}
 
-
     
     def getIDs(self) -> List[int]:
         """Get a list of all guild IDs in the database.
@@ -29,7 +28,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         :rtype: list
         """
         return list(self.guilds.keys())
-
 
     
     def getGuilds(self) -> List[bbGuild.bbGuild]:
@@ -41,7 +39,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         return list(self.guilds.values())
 
 
-    
     def getGuild(self, id : int) -> bbGuild.bbGuild:
         """Get the bbGuild object with the specified ID.
 
@@ -50,7 +47,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         :rtype: bbGuild
         """
         return self.guilds[id]
-
 
     
     def guildIdExists(self, id : int) -> bool:
@@ -70,7 +66,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         return True
 
     
-    
     def guildObjExists(self, guild : bbGuild.bbGuild) -> bool:
         """Check whether a bbGuild object exists in the database.
         Existence checking is currently handled by checking if a guild with the requested ID is stored.
@@ -81,7 +76,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         :rtype: bool
         """
         return self.guildIdExists(guild.id)
-
 
     
     def addGuildObj(self, guild : bbGuild.bbGuild):
@@ -95,7 +89,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
             raise KeyError(f"Attempted to add a guild that already exists: {guild.id}")
         self.guilds[guild.id] = guild
 
-    
     
     def addGuildID(self, id: int) -> bbGuild.bbGuild:
         """Add a bbGuild object with the requested ID to the database
@@ -112,7 +105,20 @@ class bbGuildDB(bbSerializable.bbSerializable):
         # Create and return a bbGuild for the requested ID
         self.guilds[id] = bbGuild.bbGuild(id, bbBountyDB.bbBountyDB(bbData.bountyFactions), bbGlobals.client.get_guild(id))
         return self.guilds[id]
+    
 
+    def getOrAddGuildID(self, id: int) -> bbGuild.bbGuild:
+        """Get the existing, or add a new, bbGuild object with the requested ID to the database
+
+        :param int id: integer discord ID to get or create a bbGuild for
+        
+        :return: the existing bbGuild object if one exists, or a new one
+        :rtype: bbGuild
+        """
+        if existing := self.guilds.get(id, None):
+            return existing
+        
+        return self.addGuildID(id)
     
     
     def removeGuildId(self, id : int):
@@ -121,7 +127,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
         :param int id: integer discord ID to remove from the database
         """
         self.guilds.pop(id)
-
 
     
     def removeGuildObj(self, guild : bbGuild.bbGuild):
@@ -133,14 +138,12 @@ class bbGuildDB(bbSerializable.bbSerializable):
         self.removeGuildId(guild.id)
 
     
-    
     def refreshAllShopStocks(self):
         """Generate new stock for all shops belonging to the stored bbGuilds
         """
         for guild in self.guilds.values():
             if not guild.shopDisabled:
                 guild.shop.refreshStock()
-
     
     
     def toDict(self, **kwargs) -> dict:
@@ -156,7 +159,6 @@ class bbGuildDB(bbSerializable.bbSerializable):
             # JSON stores properties as strings, so ids must be converted to str first.
             data[str(guild.id)] = guild.toDict(**kwargs)
         return data
-
 
     
     def __str__(self) -> str:
