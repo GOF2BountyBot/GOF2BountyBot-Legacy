@@ -618,7 +618,8 @@ class bbGuild(bbSerializable.bbSerializable):
             playChannel = dcGuild.get_channel(guildDict["playChannel"])
 
 
-        if id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935] or ("bountiesDisabled" in guildDict and guildDict["bountiesDisabled"]):
+        bountiesDisabled = id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935] or guildDict.get("bountiesDisabled", False)
+        if bountiesDisabled:
             bountiesDB = None
         else:
             if "bountiesDB" in guildDict:
@@ -631,5 +632,5 @@ class bbGuild(bbSerializable.bbSerializable):
                         shop=bbShop.bbShop.fromDict(guildDict["shop"]) if "shop" in guildDict else bbShop.bbShop(),
                         bountyBoardChannel=BountyBoardChannel.BountyBoardChannel.fromDict(guildDict["bountyBoardChannel"]) if "bountyBoardChannel" in guildDict and guildDict["bountyBoardChannel"] != -1 else None,
                         alertRoles=guildDict["alertRoles"] if "alertRoles" in guildDict else {}, ownedRoleMenus=guildDict["ownedRoleMenus"] if "ownedRoleMenus" in guildDict else 0,
-                        bountiesDisabled=guildDict["bountiesDisabled"] if "bountiesDisabled" in guildDict else False,
+                        bountiesDisabled=bountiesDisabled,
                         shopDisabled=id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935])
