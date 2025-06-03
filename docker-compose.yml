@@ -28,11 +28,15 @@ services:
       - DATABASE_URL=postgresql://bountybot:dbpassword9090@postgres-db:5432/bountybot
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DEBUG_MODE=${DEBUG_MODE:-False}
+      # To use the "legacy" config file, set this to the path using the container context
+      # For example, storing the config file in the mapped folder `./mappings/bountybot/saveData` as 
+      # `myConfigFile.cfg`, you would set this var to `/app/bountybot/saveData/myConfigFile.cfg`
+      - CONFIG_FILE=/app/bountybot/saveData/myConfigFile.cfg
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      # If we want to persist logs, we can add another local mapping...
-      # - ./mappings/bountybot/logs:/var/logs/bountybot
+      # Keep data across rebuilds...
+      - ./mappings/bountybot/saveData:/app/bountybot/saveData
 #    healthcheck:
 #      test: curl -X 'GET' --insecure -I -v --fail http://localhost:3002/test || exit 
 #      interval: 40s

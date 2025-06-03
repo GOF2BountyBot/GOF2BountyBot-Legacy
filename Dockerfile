@@ -3,10 +3,9 @@ ARG UBUNTU_RELEASE=24.04
 # Below should be a reasonably current Cuda version
 ARG CUDA_VERSION=12.8.1
 
-
+# Might be able to change this to something a bit smaller (like runtime instead of devel) 
+# from https://hub.docker.com/r/nvidia/cuda/tags
 FROM nvidia/cuda:${CUDA_VERSION}-cudnn-devel-ubuntu${UBUNTU_RELEASE} AS base
-
-
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -51,11 +50,11 @@ RUN apt-get update && \
         python3.10-venv \
         libpython3.10-dev \
         openssl \
-        # Extras for BountyBot
+        # Extras for bountybot
         postgresql-client \
         blender \
         g++-14 \
-        gcc-14&& \
+        gcc-14 && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -67,7 +66,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # Create a virtual environment
 RUN python3.10 -m venv /opt/venv
 
-WORKDIR /app/BountyBot
+WORKDIR /app/bountybot
 
 # Copy requirements file
 COPY requirements.txt .
@@ -91,11 +90,12 @@ COPY . .
 RUN groupadd --gid 1002 botuser && \
     useradd --uid 1001 --gid botuser --shell /bin/bash --create-home botuser && \
     chown -R botuser /home/botuser && \
-    chown -R botuser /app/BountyBot && \
+    chown -R botuser /app/bountybot && \
     chmod -R 1777 /home/botuser && \
-    chmod -R 1777 /app/BountyBot
-
+    chmod -R 1777 /app/bountybot
 
 USER botuser
 
-ENTRYPOINT ["/bin/bash", "-c", "source /opt/venv/bin/activate && /opt/venv/bin/python main.py & tail -f /dev/null"]
+# The ' & tail -f /dev/null' in the entrypoint below is a hack to keep the container running if the app crashes.
+# This can be handy for being able to connect to the container CLI and check files/logs since it will still be running.
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/venv/bin/activate && /opt/venv/bin/python main.py ${CONFIG_FILE} & tail -f /dev/null"]
