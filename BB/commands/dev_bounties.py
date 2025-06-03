@@ -302,12 +302,12 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
     args should be separated by a space and then a plus symbol
     if no args are given, generate a new bounty at complete random
     if only one argument is given it is assumed to be a faction, and a bounty is generated for that faction
-    otherwise, all 9 arguments required to generate a bounty must be given
+    otherwise, all 10 arguments required to generate a bounty must be given
     the route should be separated by only commas and no spaces. the endTime should be a UTC timestamp. Any argument can be given as 'auto' to be either inferred or randomly generated
-    as such, '!bb make-bounty' is an alias for '!bb make-bounty +auto +auto +auto +auto +auto +auto +auto +auto +auto'
+    as such, '!bb make-bounty' is an alias for '!bb make-bounty +true +auto +auto +auto +auto +auto +auto +auto +auto +auto'
 
     :param discord.Message message: the discord message calling the command
-    :param str args: can be empty, can be '[guild id] +<faction>', or can be '[guild id] +<faction> +<name> +<route> +<start> +<end> +<answer> +<reward> +<endtime> +<icon>'
+    :param str args: can be empty, can be '[guild id] +<notify> +<faction>', or can be '[guild id] +<notify> +<faction> +<name> +<route> +<start> +<end> +<answer> +<reward> +<endtime> +<icon>'
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
     guildStr = args.split("+")[0].strip()
@@ -334,29 +334,49 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
 
     # if no args were given, generate a completely random bounty
     if args == "":
+        doNotify = True
         newBounty = bbBounty.Bounty(bountyDB=callingBBGuild.bountiesDB)
-    # if only one argument was given, use it as a faction
-    elif len(args.split("+")) == 2:
-        newFaction = args.split("+")[1]
+    # if only two arguments were given, use it as notify flag and faction
+    elif len(args.split("+")) == 3:
+        rawDoNotify = args.split("+")[1].strip().lower()
+        if rawDoNotify in ("true", "1", "auto"):
+            doNotify = True
+        elif rawDoNotify in ("false", "0"):
+            doNotify = False
+        else:
+            await message.channel.send("Unknown value for first + arg (notify flag). Must be boolean")
+            return
+        
+        newFaction = args.split("+")[2]
         newBounty = bbBounty.Bounty(
             bountyDB=callingBBGuild.bountiesDB, config=bbBountyConfig.BountyConfig(faction=newFaction))
 
     # if all args were given, generate a completely custom bounty
-    # 9 args plus account for empty string at the start of the split = split of 10 elements
-    elif len(args.split("+")) == 10:
+    # 10 args plus account for empty string at the start of the split = split of 11 elements
+    elif len(args.split("+")) == 11:
         # track whether a builtIn criminal was requested
         builtIn = False
         builtInCrimObj = None
         # [1:] remove empty string before + splits
         bData = args.split("+")[1:]
 
+        # parse the given notify flag
+        rawDoNotify = bData[0].strip().lower()
+        if rawDoNotify in ("true", "1", "auto"):
+            doNotify = True
+        elif rawDoNotify in ("false", "0"):
+            doNotify = False
+        else:
+            await message.channel.send("Unknown value for first + arg (notify flag). Must be boolean")
+            return
+
         # parse the given faction
-        newFaction = bData[0].rstrip(" ")
+        newFaction = bData[1].rstrip(" ")
         if newFaction == "auto":
             newFaction = ""
 
         # parse the given criminal name
-        newName = bData[1].rstrip(" ").title()
+        newName = bData[2].rstrip(" ").title()
         if newName == "Auto":
             newName = ""
         else:
@@ -374,42 +394,42 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
                 return
 
         # parse the given route
-        newRoute = bData[2].rstrip(" ")
+        newRoute = bData[3].rstrip(" ")
         if newRoute == "auto":
             newRoute = []
         else:
-            newRoute = bData[2].split(",")
+            newRoute = bData[3].split(",")
             newRoute[-1] = newRoute[-1].rstrip(" ")
 
         # parse the given start system
-        newStart = bData[3].rstrip(" ")
+        newStart = bData[4].rstrip(" ")
         if newStart == "auto":
             newStart = ""
 
         # parse the given end system
-        newEnd = bData[4].rstrip(" ")
+        newEnd = bData[5].rstrip(" ")
         if newEnd == "auto":
             newEnd = ""
 
         # parse the given answer system
-        newAnswer = bData[5].rstrip(" ")
+        newAnswer = bData[6].rstrip(" ")
         if newAnswer == "auto":
             newAnswer = ""
 
         # parse the given reward amount
-        newReward = bData[6].rstrip(" ")
+        newReward = bData[7].rstrip(" ")
         if newReward == "auto":
             newReward = -1
         newReward = int(newReward)
 
         # parse the given end time
-        newEndTime = bData[7].rstrip(" ")
+        newEndTime = bData[8].rstrip(" ")
         if newEndTime == "auto":
             newEndTime = -1.0
         newEndTime = float(newEndTime)
 
         # parse the given icon
-        newIcon = bData[8].rstrip(" ")
+        newIcon = bData[9].rstrip(" ")
         if newIcon == "auto":
             newIcon = "" if not builtIn else builtInCrimObj.icon
 
@@ -424,12 +444,12 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
 
     # Report an error for invalid command syntax
     else:
-        await message.channel.send("incorrect syntax. give +faction +name +route +start +end +answer +reward +endtime +icon")
+        await message.channel.send("incorrect syntax. give +notify +faction +name +route +start +end +answer +reward +endtime +icon")
         return
 
     # activate and announce the new bounty
     callingBBGuild.bountiesDB.addBounty(newBounty)
-    await callingBBGuild.announceNewBounty(newBounty)
+    await callingBBGuild.announceNewBounty(newBounty, doNotify)
 
 bbCommands.register("make-bounty", dev_cmd_make_bounty, 2, forceKeepArgsCasing=True, allowDM=True, helpSection="bounties", useDoc=True)
 

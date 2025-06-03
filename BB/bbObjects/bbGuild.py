@@ -368,10 +368,11 @@ class bbGuild(bbSerializable.bbSerializable):
         return delay
 
     
-    async def announceNewBounty(self, newBounty : bbBounty.Bounty):
+    async def announceNewBounty(self, newBounty : bbBounty.Bounty, doNotify: bool = True):
         """Announce the creation of a new bounty to this guild's announceChannel, if it has one
 
         :param bbBounty newBounty: the bounty to announce
+        :param bool doNotify: Give true to ping, false to not ping
         """
         # Create the announcement embed
         bountyEmbed = lib.discordUtil.makeEmbed(titleTxt=lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal), desc="⛓ __New Bounty Available__",
@@ -387,7 +388,7 @@ class bbGuild(bbSerializable.bbSerializable):
 
         if self.hasBountyBoardChannel:
             try:
-                if self.hasUserAlertRoleID("bounties_new"):
+                if doNotify and self.hasUserAlertRoleID("bounties_new"):
                     msg = "<@&" + \
                         str(self.getUserAlertRoleID(
                             "bounties_new")) + "> " + msg
@@ -407,7 +408,7 @@ class bbGuild(bbSerializable.bbSerializable):
             currentChannel = self.getAnnounceChannel()
             if currentChannel is not None:
                 try:
-                    if self.hasUserAlertRoleID("bounties_new"):
+                    if doNotify and self.hasUserAlertRoleID("bounties_new"):
                         # announce to the given channel
                         await currentChannel.send("<@&" + str(self.getUserAlertRoleID("bounties_new")) + "> " + msg, embed=bountyEmbed)
                     else:
