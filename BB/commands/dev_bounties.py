@@ -34,7 +34,7 @@ async def dev_cmd_clear_bounties(message : discord.Message, args : str, isDM : b
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(args):
-        if not bbGlobals.guildsdb.guildIdExists(int(args)):
+        if not bbGlobals.guildsDB.guildIdExists(int(args)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(args))
@@ -206,7 +206,7 @@ async def dev_cmd_resetnewbountycool(message : discord.Message, args : str, isDM
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(guildStr):
-        if not bbGlobals.guildsdb.guildIdExists(int(guildStr)):
+        if not bbGlobals.guildsDB.guildIdExists(int(guildStr)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
@@ -241,7 +241,7 @@ async def dev_cmd_getnewbountycool(message : discord.Message, args : str, isDM :
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(guildStr):
-        if not bbGlobals.guildsdb.guildIdExists(int(guildStr)):
+        if not bbGlobals.guildsDB.guildIdExists(int(guildStr)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
@@ -277,7 +277,7 @@ async def dev_cmd_canmakebounty(message : discord.Message, args : str, isDM : bo
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(guildStr):
-        if not bbGlobals.guildsdb.guildIdExists(int(guildStr)):
+        if not bbGlobals.guildsDB.guildIdExists(int(guildStr)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
@@ -321,7 +321,7 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(guildStr):
-        if not bbGlobals.guildsdb.guildIdExists(int(guildStr)):
+        if not bbGlobals.guildsDB.guildIdExists(int(guildStr)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
@@ -479,7 +479,7 @@ async def dev_cmd_make_player_bounty(message : discord.Message, args : str, isDM
             await message.channel.send("This guild has bounties disabled.")
             return
     elif lib.stringTyping.isInt(guildStr):
-        if not bbGlobals.guildsdb.guildIdExists(int(guildStr)):
+        if not bbGlobals.guildsDB.guildIdExists(int(guildStr)):
             await message.channel.send("Unrecognised guild")
             return
         callingBBGuild = bbGlobals.guildsDB.getGuild(int(guildStr))
