@@ -11,6 +11,9 @@ async def expireHelpMenu(menuID: int):
     """Expire a reaction help menu, and mark it so in the discord message.
     Reset the owning user's helpMenuOwned tracker.
     """
+    if menuID not in bbGlobals.reactionMenusDB:
+        return
+    
     menu = bbGlobals.reactionMenusDB[menuID]
     menu.owningBBUser.helpMenuOwned = False
     await ReactionMenu.markExpiredMenuAndRemoveOptions(menuID)

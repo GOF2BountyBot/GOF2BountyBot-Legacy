@@ -48,6 +48,9 @@ async def markExpiredMenu(menuID : int):
 
     :param int menuID: The ID of the menu, corresponding with the discord ID of the menu's message
     """
+    if menuID not in bbGlobals.reactionMenusDB:
+        return
+    
     menu = bbGlobals.reactionMenusDB[menuID]
     try:
         await menu.msg.edit(content=bbConfig.expiredMenuMsg)
@@ -67,6 +70,9 @@ async def markExpiredMenuAndRemoveOptions(menuID : int):
 
     :param int menuID: The ID of the menu, corresponding with the discord ID of the menu's message
     """
+    if menuID not in bbGlobals.reactionMenusDB:
+        return
+    
     menu = bbGlobals.reactionMenusDB[menuID]
     menu.msg = await menu.msg.channel.fetch_message(menu.msg.id)
     try:
