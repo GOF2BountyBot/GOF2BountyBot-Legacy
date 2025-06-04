@@ -617,4 +617,11 @@ async def on_raw_bulk_message_delete(payload : discord.RawBulkMessageDeleteEvent
 
 
 # Launch the bot!! 🤘🚀
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
+
+if debugPrint:
+    print("botToken in bountybot.py", bbPRIVATE.botToken, sep=": ")
 bbGlobals.client.run(bbPRIVATE.botToken)

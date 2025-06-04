@@ -27,7 +27,8 @@ services:
       - PGID=${PGID:-1000}
       - DATABASE_URL=postgresql://bountybot:dbpassword9090@postgres-db:5432/bountybot
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DEBUG_MODE=${DEBUG_MODE:-False}
+      # - DEBUG_MODE=${DEBUG_MODE:-False}
+      - DEBUG_MODE=True
       # To use the "legacy" config file, set this to the path using the container context
       # For example, storing the config file in the mapped folder `./mappings/bountybot/saveData` as 
       # `myConfigFile.cfg`, you would set this var to `/app/bountybot/saveData/myConfigFile.cfg`

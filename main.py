@@ -48,6 +48,12 @@ def validate_required_config(file_config):
             f"(uppercase: {[var.upper() for var in missing_vars]}) or in the config file"
         )
 
+
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
+
 # Main configuration loading logic - handle optional config file
 config_file_path = None
 if len(sys.argv) >= 2:
@@ -61,30 +67,48 @@ validate_required_config(cfg)
 # Set configuration values with priority to environment variables
 if get_config_value("botToken", cfg):
     bbPRIVATE.botToken = get_config_value("botToken", cfg)
+    if debugPrint:
+        print("botToken", bbPRIVATE.botToken, sep=": ")
 
 if get_config_value("userDBPath", cfg):
     bbPRIVATE.userDBPath = get_config_value("userDBPath", cfg)
+    if debugPrint:
+        print("userDBPath", bbPRIVATE.userDBPath, sep=": ")
 
 if get_config_value("guildDBPath", cfg):
     bbPRIVATE.guildDBPath = get_config_value("guildDBPath", cfg)
+    if debugPrint:
+        print("guildDBPath", bbPRIVATE.guildDBPath, sep=": ")
 
 if get_config_value("bountyDBPath", cfg):
     bbPRIVATE.bountyDBPath = get_config_value("bountyDBPath", cfg)
+    if debugPrint:
+        print("bountyDBPath", bbPRIVATE.bountyDBPath, sep=": ")
 
 if get_config_value("reactionMenusDBPath", cfg):
     bbPRIVATE.reactionMenusDBPath = get_config_value("reactionMenusDBPath", cfg)
+    if debugPrint:
+        print("reactionMenusDBPath", bbPRIVATE.reactionMenusDBPath, sep=": ")
 
 if get_config_value("loggingFolderPath", cfg):
     bbPRIVATE.loggingFolderPath = get_config_value("loggingFolderPath", cfg)
+    if debugPrint:
+        print("loggingFolderPath", bbPRIVATE.loggingFolderPath, sep=": ")
 
 if get_config_value("developers", cfg):
     developers_value = get_config_value("developers", cfg)
     bbPRIVATE.developers = [int(i.strip()) for i in developers_value.split(",")]
+    if debugPrint:
+        print("developers", bbPRIVATE.developers, sep=": ")
 
 if get_config_value("shipsDir", cfg):
     bbPRIVATE.shipsDir = get_config_value("shipsDir", cfg)
+    if debugPrint:
+        print("shipsDir", bbPRIVATE.shipsDir, sep=": ")
 
 if get_config_value("skinsDir", cfg):
     bbPRIVATE.skinsDir = get_config_value("skinsDir", cfg)
+    if debugPrint:
+        print("skinsDir", bbPRIVATE.skinsDir, sep=": ")
 
 import BB.bountybot
