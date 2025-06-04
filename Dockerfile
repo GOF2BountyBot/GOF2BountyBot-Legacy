@@ -46,9 +46,9 @@ RUN apt-get update && \
         curl \
         git \
         python3-pip \
-        python3.10-dev \
-        python3.10-venv \
-        libpython3.10-dev \
+        python3.8-dev \
+        python3.8-venv \
+        libpython3.8-dev \
         openssl \
         # Extras for bountybot
         postgresql-client \
@@ -59,12 +59,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 RUN update-alternatives --config python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Create a virtual environment
-RUN python3.10 -m venv /opt/venv
+RUN python3.8 -m venv /opt/venv
 
 WORKDIR /app/bountybot
 
