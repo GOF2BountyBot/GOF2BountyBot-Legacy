@@ -1,5 +1,8 @@
 discord.py==1.7.3
-emoji==1.7.0
-aiohttp[speedups]<3.8.0,>=3.6.0
+# discord.py
+# emoji==1.7.0
+emoji
+# aiohttp[speedups]<3.8.0,>=3.6.0
+aiohttp[speedups]
 typing-extensions
 pillow

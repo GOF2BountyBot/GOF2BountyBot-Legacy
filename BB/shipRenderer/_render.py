@@ -11,11 +11,17 @@ from pathlib import Path
 from typing import List
 
 
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
 
 ##### CONFIG VARIABLES #####
 
 # Determine the location of this script file. Used  for configuring script working paths below.
 script_path = os.path.dirname(os.path.realpath(__file__))
+if debugPrint:
+    print("script_path", script_path, sep=": ")
 
 # The camera's view distance. 5000 Should be plenty, but for larger models you may need to raise it. Tested with the Vossk Battlecruiser model.
 CAM_CLIP = 5000
@@ -29,7 +35,9 @@ RENDER_TEMP_DIR = script_path + os.sep + "temp"
 # Line 4:   The path to the tertiary texture region image if using one; This will be composited with respect to the tertiary_mask.jpg found in the same directory as the model. This mask MUST exist in order for a passed tertiary texture region image to be used.
 RENDER_ARGS_PATH = script_path + os.sep + "render_vars"
 
-
+if debugPrint:
+    print("RENDER_TEMP_DIR", RENDER_TEMP_DIR, sep=": ")
+    print("RENDER_ARGS_PATH", RENDER_ARGS_PATH, sep=": ")
 
 ##### UTIL OBJECTS #####
 
@@ -79,6 +87,8 @@ def getRenderArgs() -> RenderArgs:
     with open(RENDER_ARGS_PATH,"r") as f:
         for line in f.readlines():
             args.append(line.rstrip("\n"))
+    if debugPrint:
+        print("getRenderArgs() args", args, sep=": ")
     return RenderArgs(int(args[0].split("x")[0]), int(args[0].split("x")[1]), args[1], args[2], args[3])
 
 
@@ -87,7 +97,8 @@ def getRenderArgs() -> RenderArgs:
 
 # Fetch renderer arguments
 args = getRenderArgs()
-
+if debugPrint:
+    print("Render args", args, sep=": ")
 
 
 ##### CONFIGURE THE SCENE #####

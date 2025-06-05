@@ -407,7 +407,10 @@ async def on_ready():
     for levelSection in bbCommands.helpSectionEmbeds:
         for helpSection in levelSection.values():
             for embed in helpSection:
-                embed.set_thumbnail(url=bbGlobals.client.user.avatar_url_as(size=64))
+                # avatar_asset = bbGlobals.client.user.display_avatar.with_size(64)
+                # embed.set_thumbnail(url=avatar_asset.url)
+                avatar_asset = bbGlobals.client.user.avatar_url_as(size=64)
+                embed.set_thumbnail(url=avatar_asset)
 
     # for currentUser in bbGlobals.usersDB.users.values():
     #     currentUser.validateLoadout()
@@ -617,4 +620,11 @@ async def on_raw_bulk_message_delete(payload : discord.RawBulkMessageDeleteEvent
 
 
 # Launch the bot!! 🤘🚀
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
+
+if debugPrint:
+    print("botToken in bountybot.py", bbPRIVATE.botToken, sep=": ")
 bbGlobals.client.run(bbPRIVATE.botToken)

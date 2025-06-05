@@ -1,5 +1,5 @@
 import json
-
+import os
 
 def readJSON(dbFile : str) -> dict:
     """Read the json file with the given path, and return the contents as a dictionary.
@@ -8,9 +8,16 @@ def readJSON(dbFile : str) -> dict:
     :return: The contents of the requested json file, parsed into a python dictionary
     :rtype: dict 
     """
+    # Check if file exists
+    if not os.path.exists(dbFile):
+        # Create empty JSON object if file doesn't exist
+        return {}
     f = open(dbFile, "r")
     txt = f.read()
     f.close()
+    # Check if file is empty
+    if not txt:
+        return {}
     return json.loads(txt)
 
 

@@ -1,4 +1,5 @@
 import discord
+import os
 
 from . import commandsDB as bbCommands
 from ..bbConfig import bbConfig, bbData
@@ -8,6 +9,10 @@ from .. import lib, bbGlobals
 
 bbCommands.addHelpSection(2, "skins")
 
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
 
 async def dev_cmd_addSkin(message : discord.Message, args : str, isDM : bool):
     """Make the specified ship compatible with the specified skin.
@@ -16,12 +21,16 @@ async def dev_cmd_addSkin(message : discord.Message, args : str, isDM : bool):
     :param str args: string containing a ship name and a skin, prefaced with a + character.
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_addSkin")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a ship! Example: `" + bbConfig.commandPrefix + "ship Groza Mk II`")
         return
 
     if "+" in args:
+        if debugPrint:
+            print("Have render to run...")
         if len(args.split("+")) > 2:
             await message.channel.send(":x: Please only provide one skin, with one `+`!")
             return
@@ -46,6 +55,8 @@ async def dev_cmd_addSkin(message : discord.Message, args : str, isDM : bool):
         return
 
     if skin != "":
+        if debugPrint:
+            print("skin", skin, sep=": ")
         skin = skin.lstrip(" ").lower()
         if skin not in bbData.builtInShipSkins:
             if len(skin) < 20:
@@ -75,6 +86,8 @@ async def dev_cmd_delSkin(message : discord.Message, args : str, isDM : bool):
     :param str args: string containing a ship name and a skin, prefaced with a + character.
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_delSkin")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a ship! Example: `" + bbConfig.commandPrefix + "ship Groza Mk II`")
@@ -132,6 +145,8 @@ async def dev_cmd_makeSkin(message : discord.Message, args : str, isDM : bool):
     :param str args: string containing a ship name and a skin, prefaced with a + character.
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_makeSkin")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a ship! Example: `" + bbConfig.commandPrefix + "ship Groza Mk II`")
@@ -189,6 +204,8 @@ async def dev_cmd_applySkin(message : discord.Message, args : str, isDM : bool):
     :param str args: string containing a skin name
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_applySkin")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a skin!")
@@ -224,7 +241,8 @@ async def dev_cmd_unapplySkin(message : discord.Message, args : str, isDM : bool
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-
+    if debugPrint:
+        print("in dev_cmd_unapplySkin")
     activeShip = bbGlobals.usersDB.getOrAddID(message.author.id).activeShip
     if not activeShip.isSkinned:
         await message.channel.send(":x: Your ship has no skin applied!")
@@ -246,6 +264,8 @@ async def dev_cmd_add_skin_to_all_ships(message : discord.Message, args : str, i
     :param str args: string containing a skin name
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_add_skin_to_all_ships")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a skin!")
@@ -277,6 +297,8 @@ async def dev_cmd_del_skin_from_all_ships(message : discord.Message, args : str,
     :param str args: string containing a skin name
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if debugPrint:
+        print("in dev_cmd_del_skin_from_all_ships")
     # verify a item was given
     if args == "":
         await message.channel.send(":x: Please provide a skin!")

@@ -1,0 +1,74 @@
+name: BountyBot
+
+services:
+  bountybot-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bountybot-bot
+    container_name: bountybot-bot
+    # Comment out/remove below if you don't have a NVidia GPU for use
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - botnet
+    #ports:
+    #  - 3000:3000
+    env_file:
+      - path: ./.env
+        required: false 
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - DATABASE_URL=postgresql://bountybot:dbpassword9090@postgres-db:5432/bountybot
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # - DEBUG_MODE=${DEBUG_MODE:-False}
+      - DEBUG_MODE=True
+      # To use the "legacy" config file, set this to the path using the container context
+      # For example, storing the config file in the mapped folder `./mappings/bountybot/saveData` as 
+      # `myConfigFile.cfg`, you would set this var to `/app/bountybot/saveData/myConfigFile.cfg`
+      - CONFIG_FILE=/app/bountybot/saveData/myConfigFile.cfg
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # Keep data across rebuilds...
+      - ./mappings/bountybot/saveData:/app/bountybot/saveData
+#    healthcheck:
+#      test: curl -X 'GET' --insecure -I -v --fail http://localhost:3002/test || exit 
+#      interval: 40s
+#      timeout: 30s
+#      retries: 3
+#      start_period: 60s
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    networks:
+      - botnet
+    restart: always
+    environment:
+      POSTGRES_DB: bountybot
+      POSTGRES_USER: bountybot
+      POSTGRES_PASSWORD: dbpassword9090
+    #ports:
+    #  - "5432:5432"
+    volumes:
+      # Persists Postgres data across container restarts
+      - ./mappings/bountybot/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d bountybot -U bountybot"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+networks:
+  botnet:
+    name: botnet
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: botnet_br
