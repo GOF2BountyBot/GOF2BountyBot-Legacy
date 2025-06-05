@@ -1,5 +1,5 @@
 from .bbConfig import bbConfig
-from os import path
+from os import path, makedirs
 from datetime import datetime, timezone
 import traceback
 from typing import Tuple
@@ -22,10 +22,13 @@ class logger:
     def clearLogs(self):
         """Clears all logs from the database.
         """
-        self.logs = {"usersDB":{}, "guildsDB":{}, "bountiesDB":{},
-                        "shop":{}, "escapedBounties": {}, "bountyConfig": {}, "duels": {},
-                        "hangar": {}, "misc": {}, "bountyBoards": {}, "newBounties": {},
-                        "reactionMenus": {}, "userAlerts": {}}
+        self.logs = {
+            "usersDB":{}, "guildsDB":{}, "bountiesDB":{},
+            "shop":{}, "escapedBounties": {}, "bountyConfig": {},
+            "duels": {}, "hangar": {}, "misc": {},
+            "bountyBoards": {}, "newBounties": {},
+            "reactionMenus": {}, "userAlerts": {}
+        }
 
 
     def isEmpty(self) -> bool:
@@ -80,12 +83,7 @@ class logger:
         Log files are saved to the directory specified in bbConfig.loggingFolderPath.
         Logs are sorted by the time they were added to the logger prior to saving.
         After saving, the logger is cleared of logs.
-        If category-named text files do not exist, they are created.
-
-        ⚠ If exceptions are encountered when attempting to save logs,
-        the exceptions themselves are logged in the logger and printed to console.
-        If the exceptions are not fixed externally prior to bot shutdown, this will result
-        in all stored logs being lost.
+        If category-named text files or their parent directory do not exist, they are created.
         """
         if self.isEmpty():
             return
@@ -93,72 +91,85 @@ class logger:
         logsSaved = ""
         files = {}
         nowStr = datetime.now(timezone.utc).strftime("(%d/%m/%H:%M)")
-        
+
+        # 1) Ensure the logging folder exists:
+        base_dir = bbConfig.loggingFolderPath
+        if not path.exists(base_dir):
+            try:
+                makedirs(base_dir, exist_ok=True)
+                logsSaved += f"[DIR_CREATED:{base_dir}] "
+            except OSError as e:
+                print(f"{nowStr}-[LOG::SAVE]>DIR_IOERR: ERROR CREATING DIRECTORY: {base_dir}: {e.__class__.__name__}\n{traceback.format_exc()}")
+
+        # 2) Iterate over each category that has logs. For each, open (or create) its .txt file in 'ab' mode.
         for category in self.logs:
             if bool(self.logs[category]):
-                currentFName = bbConfig.loggingFolderPath + ("" if bbConfig.loggingFolderPath.endswith("/") else "/") + category + ".txt"
+                # Build full path, ensuring there's exactly one slash between folder and filename
+                currentFName = base_dir.rstrip("/") + "/" + category + ".txt"
                 logsSaved += category + ".txt, "
 
-                if category not in files:
-                    if not path.exists(currentFName):
-                        try:
-                            f = open(currentFName, 'xb')
-                            f.close()
-                            logsSaved += "[+]"
-                        except IOError as e:
-                            print(nowStr + "-[LOG::SAVE]>F_NEW_IOERR: ERROR CREATING LOG FILE: " + currentFName + ":" + e.__class__.__name__ + "\n" + traceback.format_exc())
-                    try:
-                        files[category] = open(currentFName, 'ab')
-                    except IOError as e:
-                        print(nowStr + "-[LOG::SAVE]>F_OPN_IOERR: ERROR OPENING LOG FILE: " + currentFName + ":" + e.__class__.__name__ + "\n" + traceback.format_exc())
-                        files[category] = None
+                try:
+                    # Opening in 'ab' will create the file if it doesn't already exist (provided the directory exists).
+                    files[category] = open(currentFName, 'ab')
+                except IOError as e:
+                    print(f"{nowStr}-[LOG::SAVE]>F_OPN_IOERR: ERROR OPENING/CREATING LOG FILE: {currentFName}: {e.__class__.__name__}\n{traceback.format_exc()}")
+                    files[category] = None
 
+        # 3) Write out all queued logs in chronological order, then close each file.
         while not self.isEmpty():
             log, category = self.popHeadLogAndCategory()
-            if files[category] is not None:
+            if files.get(category) is not None:
                 try:
-                    # log strings first encoded to bytes (utf-8) to allow for unicode chars
-                    files[category].write(log.encode())
+                    files[category].write(log.encode("utf-8"))
                 except IOError as e:
-                    print(nowStr + "-[LOG::SAVE]>F_WRT_IOERR: ERROR WRITING TO LOG FILE: " + files[category].name + ":" + e.__class__.__name__ + "\n" + traceback.format_exc())
+                    print(f"{nowStr}-[LOG::SAVE]>F_WRT_IOERR: ERROR WRITING TO LOG FILE: {files[category].name}: {e.__class__.__name__}\n{traceback.format_exc()}")
                 except UnicodeEncodeError as e:
-                    print(e.start)
-        
+                    print(f"{nowStr}-[LOG::SAVE]>UNICODE_ERR: ERROR ENCODING LOG: {e}\n{traceback.format_exc()}")
+
         for f in files.values():
-            f.close()
-        if logsSaved != "":
-            print(nowStr + "-[LOG::SAVE]>SAVE_DONE: Logs saved: " + logsSaved[:-2])
-        
+            if f is not None:
+                f.close()
+
+        if logsSaved:
+            # Trim trailing comma+space
+            print(f"{nowStr}-[LOG::SAVE]>SAVE_DONE: Logs saved: {logsSaved.rstrip(', ')}")
+
         self.clearLogs()
 
 
-    def log(self, classStr : str, funcStr : str, event : str, category : str = "misc",
-            eventType : str = "MISC_ERR", trace : str = "", noPrintEvent : bool = False, noPrint : bool = False):
+    def log(self, classStr: str, funcStr: str, event: str,
+            category: str = "misc", eventType: str = "MISC_ERR",
+            trace: str = "", noPrintEvent: bool = False, noPrint: bool = False):
         """Log an event, queueing the log to be saved to a file.
-        
+
         :param str classStr: The class in which the event occurred
         :param str funcStr: The function in which the event occurred
         :param str event: The event string - a string describing the event that occurred.
-        :param str category: The category of the event, corresponding to the name of the log file where this event will be saved. Must match one of the keys in ths logger's logs dictionary. (Default 'misc')
-        :param str eventType: The type of event, analagous to an exception type name. (Default 'MISC_ERR')
+        :param str category: The category of the event, corresponding to the name of the log file where this event will be saved.
+                            Must match one of the keys in the logger’s logs dictionary. (Default 'misc')
+        :param str eventType: The type of event, analogous to an exception type name. (Default 'MISC_ERR')
         :param str trace: If the logged event is an exception, you may wish to provide a stack trace here with traceback.format_exc(). (Default "")
         :param bool noPrintEvent: Give True to print this log to console without the event string. Useful in cases where the event string is very long. (Default False)
-        :param bool noPrint: Skip printing this log to console entirely. Useful in cases where the log occurrs frequently and helps little with debugging or similar. (Default False)
+        :param bool noPrint: Skip printing this log to console entirely. Useful in cases where the log occurs frequently and helps little with debugging or similar. (Default False)
         """
         if category not in self.logs:
-            self.log("misc", "Log", "log", "ATTEMPTED TO LOG TO AN UNKNOWN CATEGORY '" + str(category) + "' -> Redirected to misc.", eventType="UNKWN_CTGR")
+            # If an unknown category was passed, redirect to 'misc' and log that incident too
+            self.log("misc", "log", f"Attempted to log to unknown category '{category}'; redirected to 'misc'.", eventType="UNKNOWN_CATEGORY")
+            category = "misc"
 
         now = datetime.now(timezone.utc)
+        timestamp = now.strftime("(%d/%m/%H:%M)")
+
         if noPrintEvent:
-            eventStr = now.strftime("(%d/%m/%H:%M)") + "-[" + str(classStr).upper() + "::" + str(funcStr).upper() + "]>" + str(eventType)
+            eventStr = f"{timestamp}-[{classStr.upper()}::{funcStr.upper()}]{eventType}"
             if not noPrint:
                 print(eventStr)
-            self.logs[category][now] = eventStr + ": " + str(event) + ("\n" + trace if trace != "" else "") + "\n\n"
+            self.logs[category][now] = eventStr + f": {event}\n{trace}" + "\n\n" if trace else "\n\n"
         else:
-            eventStr = now.strftime("(%d/%m/%H:%M)") + "-[" + str(classStr).upper() + "::" + str(funcStr).upper() + "]>" + str(eventType) + ": " + str(event)
+            eventStr = f"{timestamp}-[{classStr.upper()}::{funcStr.upper()}]{eventType}: {event}"
             if not noPrint:
                 print(eventStr)
-            self.logs[category][now] = eventStr + ("\n" + trace if trace != "" else "") + "\n\n"
+            self.logs[category][now] = eventStr + ("\n" + trace if trace else "") + "\n\n"
 
 
 # The logger instance used throughout BountyBot. TODO: To be moved to bbGlobals.
