@@ -407,7 +407,10 @@ async def on_ready():
     for levelSection in bbCommands.helpSectionEmbeds:
         for helpSection in levelSection.values():
             for embed in helpSection:
-                embed.set_thumbnail(url=bbGlobals.client.user.avatar_url_as(size=64))
+                # avatar_asset = bbGlobals.client.user.display_avatar.with_size(64)
+                # embed.set_thumbnail(url=avatar_asset.url)
+                avatar_asset = bbGlobals.client.user.avatar_url_as(size=64)
+                embed.set_thumbnail(url=avatar_asset)
 
     # for currentUser in bbGlobals.usersDB.users.values():
     #     currentUser.validateLoadout()

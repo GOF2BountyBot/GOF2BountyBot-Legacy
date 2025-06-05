@@ -1,10 +1,13 @@
 from __future__ import annotations
-from emoji import UNICODE_EMOJI
+# from emoji import UNICODE_EMOJI
+from emoji import EMOJI_DATA as UNICODE_EMOJI
 from .. import bbGlobals
 from . import stringTyping
 from ..logging import bbLogger
 import traceback
 from ..baseClasses import bbSerializable
+
+import os
 
 from typing import Union, TYPE_CHECKING
 if TYPE_CHECKING:
@@ -12,6 +15,12 @@ if TYPE_CHECKING:
 
 err_UnknownEmoji = "<:BB_ERR:779632588243075072>"
 
+
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        # Temp disable debug printing - too much noise
+        debugPrint = False
 
 class UnrecognisedCustomEmoji(Exception):
     """Exception raised when creating a dumbEmoji instance, but the client could not match an emoji to the given ID.
@@ -52,7 +61,8 @@ class dumbEmoji(bbSerializable.bbSerializable):
         :param int id: The ID of the custom emoji that this object should represent.
         :param str unicode: The unicode emoji that this object should represent.
         """
-
+        if debugPrint:
+            print("Checking emoji id", id, sep=": ")
         if id == -1 and unicode == "":
             raise ValueError("At least one of id or unicode is required")
         elif id != -1 and unicode != "":
@@ -72,7 +82,15 @@ class dumbEmoji(bbSerializable.bbSerializable):
             self.isID = False
         else:
             self.sendable = self.unicode if self.isUnicode else str(bbGlobals.client.get_emoji(self.id))
+        if debugPrint:
+            print("self.id", self.id, sep=": ")
+            print("self.unicode", self.unicode, sep=": ")
+            print("self.isID", self.isID, sep=": ")
+            print("self.isUnicode", self.isUnicode, sep=": ")
+            print("self.sendable", self.sendable, sep=": ")
         if self.sendable == "None":
+            if debugPrint:
+                print("self.sendable == None")
             if rejectInvalid:
                 raise UnrecognisedCustomEmoji("Unrecognised custom emoji ID in dumbEmoji constructor: " + str(self.id),self.id)
             else:
