@@ -20,6 +20,16 @@ RENDER_TEMP_DIR = script_path + os.sep + "temp"
 RENDER_ARGS_PATH = script_path + os.sep + "render_vars"
 
 
+debugPrint = False
+if os.getenv("DEBUG_MODE") is not None:
+    if os.getenv("DEBUG_MODE").upper() == "TRUE":
+        debugPrint = True
+
+if debugPrint:
+    print("SCRIPT_PATH", SCRIPT_PATH, sep=": ")
+    print("RENDER_TEMP_DIR", RENDER_TEMP_DIR, sep=": ")
+    print("RENDER_ARGS_PATH", RENDER_ARGS_PATH, sep=": ")
+
 class RenderFailed(Exception):
     pass
 
@@ -34,6 +44,8 @@ def trim(im : Image) -> Image:
     :return: im, with all surrounding empty space removed
     :rtype: Image
     """
+    if debugPrint:
+        print("inside trim()")
     bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
     diff = ImageChops.difference(im, bg)
     diff = ImageChops.add(diff, diff, 2.0, -100)
@@ -52,6 +64,8 @@ def ensureImageMode(tex : Image, mode="RGBA") -> Image:
     :return: tex if it is of the given mode. tex converted to mode otherwise.
     :rtype: Image
     """
+    if debugPrint:
+        print("inside ensureImageMode()")
     return tex if tex.mode == mode else tex.convert(mode)
 
 
@@ -63,6 +77,8 @@ def compositeTextures(outTexPath : str, shipPath : str, textures : Dict[int, str
     :param Dict[int, str] textures: Dictionary associating mask indices to texture file paths to composite. If a mask index is not in textures or disabledLayers, the default texture for that region will be used. The first element corresponds to the underlayer to render beneith the ship's base texture (foreground elements). All (currently 2) remaining textures are overlayed with respect to the ship's texture region masks.
     :param List[int] disabledLayers: List of texture regions to 'disable' - setting them to the bottom texture. TODO: Instead of doing this by recompositing the bottom texture, just iterate through disabled layers and apply masks. Apply bottom texture at the end.
     """
+    if debugPrint:
+        print("inside compositeTextures()")
     # Load and combine the base texture and under layer
     workingTex = ensureImageMode(Image.open(textures[0]))
     baseTex = ensureImageMode(Image.open(shipPath + os.sep + "skinBase.png"))
@@ -102,12 +118,16 @@ def setRenderArgs(args : List[str]):
 
     :param List[str] args: List of arguments to write to file
     """
+    if debugPrint:
+        print("inside setRenderArgs()")
     with open(SCRIPT_PATH + os.sep + "render_vars","w") as f:
         for arg in args:
             f.write(arg + "\n")
 
 
 def start_render():
+    if debugPrint:
+        print("inside start_render()")
     subprocess.call("blender -b \"" + SCRIPT_PATH + os.sep + "cube.blend\" -P \"" + SCRIPT_PATH + os.sep + "_render.py\"", shell=True)
 
 
@@ -124,6 +144,8 @@ async def renderShip(skinName : str, shipPath : str, shipModelName : str, textur
     :param int res_y: The height in pixels of the render resolution. This is not the the height of the final image, as empty space around the rendered object is cropped out automatically.
     :param bool full: When True, ignore all texture regions and base textures included with the ship, and render the first element in textures as the texture for the model. (Default False)
     """
+    if debugPrint:
+        print("inside renderShip()")
     # Generate render arguments
     current_model = shipPath + os.sep + shipModelName
     render_output_file = shipPath + os.sep + "skins" + os.sep + skinName + "-RENDER.png"
