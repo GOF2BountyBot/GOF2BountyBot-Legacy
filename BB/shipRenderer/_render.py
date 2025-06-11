@@ -121,7 +121,7 @@ for obj in ctx.visible_objects:
 ctx.scene.render.resolution_x = args.res_x
 ctx.scene.render.resolution_y = args.res_y
 ctx.scene.render.resolution_percentage = 100
-bpy.context.scene.cycles.samples = 6
+bpy.context.scene.cycles.samples = 8
 # Set the renderer (eevee renders some strange perspective stuff...?)
 ctx.scene.render.engine = 'CYCLES'
 # Set the render output file
