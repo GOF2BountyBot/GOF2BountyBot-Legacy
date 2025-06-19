@@ -12,7 +12,7 @@ reactionMenusDBPath = "saveData/reactionMenus.json"
 loggingFolderPath = "saveData/logs"
 
 # discord user IDs of all developers
-developers = [188618589102669826]
+developers = [188618589102669826, 448491245296418817, 1315105090088206437]
 
 shipsDir = path.join("items", "ships")
 skinsDir = path.join("items", "ship skins")
