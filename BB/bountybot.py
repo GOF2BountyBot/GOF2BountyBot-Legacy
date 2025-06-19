@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import asyncio
 import traceback
 import os
+import signal
 
 # BountyBot Imports
 
@@ -24,6 +25,24 @@ from . import lib, bbGlobals
 from .logging import bbLogger
 
 
+class GracefulKiller:
+    """Class tracking receipt of SIGINT and SIGTERM signals under linux.
+    This is used during the main loop to put the bot to sleep when requested.
+
+    :var kill_now: Whether or not a termination signal has been received
+    :vartype kill_now: bool
+    """
+
+    def __init__(self):
+        """Register signal handlers"""
+        self.kill_now = False
+        signal.signal(signal.SIGINT, self.exit_gracefully) # keyboard interrupt
+        signal.signal(signal.SIGTERM, self.exit_gracefully) # graceful exit request
+
+    def exit_gracefully(self, signum, frame):
+        """Termination signal received, mark kill indicator"""
+        self.kill_now = True
+
 
 class bbClient(ClientBaseClass):
     """A minor extension to discord.ext.commands.Bot to include database saving and extended shutdown procedures.
@@ -38,6 +57,7 @@ class bbClient(ClientBaseClass):
         intents = discord.Intents.default()
         intents.members = True
         intents.messages = True
+        self.killer = GracefulKiller()
 
         super().__init__(command_prefix="$", intents=intents)
         self.bb_loggedIn = False
@@ -460,6 +480,12 @@ async def on_ready():
 
         await bbGlobals.reactionMenusTTDB.doTaskChecking()
 
+        # termination signal received from OS. Trigger graceful shutdown with database saving
+        if bbGlobals.client.killer.kill_now:
+            bbGlobals.shutdown = bbGlobals.ShutDownState.shutdown
+            print("shutdown signal received, shutting down...")
+            await bbGlobals.client.shutdown()
+
 
 @bbGlobals.client.event
 async def on_message(message : discord.Message):
@@ -616,5 +642,7 @@ async def on_raw_bulk_message_delete(payload : discord.RawBulkMessageDeleteEvent
             await bbGlobals.reactionMenusDB[msgID].delete()
 
 
-# Launch the bot!! 🤘🚀
-bbGlobals.client.run(bbPRIVATE.botToken)
+def run():
+    # Launch the bot!! 🤘🚀
+    bbGlobals.client.run(bbPRIVATE.botToken)
+    return bbGlobals.shutdown

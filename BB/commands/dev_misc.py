@@ -31,10 +31,11 @@ async def dev_cmd_sleep(message : discord.Message, args : str, isDM : bool):
     if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
         await message.channel.send(":x: A render is currently in progress!")	
     else:
+        bbGlobals.shutdown = bbGlobals.ShutDownState.shutdown
         await message.channel.send("zzzz....")
         await bbGlobals.client.bb_shutdown()
 
-bbCommands.register("sleep", dev_cmd_sleep, 2, allowDM=True, useDoc=True)
+bbCommands.register("bot-sleep", dev_cmd_sleep, 2, allowDM=True, useDoc=True)
 
 
 async def dev_cmd_save(message : discord.Message, args : str, isDM : bool):
@@ -55,6 +56,40 @@ async def dev_cmd_save(message : discord.Message, args : str, isDM : bool):
     await message.channel.send("saved!")
 
 bbCommands.register("save", dev_cmd_save, 2, allowDM=True, useDoc=True)
+
+
+async def dev_cmd_restart(message: discord.Message, args: str, isDM: bool):
+    """developer command saving all data to JSON and then restarting the bot
+
+    :param discord.Message message: the discord message calling the command
+    :param str args: ignored
+    :param bool isDM: Whether or not the command is being called from a DM channel
+    """
+    if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
+        await message.channel.send(":x: A render is currently in progress!")	
+    else:
+        bbGlobals.shutdown = bbGlobals.ShutDownState.restart
+        await message.channel.send("restarting....")
+        await bbGlobals.client.bb_shutdown()
+
+bbCommands.register("bot-restart", dev_cmd_restart, 2, allowDM=True, useDoc=True)
+
+
+async def dev_cmd_bot_update(message : discord.Message, args : str, isDM : bool):
+    """developer command that gracefully shuts down the bot, performs git pull, and then reboots the bot.
+
+    :param discord.Message message: the discord message calling the command
+    :param str args: ignored
+    :param bool isDM: Whether or not the command is being called from a DM channel
+    """
+    if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
+        await message.channel.send(":x: A render is currently in progress!")	
+    else:
+        bbGlobals.shutdown = bbGlobals.ShutDownState.update
+        await message.channel.send("updating and restarting....")
+        await bbGlobals.client.bb_shutdown()
+
+bbCommands.register("bot-update", dev_cmd_bot_update, 2, allowDM=True, useDoc=True)
 
 
 async def dev_cmd_reset_has_poll(message : discord.Message, args : str, isDM : bool):

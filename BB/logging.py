@@ -25,7 +25,8 @@ class logger:
         self.logs = {"usersDB":{}, "guildsDB":{}, "bountiesDB":{},
                         "shop":{}, "escapedBounties": {}, "bountyConfig": {}, "duels": {},
                         "hangar": {}, "misc": {}, "bountyBoards": {}, "newBounties": {},
-                        "reactionMenus": {}, "userAlerts": {}}
+                        "reactionMenus": {}, "userAlerts": {},
+                        "devCommands": {}}
 
 
     def isEmpty(self) -> bool:

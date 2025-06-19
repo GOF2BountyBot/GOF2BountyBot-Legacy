@@ -3,6 +3,7 @@ from types import FunctionType
 from discord import Message, Embed, Colour
 from typing import List
 from ..bbConfig import bbConfig, bbData
+from .. import logging
 
 
 class IncorrectCommandCallContext(Exception):
@@ -33,7 +34,7 @@ class CommandRegistry:
     :var longHelp: A longer help string describing in full parameters and command usage
     :vartype longHelp: str
     """
-    def __init__(self, ident : str, func: FunctionType, forceKeepArgsCasing : bool, forceKeepCommandCasing : bool, allowDM : bool, allowHelp : bool, aliases : List[str] = [], signatureStr : str = "", shortHelp : str = "", longHelp : str = "", helpSection : str = "miscellaneous"):
+    def __init__(self, ident : str, func: FunctionType, accessLevel: int, forceKeepArgsCasing : bool, forceKeepCommandCasing : bool, allowDM : bool, allowHelp : bool, aliases : List[str] = [], signatureStr : str = "", shortHelp : str = "", longHelp : str = "", helpSection : str = "miscellaneous"):
         """
         :param str ident: The string command name by which this command is identified and called
         :param FunctionType func: A reference to the function to call upon calling this CommandRegistry
@@ -58,6 +59,7 @@ class CommandRegistry:
         self.shortHelp = shortHelp
         self.longHelp = longHelp
         self.helpSection = helpSection
+        self.accessLevel = accessLevel
 
 
     async def call(self, message : Message, args : str, isDM : bool):
@@ -68,6 +70,18 @@ class CommandRegistry:
         :param bool isDM: Whether the command was called from DMs or not
         :raise IncorrectCommandCallContext: When attempting to call a non-DMable command from DMs
         """
+        if self.accessLevel == 2:
+            callerStr = f"{message.author.display_name}#{message.author.id}" if message.author is not None else 'UNKNOWN'
+            channelStr = (f"{message.guild.name}#{message.guild.id}/{message.channel.id}"
+                          if message.guild is not None else f"{message.channel.id} (DM)")
+            logging.bbLogger.log(
+                CommandRegistry.__name__,
+                CommandRegistry.call.__name__,
+                "DEVCMD",
+                "devCommands",
+                "CMD_CALL",
+                f"{callerStr} called dev command {self.ident} with args {args} in channel {channelStr}")
+        
         if isDM and not self.allowDM:
             raise IncorrectCommandCallContext("Attempted to call command '" + self.ident + "' from DMs, but command is not allowed in DMs.")
         await self.func(message, args if self.forceKeepArgsCasing else args.lower(), isDM)
@@ -171,7 +185,7 @@ class HeirarchicalCommandsDB:
                 raise ValueError("Unrecognised help section name '" + helpSection + "'")
 
         # Register all identifiers for this command to the same command registry
-        newRegistry = CommandRegistry(cmdIdent, function, forceKeepArgsCasing, forceKeepCommandCasing, allowDM, not noHelp, aliases=aliases, signatureStr=signatureStr, shortHelp=shortHelp, longHelp=longHelp, helpSection=helpSection)
+        newRegistry = CommandRegistry(cmdIdent, function, accessLevel, forceKeepArgsCasing, forceKeepCommandCasing, allowDM, not noHelp, aliases=aliases, signatureStr=signatureStr, shortHelp=shortHelp, longHelp=longHelp, helpSection=helpSection)
         for currentIdent in allIdents:
             self.commands[accessLevel][currentIdent] = newRegistry
 
