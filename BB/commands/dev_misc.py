@@ -56,7 +56,7 @@ async def getShutdownWarnings(message : discord.Message) -> str:
     if len(bbGlobals.currentRenders) > 0:
         warnings.append("a render is currently in progress")
     
-    return warnings[0] if len(warnings) == 1 else (" - " + "\n - ".join(warnings))
+    return "" if len(warnings) == 0 else warnings[0] if len(warnings) == 1 else (" - " + "\n - ".join(warnings))
 
 
 async def dev_cmd_sleep(message : discord.Message, args : str, isDM : bool):
