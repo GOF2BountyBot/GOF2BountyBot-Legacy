@@ -37,3 +37,9 @@ if "skinsDir" in cfg:
     bbPRIVATE.skinsDir = cfg["skinsDir"]
     
 import BB.bountybot
+
+status = BB.bountybot.run()
+
+# return exit status code for bot restarting
+print("returning status code " + str(status))
+sys.exit(status)
