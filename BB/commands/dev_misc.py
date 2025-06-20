@@ -71,7 +71,7 @@ async def dev_cmd_sleep(message : discord.Message, args : str, isDM : bool):
         await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.shutdown
-        await message.channel.send(f"{warn}. `-f` given, shutting down anyway.\nzzzz....")
+        await message.channel.send((f"{warn}. `-f` given, shutting down anyway.\n" if warn else "") + "zzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-sleep", dev_cmd_sleep, 2, allowDM=True, useDoc=True)
@@ -102,7 +102,7 @@ async def dev_cmd_restart(message: discord.Message, args: str, isDM: bool):
         await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.restart
-        await message.channel.send(f"{warn}. `-f` given, restarting anyway.\nzzzz....")
+        await message.channel.send((f"{warn}. `-f` given, restarting anyway.\n" if warn else "") + "zzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-restart", dev_cmd_restart, 2, allowDM=True, useDoc=True)
@@ -120,7 +120,7 @@ async def dev_cmd_bot_update(message : discord.Message, args : str, isDM : bool)
         await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.update
-        await message.channel.send(f"{warn}. `-f` given, updating and restarting anyway.\nzzzz....")
+        await message.channel.send((f"{warn}. `-f` given, updating and restarting anyway.\n" if warn else "") + "zzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-update", dev_cmd_bot_update, 2, allowDM=True, useDoc=True)
