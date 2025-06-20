@@ -1,3 +1,11 @@
+from datetime import datetime
+
+class ShutDownState:
+    restart = 0
+    shutdown = 1
+    update = 2
+
+
 # Discord
 client = None
 botLoggedIn = False
@@ -28,3 +36,6 @@ newBountyFixedDeltaChanged = False
 
 # Names of ships currently being rendered
 currentRenders = []
+
+shutdown = ShutDownState.restart
+lastSuccessfulSave = datetime.min

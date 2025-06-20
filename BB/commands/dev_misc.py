@@ -7,6 +7,8 @@ from .. import bbGlobals, lib
 
 from . import util_help
 
+# used in nested f-strings
+NL = "\n"
 
 async def dev_cmd_dev_help(message : discord.Message, args : str, isDM : bool):
     """dev command printing help strings for dev commands as defined in bbData
@@ -20,6 +22,42 @@ async def dev_cmd_dev_help(message : discord.Message, args : str, isDM : bool):
 bbCommands.register("dev-help", dev_cmd_dev_help, 2, signatureStr="**dev-help** *[page number, section or command]*", shortHelp="Display information about developer-only commands.\nGive a specific command for detailed info about it, or give a page number or give a section name for brief info.", longHelp="Display information about developer-only commands.\nGive a specific command for detailed info about it, or give a page number or give a section name for brief info about a set of commands. These are the currently valid section names:\n- Bounties\n- Miscellaneous\n- Items\n- Channels\n- Skins")
 
 
+async def trySave(message : discord.Message) -> bool:
+    """Try to save dbs, and send an error to the caller's DMs if it fails.
+    Returns `True` on success, `False` on failure."""
+    try:
+        bbGlobals.client.bb_saveAllDBs()
+        print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved manually!"))
+        return True
+    except Exception as e:
+        print("SAVING ERROR", e.__class__.__name__)
+        print(traceback.format_exc())
+        if message.author.dm_channel is None:
+            await message.author.create_dm()
+        if message.author.dm_channel is None:
+            sendChannel = message.channel
+        else:
+            sendChannel = message.author.dm_channel
+
+        try:
+            await sendChannel.send(f"failed to save with {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        except discord.Forbidden:
+            await message.channel.send(":x: I can't DM you, " + message.author.display_name + "! Please enable DMs from users who are not friends.")
+    return False
+
+
+async def getShutdownWarnings(message : discord.Message) -> str:
+    warnings = []
+
+    saved = await trySave(message)
+    if not saved:
+        warnings.append(f"failed to save (last successful save <t:{int(bbGlobals.lastSuccessfulSave.timestamp())}:f>)")
+
+    if len(bbGlobals.currentRenders) > 0:
+        warnings.append("a render is currently in progress")
+    
+    return warnings[0] if len(warnings) == 1 else (" - " + "\n - ".join(warnings))
+
 
 async def dev_cmd_sleep(message : discord.Message, args : str, isDM : bool):
     """developer command saving all data to JSON and then shutting down the bot
@@ -28,11 +66,12 @@ async def dev_cmd_sleep(message : discord.Message, args : str, isDM : bool):
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
-        await message.channel.send(":x: A render is currently in progress!")	
+    warn = await getShutdownWarnings(message)
+    if warn and "-f" not in args:
+        await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.shutdown
-        await message.channel.send("zzzz....")
+        await message.channel.send(f"{warn}. `-f` given, shutting down anyway.\nzzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-sleep", dev_cmd_sleep, 2, allowDM=True, useDoc=True)
@@ -45,15 +84,8 @@ async def dev_cmd_save(message : discord.Message, args : str, isDM : bool):
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    try:
-        bbGlobals.client.bb_saveAllDBs()
-    except Exception as e:
-        print("SAVING ERROR", e.__class__.__name__)
-        print(traceback.format_exc())
-        await message.channel.send("failed!")
-        return
-    print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved manually!"))
-    await message.channel.send("saved!")
+    if await trySave(message):
+        await message.channel.send("saved!")
 
 bbCommands.register("save", dev_cmd_save, 2, allowDM=True, useDoc=True)
 
@@ -65,11 +97,12 @@ async def dev_cmd_restart(message: discord.Message, args: str, isDM: bool):
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
-        await message.channel.send(":x: A render is currently in progress!")	
+    warn = await getShutdownWarnings(message)
+    if warn and "-f" not in args:
+        await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.restart
-        await message.channel.send("restarting....")
+        await message.channel.send(f"{warn}. `-f` given, restarting anyway.\nzzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-restart", dev_cmd_restart, 2, allowDM=True, useDoc=True)
@@ -82,11 +115,12 @@ async def dev_cmd_bot_update(message : discord.Message, args : str, isDM : bool)
     :param str args: ignored
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    if len(bbGlobals.currentRenders) > 0 and "-f" not in args:
-        await message.channel.send(":x: A render is currently in progress!")	
+    warn = await getShutdownWarnings(message)
+    if warn and "-f" not in args:
+        await message.channel.send(f":x: {f'{NL}{warn}' if NL in warn else warn}. Give `-f` to force.")	
     else:
         bbGlobals.shutdown = bbGlobals.ShutDownState.update
-        await message.channel.send("updating and restarting....")
+        await message.channel.send(f"{warn}. `-f` given, updating and restarting anyway.\nzzzz....")
         await bbGlobals.client.bb_shutdown()
 
 bbCommands.register("bot-update", dev_cmd_bot_update, 2, allowDM=True, useDoc=True)

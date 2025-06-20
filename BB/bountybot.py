@@ -75,6 +75,7 @@ class bbClient(ClientBaseClass):
         lib.jsonHandler.saveDB(bbConfig.guildDBPath, bbGlobals.guildsDB)
         lib.jsonHandler.saveDB(bbConfig.reactionMenusDBPath, bbGlobals.reactionMenusDB)
         bbLogger.save()
+        bbGlobals.lastSuccessfulSave = datetime.now(timezone.utc)
         print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
 
 
