@@ -7,7 +7,7 @@ if [ "$#" -gt  0 ]; then
         echo "git mode enabled"
         usegit=true
     else
-        runbot='python3 main.py "$1"'
+        runbot='python3 main.py $1'
     fi
 
     if [ "$#" -gt  1 ]; then
@@ -15,7 +15,7 @@ if [ "$#" -gt  0 ]; then
             echo "git mode enabled"
             usegit=true
         else
-            runbot='python3 main.py "$2"'
+            runbot='python3 main.py $2'
         fi
     fi
 fi
