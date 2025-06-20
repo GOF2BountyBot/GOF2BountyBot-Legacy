@@ -1,13 +1,15 @@
 #!/bin/bash
 runbot="python3.8 main.py"
 usegit=false
+cfg=""
 
 if [ "$#" -gt  0 ]; then
     if [ "$1" = "-g" ]; then
         echo "git mode enabled"
         usegit=true
     else
-        runbot=`python3.8 main.py ${1}`
+        cfg="$1"
+        runbot="python3.8 main.py ${cfg}"
     fi
 
     if [ "$#" -gt  1 ]; then
@@ -15,11 +17,14 @@ if [ "$#" -gt  0 ]; then
             echo "git mode enabled"
             usegit=true
         else
-            runbot=`python3.8 main.py ${2}`
+            cfg="$2"
+            runbot="python3.8 main.py ${cfg}"
         fi
     fi
 fi
 
+
+echo $runbot
 $runbot
 
 while [ "$?" -ne 1 ]; do
