@@ -80,13 +80,17 @@ maxTechLevel = 10
 cumulativeShopTLChance = [0 for tl in range(minTechLevel, maxTechLevel + 1)]
 shopTLChance = [0 for tl in range(minTechLevel, maxTechLevel + 1)]
 
-itemChanceSum = 0
+# itemChanceSum = 0
 
-# Calculate spawn chance for each shop TL
-for shopTL in range(minTechLevel, maxTechLevel + 1):
-    itemChance = truncToRes(1 - math.exp((shopTL - 10.5) / 5))
-    cumulativeShopTLChance[shopTL - 1] = itemChance
-    itemChanceSum += itemChance
+# # Calculate spawn chance for each shop TL
+# for shopTL in range(minTechLevel, maxTechLevel + 1):
+#     itemChance = truncToRes(0.2 * math.pow(shopTL, 2) + 20)
+#     cumulativeShopTLChance[shopTL - 1] = itemChance
+#     itemChanceSum += itemChance
+
+# looks like I can't remember maths from school, so I'm hand picking weights for now
+cumulativeShopTLChance = [8, 10, 12, 12, 11, 10, 9, 8, 6, 5]
+itemChanceSum = sum(cumulativeShopTLChance)
 
 # Scale shop TL probabilities so that they add up to 1
 for shopTL in range(minTechLevel, maxTechLevel + 1):
