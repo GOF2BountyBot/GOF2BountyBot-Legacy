@@ -145,7 +145,8 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
                                        
         # If no bounty was won, print an error message
         else:
-            await message.channel.send(":telescope: **" + message.author.display_name + "**, you did not find any criminals in **" + requestedSystem.title() + "**!\n" + sightedCriminalsStr)
+            noCooldownIncurStr = "" if systemInBountyRoute else f"\n-# No cooldown incurred: {requestedSystem} is not in any bounty routes."
+            await message.channel.send(f":telescope: **" + message.author.display_name + "**, you did not find any criminals in **" + requestedSystem.title() + "**!\n" + sightedCriminalsStr + noCooldownIncurStr)
 
         # Only put the calling user on checking cooldown and increment systemsChecked stat if the system checked is on an active bounty's route.
         if systemInBountyRoute:
