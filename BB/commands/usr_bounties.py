@@ -66,10 +66,12 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         await message.channel.send(":x: Your ship has no weapons equipped!")
         return
 
+    now = datetime.now(timezone.utc)
+
     # Restrict the number of bounties a player may win in a single day
-    if requestedBBUser.dailyBountyWinsReset < datetime.now(timezone.utc):
+    if requestedBBUser.dailyBountyWinsReset < now:
         requestedBBUser.bountyWinsToday = 0
-        requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
+        requestedBBUser.dailyBountyWinsReset = now.replace(
                             hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
 
     if requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
@@ -77,7 +79,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         return
 
     # ensure the calling user is not on checking cooldown
-    if datetime.fromtimestamp(requestedBBUser.bountyCooldownEnd, timezone.utc) < datetime.now(timezone.utc):
+    if datetime.fromtimestamp(requestedBBUser.bountyCooldownEnd, timezone.utc) < now:
         bountyWon = False
         systemInBountyRoute = False
         dailyBountiesMaxReached = False
@@ -87,6 +89,8 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
             # list of completed bounties to remove from the bounties database
             toPop = []
             for bounty in callingBBGuild.bountiesDB.getFactionBounties(fac):
+                if bounty.issueTime > now:
+                    continue
 
                 # Check the passed system in current bounty
                 # If current bounty resides in the requested system
@@ -94,7 +98,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
                 if checkResult == 3:
                     requestedBBUser.bountyWinsToday += 1
                     if not dailyBountiesMaxReached and requestedBBUser.bountyWinsToday >= bbConfig.maxDailyBountyWins:
-                        requestedBBUser.dailyBountyWinsReset = datetime.now(timezone.utc).replace(
+                        requestedBBUser.dailyBountyWinsReset = now.replace(
                             hour=0, minute=0, second=0, microsecond=0) + lib.timeUtil.timeDeltaFromDict({"hours": 24})
                         dailyBountiesMaxReached = True
 
@@ -123,6 +127,8 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         # Check if any bounties are close to the requested system in their route, defined by bbConfig.closeBountyThreshold
         for fac in callingBBGuild.bountiesDB.getFactions():
             for bounty in callingBBGuild.bountiesDB.getFactionBounties(fac):
+                if bounty.issueTime > now:
+                    continue
                 if requestedSystem in bounty.route:
                     if 0 < bounty.route.index(bounty.answer) - bounty.route.index(requestedSystem) < bbConfig.closeBountyThreshold:
                         # Print any close bounty names
@@ -145,14 +151,14 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         if systemInBountyRoute:
             requestedBBUser.systemsChecked += 1
             # Put the calling user on checking cooldown
-            requestedBBUser.bountyCooldownEnd = (datetime.now(timezone.utc) +
+            requestedBBUser.bountyCooldownEnd = (now +
                                                  timedelta(minutes=bbConfig.checkCooldown["minutes"])).timestamp()
 
     # If the calling user is on checking cooldown
     else:
         # Print an error message with the remaining time on the calling user's cooldown
         diff = datetime.fromtimestamp(bbGlobals.usersDB.getUser(
-            message.author.id).bountyCooldownEnd, timezone.utc) - datetime.now(timezone.utc)
+            message.author.id).bountyCooldownEnd, timezone.utc) - now
         minutes = int(diff.total_seconds() / 60)
         seconds = int(diff.total_seconds() % 60)
         await message.channel.send(":stopwatch: **" + message.author.display_name + "**, your *Khador Drive* is still charging! please wait **" + str(minutes) + "m " + str(seconds) + "s.**")
@@ -275,10 +281,13 @@ async def cmd_route(message : discord.Message, args : str, isDM : bool):
         bounty = callingBBGuild.bountiesDB.getBounty(requestedBountyName.lower())
         outmessage = "**" + \
             lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + "**'s current route:\n> "
-        for system in bounty.route:
-            outmessage += " " + ("~~" if bounty.checked[system] != -1 else "") + system + (
-                "~~" if bounty.checked[system] != -1 else "") + ","
-        outmessage = outmessage[:-1] + ". :rocket:"
+        if bounty.issueTime > datetime.now(timezone.utc):
+            outmessage += f"*Releases <t:{int(bounty.issueTime.timestamp())}:R!*"
+        else:
+            for system in bounty.route:
+                outmessage += " " + ("~~" if bounty.checked[system] != -1 else "") + system + (
+                    "~~" if bounty.checked[system] != -1 else "") + ","
+            outmessage = outmessage[:-1] + ". :rocket:"
         await message.channel.send(outmessage)
     # if the named criminal is not wanted
     else:

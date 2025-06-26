@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from discord import Embed
+from datetime import datetime, timezone
 from . import bbShop
 from ..bbDatabases import bbBountyDB
 from .bounties.bountyBoards import BountyBoardChannel
@@ -374,25 +375,17 @@ class bbGuild(bbSerializable.bbSerializable):
         :param bbBounty newBounty: the bounty to announce
         :param bool doNotify: Give true to ping, false to not ping
         """
-        # Create the announcement embed
-        bountyEmbed = lib.discordUtil.makeEmbed(titleTxt=lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal), desc="⛓ __New Bounty Available__",
-                                col=bbData.factionColours[newBounty.faction], thumb=newBounty.criminal.icon, footerTxt=newBounty.faction.title())
-        bountyEmbed.add_field(name="Reward:", value=str(
-            newBounty.reward) + " Credits")
-        bountyEmbed.add_field(name="Possible Systems:", value=len(newBounty.route))
-        bountyEmbed.add_field(name="See the culprit's route with:", value="`" + bbConfig.commandPrefix +
-                            "route " + lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal) + "`", inline=False)
-        # Create the announcement text
-        msg = "A new bounty is now available from **" + \
-            newBounty.faction.title() + "** central command:"
+        if newBounty.issueTime > datetime.now(timezone.utc):
+            bbGlobals.newBountiesTTDB.scheduleTask(TimedTask.TimedTask(expiryTime=newBounty.issueTime, expiryFunction=self.announceNewBountyRoute, expiryFunctionArgs=newBounty))
 
+        msg = f"A{'n' if str(newBounty.reward).rstrip()[-1] == '1' else ''} {newBounty.reward} credit bounty is now available from **{newBounty.faction.title()}** central command:"
         if self.hasBountyBoardChannel:
             try:
                 if doNotify and self.hasUserAlertRoleID("bounties_new"):
-                    msg = "<@&" + \
-                        str(self.getUserAlertRoleID(
-                            "bounties_new")) + "> " + msg
+                    roleId = self.getUserAlertRoleID("bounties_new")
+                    msg = f"<@&{roleId}> {msg}"
                 # announce to the given channel
+                bountyEmbed = BountyBoardChannel.makeBountyEmbed(newBounty)
                 bountyListing = await self.bountyBoardChannel.channel.send(msg, embed=bountyEmbed)
                 await self.bountyBoardChannel.addBounty(newBounty, bountyListing)
                 await self.bountyBoardChannel.updateBountyMessage(newBounty)
@@ -407,6 +400,26 @@ class bbGuild(bbSerializable.bbSerializable):
             # ensure the announceChannel is valid
             currentChannel = self.getAnnounceChannel()
             if currentChannel is not None:
+                # Create the announcement embed
+                bountyEmbed = lib.discordUtil.makeEmbed(titleTxt=lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal), desc="⛓ __New Bounty Available__",
+                                        col=bbData.factionColours[newBounty.faction], thumb=newBounty.criminal.icon, footerTxt=newBounty.faction.title())
+                bountyEmbed.add_field(name="Reward:", value=str(
+                    newBounty.reward) + " Credits")
+                bountyEmbed.add_field(name="Possible Systems:", value=len(newBounty.route))
+                if newBounty.issueTime > datetime.now(timezone.utc):
+                    bountyEmbed.add_field(
+                        name="**Route:**",
+                        value=f"*Releases <t:{int(newBounty.issueTime.timestamp())}:R>!*\nOnce released,"
+                            + f"See the culprit's route with: `{bbConfig.commandPrefix}route {lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal)}`",
+                        inline=False)
+                else:
+                    bountyEmbed.add_field(
+                        name="**Route:**",
+                        value=f"See the culprit's route with: `{bbConfig.commandPrefix}route {lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal)}`",
+                        inline=False)
+                
+                # Create the announcement text
+                msg = f"A new bounty is now available from **{newBounty.faction.title()}** central command:"
                 try:
                     if doNotify and self.hasUserAlertRoleID("bounties_new"):
                         # announce to the given channel
@@ -420,6 +433,11 @@ class bbGuild(bbSerializable.bbSerializable):
             # TODO: may wish to add handling for invalid announceChannels - e.g remove them from the bbGuild object
 
 
+    async def announceNewBountyRoute(self, newBounty : bbBounty.Bounty):
+        if self.hasBountyBoardChannel:
+            await self.bountyBoardChannel.updateBountyMessage(newBounty)
+        # Nothing to do if there's no bountyboardchannel
+
     async def spawnAndAnnounceRandomBounty(self):
         """Generate a completely random bounty, spawn it, and announce it if this guild has
         an appropriate channel selected.
@@ -429,6 +447,7 @@ class bbGuild(bbSerializable.bbSerializable):
         # ensure a new bounty can be created
         if self.bountiesDB.canMakeBounty():
             newBounty = bbBounty.Bounty(bountyDB=self.bountiesDB)
+            newBounty.issueTime = datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)
             # activate and announce the bounty
             self.bountiesDB.addBounty(newBounty)
             await self.announceNewBounty(newBounty)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import discord
 from discord import Embed, HTTPException, Forbidden, NotFound, Client, Message
+from datetime import datetime, timedelta, timezone
 from ....bbConfig import bbData, bbConfig
 from .... import lib
 from .. import bbCriminal
@@ -22,19 +23,22 @@ def makeBountyEmbed(bounty : bbBounty.Bounty) -> Embed:
     embed.set_footer(text=bounty.faction.title())
     embed.set_thumbnail(url=bounty.criminal.icon)
     embed.add_field(name="**Reward:**", value=lib.stringTyping.commaSplitNum(str(bounty.reward)) + " Credits")
-    routeStr = ""
-    for system in bounty.route:
-        if bounty.systemChecked(system):
-            routeStr += "~~"
-            if 0 < bounty.route.index(bounty.answer) - bounty.route.index(system) < bbConfig.closeBountyThreshold:
-                routeStr += "**" + system + "**"
+    if bounty.issueTime > datetime.now(timezone.utc):
+        embed.add_field(name="**Route:**", value=f"*Releases <t:{int(bounty.issueTime.timestamp())}:R>!*")
+    else:
+        routeStr = ""
+        for system in bounty.route:
+            if bounty.systemChecked(system):
+                routeStr += "~~"
+                if 0 < bounty.route.index(bounty.answer) - bounty.route.index(system) < bbConfig.closeBountyThreshold:
+                    routeStr += "**" + system + "**"
+                else:
+                    routeStr += system
+                routeStr += "~~"
             else:
                 routeStr += system
-            routeStr += "~~"
-        else:
-            routeStr += system
-        routeStr += ", "
-    embed.add_field(name="**Route:**", value=routeStr[:-2], inline=False)
+            routeStr += ", "
+        embed.add_field(name="**Route:**", value=routeStr[:-2], inline=False)
     embed.add_field(name="-", value="> ~~Already checked systems~~\n> **Criminal spotted here recently**") #"‎"
     # embed.add_field(value="`Stars indicate systems where the criminal has recently been spotted.`", name="`Crossed-through systems have already been checked.`")
     # embed.add_field(name="**Difficulty:**", value=str(bounty.criminal.techLevel))

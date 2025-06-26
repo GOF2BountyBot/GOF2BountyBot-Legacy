@@ -213,6 +213,8 @@ def pickRandomItemTL(shopTL : int) -> int:
 
 ##### BOUNTIES #####
 
+newBountyWarningTimeSeconds = 20
+
 maxBountiesPerFaction = 5
 
 # The maximum number of bounties a player is allowed to win each day
