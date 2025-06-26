@@ -307,7 +307,7 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
     as such, '!bb make-bounty' is an alias for '!bb make-bounty +true +auto +auto +auto +auto +auto +auto +auto +auto +auto'
 
     :param discord.Message message: the discord message calling the command
-    :param str args: can be empty, can be '[guild id] +<notify> +<faction>', or can be '[guild id] +<notify> +<faction> +<name> +<route> +<start> +<end> +<answer> +<reward> +<endtime> +<icon>'
+    :param str args: can be empty, can be '[guild id] +<notify> +<faction>', or can be '[guild id] +<notify> +<faction> +<name> +<route> +<start> +<end> +<answer> +<reward> +<endtime> +<icon> +<doDailyWinsLimit>'
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
     guildStr = args.split("+")[0].strip()
@@ -352,8 +352,8 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
             bountyDB=callingBBGuild.bountiesDB, config=bbBountyConfig.BountyConfig(faction=newFaction))
 
     # if all args were given, generate a completely custom bounty
-    # 10 args plus account for empty string at the start of the split = split of 11 elements
-    elif len(args.split("+")) == 11:
+    # 10 args plus account for empty string at the start of the split = split of 12 elements
+    elif len(args.split("+")) == 12:
         # track whether a builtIn criminal was requested
         builtIn = False
         builtInCrimObj = None
@@ -433,18 +433,29 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
         if newIcon == "auto":
             newIcon = "" if not builtIn else builtInCrimObj.icon
 
+        # parse doDailyWinsLimit
+        newDoDailyWinsLimit = bData[10].rstrip(" ")
+        if newDoDailyWinsLimit.lower() in ("auto", "yes", "true", "1"):
+            newDoDailyWinsLimit = True
+        elif newDoDailyWinsLimit.lower() in ("no", "false", "0"):
+            newDoDailyWinsLimit = False
+        else:
+            await message.channel.send(f"Unknown value for doDailyWinsLimit: {newDoDailyWinsLimit}")
+
         # special bounty generation for builtIn criminals
         if builtIn:
             newBounty = bbBounty.Bounty(bountyDB=callingBBGuild.bountiesDB, criminalObj=builtInCrimObj, config=bbBountyConfig.BountyConfig(
-                faction=newFaction, name=newName, route=newRoute, start=newStart, end=newEnd, answer=newAnswer, reward=newReward, endTime=newEndTime, isPlayer=False, icon=newIcon))
+                faction=newFaction, name=newName, route=newRoute, start=newStart, end=newEnd, answer=newAnswer, reward=newReward, endTime=newEndTime, isPlayer=False, icon=newIcon),
+                doDailyWinsLimit=newDoDailyWinsLimit)
         # normal bounty generation for custom criminals
         else:
             newBounty = bbBounty.Bounty(bountyDB=callingBBGuild.bountiesDB, config=bbBountyConfig.BountyConfig(faction=newFaction, name=newName, route=newRoute,
-                                                                                                start=newStart, end=newEnd, answer=newAnswer, reward=newReward, endTime=newEndTime, isPlayer=False, icon=newIcon))
+                                                                                                start=newStart, end=newEnd, answer=newAnswer, reward=newReward, endTime=newEndTime, isPlayer=False, icon=newIcon),
+                                        doDailyWinsLimit=newDoDailyWinsLimit)
 
     # Report an error for invalid command syntax
     else:
-        await message.channel.send("incorrect syntax. give +notify +faction +name +route +start +end +answer +reward +endtime +icon")
+        await message.channel.send("incorrect syntax. give +notify +faction +name +route +start +end +answer +reward +endtime +icon +doDailyWinsLimit")
         return
 
     # activate and announce the new bounty

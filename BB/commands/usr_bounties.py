@@ -81,6 +81,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
     # ensure the calling user is not on checking cooldown
     if datetime.fromtimestamp(requestedBBUser.bountyCooldownEnd, timezone.utc) < now:
         bountyWon = False
+        bountyWonDoDailyWinsLimit = True
         systemInBountyRoute = False
         dailyBountiesMaxReached = False
 
@@ -103,6 +104,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
                         dailyBountiesMaxReached = True
 
                     bountyWon = True
+                    bountyWonDoDailyWinsLimit = bountyWonDoDailyWinsLimit and bounty.doDailyWinsLimit
                     # reward all contributing users
                     rewards = bounty.calcRewards()
                     for userID in rewards:
@@ -139,9 +141,12 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
 
         # If a bounty was won, print a congratulatory message
         if bountyWon:
-            requestedBBUser.bountyWins += 1
-            await message.channel.send(sightedCriminalsStr + "\n" + ":moneybag: **" + message.author.display_name + "**, you now have **" + str(requestedBBUser.credits) + " Credits!**\n" +
-                                       ("You have now reached the maximum number of bounty wins allowed for today! Please check back tomorrow." if dailyBountiesMaxReached else "You have **" + str(bbConfig.maxDailyBountyWins - requestedBBUser.bountyWinsToday) + "** remaining bounty wins today!"))
+            if bountyWonDoDailyWinsLimit:
+                requestedBBUser.bountyWins += 1
+                dailyWinsStr = "You have now reached the maximum number of bounty wins allowed for today! Please check back tomorrow." if dailyBountiesMaxReached else ("You have **" + str(bbConfig.maxDailyBountyWins - requestedBBUser.bountyWinsToday) + "** remaining bounty wins today!")
+            else:
+                dailyWinsStr = "-# Your daily bounty wins has **not** changed."
+            await message.channel.send(sightedCriminalsStr + "\n" + ":moneybag: **" + message.author.display_name + "**, you now have **" + str(requestedBBUser.credits) + " Credits!**\n" + dailyWinsStr)
                                        
         # If no bounty was won, print an error message
         else:

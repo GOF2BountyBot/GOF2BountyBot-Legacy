@@ -31,7 +31,7 @@ class Bounty(bbSerializable.bbSerializable):
     :vartype answer: str
     """
 
-    def __init__(self, criminalObj : bbCriminal = None, config : bbBountyConfig = None, bountyDB : bbBountyDB.bbBountyDB = None, dbReload : bool = False):
+    def __init__(self, criminalObj : bbCriminal = None, config : bbBountyConfig = None, bountyDB : bbBountyDB.bbBountyDB = None, dbReload : bool = False, doDailyWinsLimit : bool = True):
         """
         :param criminalObj: The criminal to be wanted. Give None to randomly generate a criminal. (Default None)
         :type criminalObj: bbCriminal or None
@@ -74,6 +74,7 @@ class Bounty(bbSerializable.bbSerializable):
         self.reward = config.reward
         self.checked = config.checked
         self.answer = config.answer
+        self.doDailyWinsLimit = doDailyWinsLimit
 
         
     # return 0 => system not in route
@@ -139,7 +140,10 @@ class Bounty(bbSerializable.bbSerializable):
         :return: A dictionary representation of this bounty.
         :rtype: dict
         """
-        return {"faction": self.faction, "route": self.route, "answer": self.answer, "checked": self.checked, "reward": self.reward, "issueTime": self.issueTime, "endTime": self.endTime, "criminal": self.criminal.toDict(**kwargs)}
+        d = {"faction": self.faction, "route": self.route, "answer": self.answer, "checked": self.checked, "reward": self.reward, "issueTime": self.issueTime, "endTime": self.endTime, "criminal": self.criminal.toDict(**kwargs)}
+        if not self.doDailyWinsLimit:
+            d["doDailyWinsLimit"] = False
+        return d
 
 
     @classmethod
@@ -152,4 +156,5 @@ class Bounty(bbSerializable.bbSerializable):
         dbReload = kwargs["dbReload"] if "dbReload" in kwargs else False
         return Bounty(dbReload=dbReload,
                         criminalObj=bbCriminal.Criminal.fromDict(bounty["criminal"]), 
-                        config=bbBountyConfig.BountyConfig(faction=bounty["faction"], route=bounty["route"], answer=bounty["answer"], checked=bounty["checked"], reward=bounty["reward"], issueTime=bounty["issueTime"], endTime=bounty["endTime"]))
+                        config=bbBountyConfig.BountyConfig(faction=bounty["faction"], route=bounty["route"], answer=bounty["answer"], checked=bounty["checked"], reward=bounty["reward"], issueTime=bounty["issueTime"], endTime=bounty["endTime"]),
+                        doDailyWinsLimit=bounty.get("doDailyWinsLimit", True))
