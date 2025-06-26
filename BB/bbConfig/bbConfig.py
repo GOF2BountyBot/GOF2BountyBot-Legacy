@@ -239,7 +239,7 @@ newBountyFixedDelta = {"days":0, "hours":0, "minutes":1, "seconds":0}
 newBountyDelayRandomRange = {"min": 5 * 60, "max": 7 * 60}
 
 ### routeScale config
-newBountyDelayRouteScaleCoefficient = 1
+newBountyDelayRouteScaleCoefficient = 0.85
 fallbackRouteScale = 5
 
 
