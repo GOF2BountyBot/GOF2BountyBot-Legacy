@@ -414,7 +414,7 @@ builtInSystemData = { #Terran
             "Prospero": {"name":"Prospero", "faction":"terran", "neighbours":["Union", "Vulpes"], "security":2, "coordinates":(5, 10), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Prospero"},
             "Union": {"name":"Union", "faction":"terran", "neighbours":["Loma", "Aquila", "Prospero", "Magnetar", "Weymire"], "security":1, "coordinates":(7, 4), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Union_system"},
             "Vulpes": {"name":"Vulpes", "faction":"terran", "neighbours":["Prospero", "Oom'Bak"], "security":2, "coordinates":(10, 7), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Vulpes"},
-            "Wolf-Reiser": {"name":"Wolf-Reiser", "faction":"terran", "neighbours":["Aquila"], "security":0, "coordinates":(10, 3), "aliases":["wolfreiser","wolf","reiser"], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Wolf-Reiser"},
+            "Wolf-Reiser": {"name":"Wolf-Reiser", "faction":"terran", "neighbours":["Aquila"], "security":0, "coordinates":(10, 3), "aliases":["wolfreiser","wolf","reiser", "wolf reiser", "wolfrieser","rieser", "wolf rieser","wolf-rieser"], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Wolf-Reiser"},
             
             #Vossk
             "K'Ontrr": {"name":"K'Ontrr", "faction":"vossk", "neighbours":["S'Kolptorr", "Ni'Mrrod", "Me'Enkk", "Wah'Norr"], "security":3, "coordinates":(10, 11), "aliases":["kontrr"], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:K'Ontrr"},
@@ -442,7 +442,7 @@ builtInSystemData = { #Terran
             
             #Neutral
             "Alda": {"name":"Alda", "faction":"neutral", "neighbours":[], "security":3, "coordinates":(8, 13), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Alda"},
-            "Her Jaza": {"name":"Her Jaza", "faction":"neutral", "neighbours":[], "security":3, "coordinates":(8, 12), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Her_Jaza"},
+            "Her Jaza": {"name":"Her Jaza", "faction":"neutral", "neighbours":[], "security":3, "coordinates":(8, 12), "aliases":["herjaza"], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Her_Jaza"},
             "Shima": {"name":"Shima", "faction":"neutral", "neighbours":["Loma", "Weymire", "Nesla"], "security":0, "coordinates":(5, 3), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Shima"},
             "Skavac": {"name":"Skavac", "faction":"neutral", "neighbours":[], "security":3, "coordinates":(10, 1), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Skavac"},
             "Skor Terpa": {"name":"Skor Terpa", "faction":"neutral", "neighbours":[], "security":3, "coordinates":(7, 1), "aliases":[], "wiki":"https://galaxyonfire.fandom.com/wiki/Category:Skor_Terpa"}
