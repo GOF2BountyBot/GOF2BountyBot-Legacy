@@ -215,13 +215,13 @@ bbCommands.register("shop", cmd_shop, 0, aliases=["store"], allowDM=False, helpS
 
 async def cmd_shop_buy(message : discord.Message, args : str, isDM : bool):
     """Buy the item of the given item type, at the given index, from the guild's shop.
-    if "transfer" is specified, the new ship's items are unequipped, and the old ship's items attempt to fill the new ship.
-    any items left unequipped are added to the user's inactive items lists.
-    if "sell" is specified, the user's old activeShip is stripped of items and sold to the shop.
-    "transfer" and "sell" are only valid when buying a ship.
+
+    When buying a ship:
+    All items are moved to the new ship (or to the user's hangar), and the old active ship is sold.
+    if "keep" is specified, the old ship is moved to the hangar instead.
 
     :param discord.Message message: the discord message calling the command
-    :param str args: string containing an item type and an index number, and optionally "transfer", and optionally "sell" separated by a single space
+    :param str args: string containing an item type and an index number, and optionally "keep"
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
     requestedBBGuild = bbGlobals.guildsDB.getGuild(message.guild.id)
@@ -245,7 +245,7 @@ async def cmd_shop_buy(message : discord.Message, args : str, isDM : bool):
         await message.channel.send(":x: Not enough arguments! Please provide both an item type (ship/weapon/module/turret) and an item number from `" + bbConfig.commandPrefix + "shop`")
         return
     if len(argsSplit) > 4:
-        await message.channel.send(":x: Too many arguments! Please only give an item type (ship/weapon/module/turret), an item number, and optionally `transfer` and/or `sell` when buying a ship.")
+        await message.channel.send(":x: Too many arguments! Please only give an item type (ship/weapon/module/turret), an item number, and optionally `keep` when buying a ship.")
         return
 
     item = argsSplit[0].rstrip("s")
@@ -271,28 +271,17 @@ async def cmd_shop_buy(message : discord.Message, args : str, isDM : bool):
         await message.channel.send(":x: Invalid item number! Must be at least 1.")
         return
 
-    transferItems = False
-    sellOldShip = False
+    transferItems = True
+    sellOldShip = True
     if len(argsSplit) > 2:
         for arg in argsSplit[2:]:
-            if arg == "transfer":
-                if transferItems:
-                    await message.channel.send(":x: Invalid argument! Please only specify `transfer` once!")
-                    return
+            if arg == "keep":
                 if item != "ship":
-                    await message.channel.send(":x: `transfer` can only be used when buying a ship!")
+                    await message.channel.send(":x: `keep` can only be used when buying a ship!")
                     return
-                transferItems = True
-            elif arg == "sell":
-                if sellOldShip:
-                    await message.channel.send(":x: Invalid argument! Please only specify `sell` once!")
-                    return
-                if item != "ship":
-                    await message.channel.send(":x: `sell` can only be used when buying a ship!")
-                    return
-                sellOldShip = True
+                sellOldShip = False
             else:
-                await message.channel.send(":x: Invalid argument! Please only give an item type (ship/weapon/module/turret), an item number, and optionally `transfer` and/or `sell` when buying a ship.")
+                await message.channel.send(":x: Invalid argument! Please only give an item type (ship/weapon/module/turret), an item number, and optionally `keep` when buying a ship.")
                 return
 
     requestedItem = shopItemStock[itemNum - 1].item
@@ -353,7 +342,7 @@ async def cmd_shop_buy(message : discord.Message, args : str, isDM : bool):
     else:
         raise NotImplementedError("Valid but unsupported item name: " + item)
 
-bbCommands.register("buy", cmd_shop_buy, 0, allowDM=False, helpSection="economy", signatureStr="**buy <item-type> <item-number>** *[transfer] [sell]*", shortHelp="Buy the requested item from the shop. Item numbers can be seen in the `$COMMANDPREFIX$shop`.\n🌎 This command must be used in your **home server**.", longHelp="Buy the requested item from the shop. Item numbers are shown next to items in the `$COMMANDPREFIX$shop`.\nWhen buying a ship, specify `sell` to sell your active ship, and/or `transfer` to move your active items to the new ship. I.e, *to sell your active ship without selling the items on the ship, use:* `$COMMANDPREFIX$buy ship <ship number> sell transfer`.*\n🌎 This command must be used in your **home server**.")
+bbCommands.register("buy", cmd_shop_buy, 0, allowDM=False, helpSection="economy", signatureStr="**buy <item-type> <item-number>** *[keep]*", shortHelp="Buy the requested item from the shop. Item numbers can be seen in the `$COMMANDPREFIX$shop`.\n🌎 This command must be used in your **home server**.", longHelp="Buy the requested item from the shop. Item numbers are shown next to items in the `$COMMANDPREFIX$shop`.\nWhen buying a ship, your old active ship will be sold, and your items will be moved to the new one. Specify `keep` to instead move active ship to your hangar. E.g: `$COMMANDPREFIX$buy ship <ship number> keep`*\n🌎 This command must be used in your **home server**.")
 
 
 async def cmd_shop_sell(message : discord.Message, args : str, isDM : bool):
