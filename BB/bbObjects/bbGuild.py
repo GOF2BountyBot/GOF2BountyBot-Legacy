@@ -378,7 +378,7 @@ class bbGuild(bbSerializable.bbSerializable):
         if newBounty.issueTime > datetime.now(timezone.utc):
             bbGlobals.newBountiesTTDB.scheduleTask(TimedTask.TimedTask(expiryTime=newBounty.issueTime, expiryFunction=self.announceNewBountyRoute, expiryFunctionArgs=newBounty))
 
-        msg = f"A{'n' if str(newBounty.reward).rstrip()[-1] == '1' else ''} {newBounty.reward} credit bounty is now available from **{newBounty.faction.title()}** central command:"
+        msg = f"A {newBounty.reward} credit bounty is now available from **{newBounty.faction.title()}** central command:"
         if self.hasBountyBoardChannel:
             try:
                 if doNotify and self.hasUserAlertRoleID("bounties_new"):
