@@ -288,7 +288,7 @@ async def cmd_route(message : discord.Message, args : str, isDM : bool):
         outmessage = "**" + \
             lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + "**'s current route:\n> "
         if bounty.issueTime > datetime.now(timezone.utc):
-            outmessage += f"*Releases <t:{int(bounty.issueTime.timestamp())}:R!*"
+            outmessage += f"*Releases <t:{int(bounty.issueTime.timestamp())}:R>!*"
         else:
             for system in bounty.route:
                 outmessage += " " + ("~~" if bounty.checked[system] != -1 else "") + system + (
