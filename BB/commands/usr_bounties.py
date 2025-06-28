@@ -287,7 +287,8 @@ async def cmd_route(message : discord.Message, args : str, isDM : bool):
         bounty = callingBBGuild.bountiesDB.getBounty(requestedBountyName.lower())
         outmessage = "**" + \
             lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + "**'s current route:\n> "
-        if bounty.issueTime > datetime.now(timezone.utc):
+        countdownTime = bounty.issueTime + timedelta(seconds=20)
+        if bounty.issueTime <= countdownTime:
             outmessage += f"*Releases <t:{int(bounty.issueTime.timestamp())}:R>!*"
         else:
             for system in bounty.route:
