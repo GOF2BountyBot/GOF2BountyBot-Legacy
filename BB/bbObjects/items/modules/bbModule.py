@@ -1,8 +1,9 @@
-from ..bbItem import bbItem
+from ..bbItem import bbItem, spawnableItem
 from ....bbConfig import bbData
 from .... import lib
 from typing import List
 
+@spawnableItem
 class bbModule(bbItem):
     """"An equippable item, providing ships with various stat perks and new functionality.
     All, none, or any combination of a bbModule's attributes may be populated.
