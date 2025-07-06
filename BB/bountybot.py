@@ -106,9 +106,12 @@ class bbClient(ClientBaseClass):
         print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
 
     
-    @tasks.loop(time=time(hour=0, minute=0, second=0))
+    @tasks.loop(hours=1)
     async def userDataArchive(self):
-        today = datetime.now(tz=timezone.utc).date()
+        now = datetime.now(tz=timezone.utc)
+        if now.hour != 0:
+            return
+        today = now.date()
         dirPath = os.path.join(bbConfig.userDBBackupPath, str(today.month))
         fpath = os.path.join(dirPath, today.strftime("%d-%m-%Y.json"))
         os.makedirs(dirPath)
@@ -120,9 +123,12 @@ class bbClient(ClientBaseClass):
         await self.wait_until_ready()
 
     
-    @tasks.loop(time=time(hour=0, minute=0, second=0))
+    @tasks.loop(hours=1)
     async def endStatRaces(self):
-        today = datetime.combine(datetime.now(tz=timezone.utc).date(), time())
+        now = datetime.now(tz=timezone.utc)
+        if now.hour != 0:
+            return
+        today = datetime.combine(now.date(), time())
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             completedRaces: List[int] = []
@@ -143,9 +149,12 @@ class bbClient(ClientBaseClass):
         await self.wait_until_ready()
 
 
-    @tasks.loop(time=time(hour=0, minute=0, second=0))
+    @tasks.loop(hours=1)
     async def announceNewStatRaces(self):
-        today = datetime.combine(datetime.now(tz=timezone.utc).date(), time())
+        now = datetime.now(tz=timezone.utc)
+        if now.hour != 0:
+            return
+        today = datetime.combine(now.date(), time())
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             for race in g.statRaces:
