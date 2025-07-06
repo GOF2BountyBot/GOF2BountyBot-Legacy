@@ -1,9 +1,17 @@
 import discord
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta, time
+import re
+import json
+from typing import Dict, List
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
+from ..reactionMenus.ConfirmationReactionMenu import InlineConfirmationMenu
+from ..bbConfig import bbConfig
+from ..bbObjects.items import bbItem
+from ..bbObjects.statRace import StatRace, StatRaceReward
+from ..bbObjects import bbGuild
 
 from . import util_help
 
@@ -466,3 +474,210 @@ async def dev_cmd_reset_transfer_cool(message : discord.Message, args : str, isD
     
 
 bbCommands.register("reset-transfer-cool", dev_cmd_reset_transfer_cool, 2, allowDM=True, useDoc=True)
+
+
+async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bool):
+    """developer command starting a new stat race
+
+    :param discord.Message message: the discord message calling the command
+    :param str args: ignored
+    :param bool isDM: Whether or not the command is being called from a DM channel
+    """
+    argsSplit = args.split("\n")
+    if len(argsSplit) < 2:
+        await message.channel.send(":x: Provide kwargs all on the first line, and after a new line, the rewards json")
+        return
+
+    args = argsSplit[0]
+    jsonString = "\n".join(argsSplit[1:])
+
+    guildIdMatch = re.match(".*guildid=(\\d+)", args, re.IGNORECASE)
+    if not guildIdMatch:
+        await message.channel.send(":x: Failed to parse guildid kwarg")
+        return
+    
+    guildId = int(guildIdMatch.group(1))
+    
+    statNameMatch = re.match(".*statname=((?:\\d|[a-z]|-|_)+)", args, re.IGNORECASE)
+    if not statNameMatch:
+        await message.channel.send(":x: Failed to parse statname kwarg")
+        return
+    
+    statName = statNameMatch.group(1)
+
+    startInDaysMatch = re.match(".*startInDays=(\\d+)", args, re.IGNORECASE)
+    startInDays = int(startInDaysMatch.group(1)) if startInDaysMatch else 1
+
+    if startInDays < 1:
+        await message.channel.send(":x: startInDays must be at least 1")
+        return
+
+    deltaModeMatch = re.match(".*delta=(false)|(true)", args, re.IGNORECASE)
+    deltaMode = (not deltaModeMatch) or deltaModeMatch.group(1).lower() == "true"
+
+    orderAscMatch = re.match(".*orderAsc=(false)|(true)", args, re.IGNORECASE)
+    orderAsc = True if orderAscMatch and orderAscMatch.group(1).lower() == "true" else False
+    
+    timeoutDict: Dict[str, int] = {}
+
+    for timeName in ["months", "weeks", "days", "hours", "minutes"]:
+        timeNameMatch = re.match(f".*{timeName}=(\\d+)", args, re.IGNORECASE)
+        
+        if timeNameMatch:
+            timeoutDict[timeName] = int(timeNameMatch.group(1))
+
+    if not timeoutDict:
+        await message.channel.send(":x: Failed to parse race length")
+        return
+
+    if all(v == 0 for v in timeoutDict.values()):
+        await message.channel.send(":x: Race length cannot be zero")
+        return
+    
+    months = timeoutDict.get("months", 0)
+    weeks = timeoutDict.get("weeks", 0)
+    days = timeoutDict.get("days", 0)
+    hours = timeoutDict.get("hours", 0)
+    minutes = timeoutDict.get("minutes", 0)
+
+    today = datetime.combine(datetime.now(timezone.utc).date(), time())
+    raceEnd = today + timedelta(days=days, hours=hours, minutes=minutes, weeks=weeks)
+    if raceEnd.month + months > 12:
+        raceEnd.replace(year=raceEnd.year + 1)
+    
+    newMonth = (raceEnd.month + months) % 12
+    raceEnd.replace(month=newMonth or 1)
+
+    raceStart = today + timedelta(days=startInDays)
+
+    confirmMsg = await message.channel.send(f"Confirm the race timing: <t:{int(raceStart.timestamp())}:F> - <t:{int(raceEnd.timestamp())}:F>")
+    confirmation = await InlineConfirmationMenu(confirmMsg, message.author, bbConfig.toolUseConfirmTimeoutSeconds).doMenu()
+
+    if bbConfig.defaultRejectEmoji in confirmation:
+        await message.channel.send("🛑 Stat race creation cancelled.")
+        return
+    
+    if bbConfig.defaultAcceptEmoji not in confirmation:
+        raise ValueError(",".join(str(i) for i in confirmation))
+    
+    try:
+        itemDict = json.loads(jsonString)
+    except json.JSONDecodeError as ex:
+        await message.channel.send(f":x: Rewards is not valid json: {ex}")
+        return
+    
+    if not isinstance(itemDict, dict):
+        await message.channel.send(":x: Rewards json is not a dictionary")
+        return
+    
+    rewards: List[StatRaceReward] = []
+    for k, v in itemDict.items():
+        if not lib.stringTyping.isInt(k):
+            await message.channel.send(f":x: Reward number {k} is not an integer")
+            return
+        
+        placeNumber = int(k)
+        if placeNumber < 1:
+            await message.channel.send(f":x: Reward number {k} is less than 1")
+            return
+        
+        if placeNumber > 1:
+            await message.channel.send(f":x: Reward number {k} is greater than than 10")
+            return
+        
+        if not isinstance(v, dict):
+            await message.channel.send(f":x: Reward value {k} is not a dictionary")
+            return
+
+        if "type" not in v:
+            await message.channel.send(":x: Please give a type in your item dictionary.")
+            return
+
+        if v["type"] not in bbItem.subClassNames:
+            await message.channel.send(":x: Unknown bbItem subclass type: " + v["type"])
+            return
+        
+        try:
+            bbItem.spawnItem(v)
+        except Exception as ex:
+            await message.channel.send(f":x: Failed to spawn reward value {k}: {ex}")
+            return
+        
+        rewards.append(StatRaceReward(v, placeNumber))
+
+    if not bbGlobals.guildsDB.guildIdExists(guildId):
+        await message.channel.send(":x: Unrecognised guild")
+        return
+    
+    r = StatRace(rewards, raceStart, raceEnd, deltaMode, orderAsc, statName)
+    hostGuild: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(guildId)
+    hostGuild.statRaces.append(r)
+
+    await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} stat race created. Now announcing...")
+    await bbGlobals.client.announceOneNewStatRace(hostGuild, r)
+    
+
+bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, helpSection="stat races",
+                    longHelp="Make a leaderboard over the given period for the given stat, and award the given prizes" \
+                        + " to the top scorers. Give the kwargs all on the first line, and then after a new line, the rewards as json."
+                        + "kwargs:\n"
+                        + "- `guildId` (int)\n"
+                        + "- `statname` (str, currently credits, lifetimeCredits, systemsChecked, bountyWins, value)\n"
+                        + "- `delta` (bool, default false)\n"
+                        + "- `orderAsc` (bool, default false)\n"
+                        + "- `startInDays` (int, default 1)\n"
+                        + "- `months` (int)\n"
+                        + "- `weeks` (int)\n"
+                        + "- `days` (int)\n"
+                        + "- `hours` (int)\n"
+                        + "- `minutes` (int)")
+
+
+async def dev_cmd_getGuildStatRaces(message : discord.Message, args : str, isDM : bool):
+    if not lib.stringTyping.isInt(args):
+        await message.channel.send(":x: Give the guild id as the only argument")
+        return
+    
+    guildId = int(args)
+    if not bbGlobals.guildsDB.guildIdExists(guildId):
+        await message.channel.send(":x: Unrecognised guild")
+        return
+    
+    g: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(guildId)
+    racesEmbed = lib.discordUtil.makeEmbed(titleTxt=f"{args} Stat Races")
+    for i, r in enumerate(g.statRaces):
+        racesEmbed.add_field(
+            name=f"{i}", 
+            value=f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
+                + f"rewards for places: {', '.join(str(place.fixedPlace) + ' ' for place in r.rewards)}")
+    
+    await message.channel.send(racesEmbed=racesEmbed)
+
+bbCommands.register("get-stat-races", dev_cmd_getGuildStatRaces, 2, allowDM=True, helpSection="stat races")
+
+
+async def dev_cmd_cancelGuildStatRace(message : discord.Message, args : str, isDM : bool):
+    argsSplit = args.split(" ")
+    if len(argsSplit) != 2 or not any(lib.stringTyping.isInt(i) for i in argsSplit):
+        await message.channel.send(":x: Give the guild id followed by the stat race id from `$get-stat-races`")
+        return
+    
+    guildId = int(args[0])
+    raceId = int(args[1])
+
+    if not bbGlobals.guildsDB.guildIdExists(guildId):
+        await message.channel.send(":x: Unrecognised guild")
+        return
+    
+    g: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(guildId)
+
+    if not g.statRaces or raceId < 0 or raceId > len(g.statRaces) - 1:
+        await message.channel.send(":x: Invalid stat race id. Give the id shown in `$get-stat-races`")
+        return
+
+    r = g.statRaces.pop(raceId)
+    
+    await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} This race has been cancelled. No announcement has been made:\n"
+                               + f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+
+bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races")

@@ -1,5 +1,5 @@
 import discord
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
@@ -457,6 +457,8 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
     else:
         await message.channel.send("incorrect syntax. give +notify +faction +name +route +start +end +answer +reward +endtime +icon +doDailyWinsLimit")
         return
+
+    newBounty.issueTime = datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)
 
     # activate and announce the new bounty
     callingBBGuild.bountiesDB.addBounty(newBounty)

@@ -4,6 +4,7 @@ botToken = ""
 
 # path to JSON files for database saves
 userDBPath = "saveData/users.json"
+userDBBackupPath = "saveData/backups/users"
 guildDBPath = "saveData/guilds.json"
 bountyDBPath = "saveData/bounties.json"
 reactionMenusDBPath = "saveData/reactionMenus.json"

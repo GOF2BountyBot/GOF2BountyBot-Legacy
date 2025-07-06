@@ -7,7 +7,7 @@ from ..bbDatabases import bbBountyDB
 from .bounties.bountyBoards import BountyBoardChannel
 from ..userAlerts import UserAlerts
 from discord import channel, Client, Forbidden, Guild, Member, Message, HTTPException, NotFound
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from ..bbConfig import bbConfig, bbData
 from .. import bbGlobals, lib
 from ..scheduling import TimedTask
@@ -15,6 +15,7 @@ from .bounties import bbBounty
 from ..logging import bbLogger
 from datetime import timedelta
 from ..baseClasses import bbSerializable
+from .statRace import StatRace
 
 
 class NoneDCGuildObj(Exception):
@@ -53,7 +54,8 @@ class bbGuild(bbSerializable.bbSerializable):
     def __init__(self, id : int, bountiesDB: bbBountyDB.bbBountyDB, dcGuild: Guild, announceChannel : channel.TextChannel = None,
             playChannel : channel.TextChannel = None, shop : bbShop.bbShop = None,
             bountyBoardChannel : BountyBoardChannel.BountyBoardChannel = None, alertRoles : Dict[str, int] = {},
-            ownedRoleMenus : int = 0, bountiesDisabled : bool = False, shopDisabled : bool = False):
+            ownedRoleMenus : int = 0, bountiesDisabled : bool = False, shopDisabled : bool = False,
+            statRaces: Optional[List[StatRace]] = None):
         """
         :param int id: The ID of the guild, directly corresponding to a discord guild's ID.
         :param bbBountyDB.bbBountyDB bountiesDB: This guild's active bounties
@@ -123,10 +125,12 @@ class bbGuild(bbSerializable.bbSerializable):
                         "bbConfig: Unrecognised newBountyDelayType '" + bbConfig.newBountyDelayType + "'")
 
             bbGlobals.newBountiesTTDB.scheduleTask(self.newBountyTT)
+        
+        self.statRaces = statRaces or []
 
 
 
-    def getAnnounceChannel(self) -> channel:
+    def getAnnounceChannel(self) -> channel.TextChannel:
         """Get the discord channel object of the guild's announcements channel.
 
         :return: the discord.channel of the guild's announcements channel
@@ -138,7 +142,7 @@ class bbGuild(bbSerializable.bbSerializable):
         return self.announceChannel
 
 
-    def getPlayChannel(self) -> channel:
+    def getPlayChannel(self) -> channel.TextChannel:
         """Get the discord channel object of the guild's bounty playing channel.
 
         :return: the discord channel object of the guild's bounty playing channel
@@ -606,6 +610,9 @@ class bbGuild(bbSerializable.bbSerializable):
 
         if not self.shopDisabled:
             data["shop"] = self.shop.toDict(**kwargs)
+
+        if self.statRaces:
+            data["statRaces"] = [r.toDict() for r in self.statRaces]
         
         return data
 
@@ -647,10 +654,12 @@ class bbGuild(bbSerializable.bbSerializable):
             else:
                 bountiesDB = bbBountyDB.bbBountyDB(bbData.bountyFactions)
         
+        statRaces = [StatRace.fromDict(s) for s in guildDict.get("statRaces", [])]
 
         return bbGuild(id, bountiesDB, dcGuild, announceChannel=announceChannel, playChannel=playChannel,
                         shop=bbShop.bbShop.fromDict(guildDict["shop"]) if "shop" in guildDict else bbShop.bbShop(),
                         bountyBoardChannel=BountyBoardChannel.BountyBoardChannel.fromDict(guildDict["bountyBoardChannel"]) if "bountyBoardChannel" in guildDict and guildDict["bountyBoardChannel"] != -1 else None,
                         alertRoles=guildDict["alertRoles"] if "alertRoles" in guildDict else {}, ownedRoleMenus=guildDict["ownedRoleMenus"] if "ownedRoleMenus" in guildDict else 0,
                         bountiesDisabled=bountiesDisabled,
-                        shopDisabled=id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935])
+                        shopDisabled=id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935],
+                        statRaces=statRaces)

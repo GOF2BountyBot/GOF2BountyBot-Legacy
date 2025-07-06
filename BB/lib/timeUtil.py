@@ -1,4 +1,5 @@
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime
+from dateutil.relativedelta import relativedelta
 import random
 from typing import Dict
 
@@ -26,6 +27,31 @@ def td_format_noYM(td_object : timedelta) -> str:
             period_value , seconds = divmod(seconds, period_seconds)
             has_s = 's' if period_value > 1 else ''
             strings.append("%s %s%s" % (period_value, period_name, has_s))
+
+    return ", ".join(strings)
+
+
+def td_format(fromTime : datetime, toTime: datetime) -> str:
+    """Create a string describing the attributes of a given time range, in a
+    human reader-friendly format.
+    """
+    d = relativedelta(toTime, fromTime)
+
+    strings=[]
+    periods = [
+        ('year',        d.years),
+        ('month',       d.months),
+        ('week',        d.weeks),
+        ('day',         d.days),
+        ('hour',        d.hours),
+        ('minute',      d.minutes),
+        ('second',      d.seconds)
+    ]
+
+    for period_name, val in periods:
+        if val != 0:
+            has_s = 's' if val > 1 else ''
+            strings.append("%s %s%s" % (val, period_name, has_s))
 
     return ", ".join(strings)
 
