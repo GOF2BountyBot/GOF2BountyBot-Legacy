@@ -542,7 +542,7 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
     hours = timeoutDict.get("hours", 0)
     minutes = timeoutDict.get("minutes", 0)
 
-    today = datetime.combine(datetime.now(timezone.utc).date(), time())
+    today = datetime.combine(datetime.now(timezone.utc).date(), time(), timezone.utc)
     raceEnd = today + timedelta(days=days, hours=hours, minutes=minutes, weeks=weeks)
     if raceEnd.month + months > 12:
         raceEnd.replace(year=raceEnd.year + 1)

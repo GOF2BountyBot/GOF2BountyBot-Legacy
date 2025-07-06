@@ -128,7 +128,7 @@ class bbClient(ClientBaseClass):
         now = datetime.now(tz=timezone.utc)
         if now.hour != 0:
             return
-        today = datetime.combine(now.date(), time())
+        today = datetime.combine(now.date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             completedRaces: List[int] = []
@@ -154,7 +154,7 @@ class bbClient(ClientBaseClass):
         now = datetime.now(tz=timezone.utc)
         if now.hour != 0:
             return
-        today = datetime.combine(now.date(), time())
+        today = datetime.combine(now.date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             for race in g.statRaces:
