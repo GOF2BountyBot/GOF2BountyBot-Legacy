@@ -583,7 +583,7 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
             await message.channel.send(f":x: Reward number {k} is less than 1")
             return
         
-        if placeNumber > 1:
+        if placeNumber > 10:
             await message.channel.send(f":x: Reward number {k} is greater than than 10")
             return
         
