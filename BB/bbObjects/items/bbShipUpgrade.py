@@ -4,10 +4,8 @@ from __future__ import annotations
 from ...bbConfig import bbData
 from . import bbShip
 from ...baseClasses import bbSerializable
-from .bbItem import spawnableItem
 
 
-@spawnableItem
 class bbShipUpgrade(bbSerializable.bbSerializable):
     """A ship upgrade that can be applied to bbShips, but cannot be unapplied again.
     There is no technical reason why a ship upgrade could not be removed, but from a game design perspective, it adds extra value and strategy to the decision to apply an upgrade.
