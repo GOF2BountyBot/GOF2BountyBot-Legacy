@@ -18,6 +18,8 @@ from . import util_help
 # used in nested f-strings
 NL = "\n"
 
+bbCommands.addHelpSection(2, "stat races")
+
 async def dev_cmd_dev_help(message : discord.Message, args : str, isDM : bool):
     """dev command printing help strings for dev commands as defined in bbData
 
