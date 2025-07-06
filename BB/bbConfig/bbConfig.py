@@ -269,9 +269,11 @@ savePeriod = {"hours":1}
 
 # path to JSON files for database saves
 userDBPath = bbPRIVATE.userDBPath
+userDBBackupPath = bbPRIVATE.userDBBackupPath
 guildDBPath = bbPRIVATE.guildDBPath
 bountyDBPath = bbPRIVATE.bountyDBPath
 reactionMenusDBPath = bbPRIVATE.reactionMenusDBPath
+botGlobalSavePath = bbPRIVATE.botGlobalSavePath
 
 # path to folder to save log txts to
 loggingFolderPath = bbPRIVATE.loggingFolderPath

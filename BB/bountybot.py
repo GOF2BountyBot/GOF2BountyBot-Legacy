@@ -78,6 +78,8 @@ class bbClient(ClientBaseClass):
         - the guilds database
         - the reaction menus database
         """
+        if bbGlobals.shopRefreshTT is not None and bbGlobals.shopRefreshTT.expiryTime is not None:
+            lib.jsonHandler.writeJSON(bbConfig.botGlobalSavePath, {"nextShopRefresh": bbGlobals.shopRefreshTT.expiryTime.timestamp()})
         lib.jsonHandler.saveDB(bbConfig.userDBPath, bbGlobals.usersDB)
         lib.jsonHandler.saveDB(bbConfig.guildDBPath, bbGlobals.guildsDB)
         lib.jsonHandler.saveDB(bbConfig.reactionMenusDBPath, bbGlobals.reactionMenusDB)
@@ -726,7 +728,19 @@ async def on_ready():
     # bot is now logged in
     bbGlobals.client.bb_loggedIn = True
     
-    bbGlobals.shopRefreshTT = TimedTask.TimedTask(expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.shopRefreshStockPeriod), autoReschedule=True, expiryFunction=refreshAndAnnounceAllShopStocks)
+    try:
+        rawBotSaveData = lib.jsonHandler.readJSON(bbConfig.botGlobalSavePath)
+    except FileNotFoundError:
+        newShopTime = None
+    else:
+        if "nextShopRefresh" in rawBotSaveData:
+            newShopTime = datetime.fromtimestamp(rawBotSaveData["nextShopRefresh"], timezone.utc)
+        else:
+            newShopTime = None
+
+    bbGlobals.shopRefreshTT = TimedTask.TimedTask(
+        expiryTime=newShopTime,
+        expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.shopRefreshStockPeriod), autoReschedule=True, expiryFunction=refreshAndAnnounceAllShopStocks)
     bbGlobals.dbSaveTT = TimedTask.TimedTask(expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.savePeriod), autoReschedule=True, expiryFunction=bbGlobals.client.bb_saveAllDBs)
 
     bbGlobals.duelRequestTTDB = TimedTaskHeap.TimedTaskHeap()

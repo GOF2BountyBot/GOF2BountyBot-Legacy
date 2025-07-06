@@ -8,6 +8,7 @@ userDBBackupPath = "saveData/backups/users"
 guildDBPath = "saveData/guilds.json"
 bountyDBPath = "saveData/bounties.json"
 reactionMenusDBPath = "saveData/reactionMenus.json"
+botGlobalSavePath = "saveData/botSave.json"
 
 # path to folder to save log txts to
 loggingFolderPath = "saveData/logs"
