@@ -660,7 +660,7 @@ async def dev_cmd_getGuildStatRaces(message : discord.Message, args : str, isDM 
             value=f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
                 + f"rewards for places: {', '.join(str(place.fixedPlace) + ' ' for place in r.rewards)}")
     
-    await message.channel.send(racesEmbed=racesEmbed)
+    await message.channel.send(embed=racesEmbed)
 
 bbCommands.register("get-stat-races", dev_cmd_getGuildStatRaces, 2, allowDM=True, helpSection="stat races")
 
