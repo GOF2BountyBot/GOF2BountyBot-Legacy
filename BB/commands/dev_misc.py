@@ -626,7 +626,7 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
         await bbGlobals.client.announceOneNewStatRace(hostGuild, r)
     
 
-bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, helpSection="stat races",
+bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, helpSection="stat races", forceKeepArgsCasing=True,
                     longHelp="Make a leaderboard over the given period for the given stat, and award the given prizes" \
                         + " to the top scorers. Give the kwargs all on the first line, and then after a new line, the rewards as json."
                         + "kwargs:\n"
@@ -689,4 +689,4 @@ async def dev_cmd_cancelGuildStatRace(message : discord.Message, args : str, isD
     await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} This race has been cancelled. No announcement has been made:\n"
                                + f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
 
-bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races", forceKeepArgsCasing=True)
+bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races")
