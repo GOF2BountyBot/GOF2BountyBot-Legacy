@@ -2,6 +2,8 @@ from . import TimedTask
 from heapq import heappop, heappush
 import inspect
 from types import FunctionType
+from .. import logging
+import traceback
 
 class TimedTaskHeap:
     """A min-heap of TimedTasks, sorted by task expiration time.
@@ -71,19 +73,24 @@ class TimedTaskHeap:
         TODO: pass down whatever the expiry function returns
         """
         # Await coroutine asynchronous functions
-        if self.asyncExpiryFunction:
-            # Pass args to the expiry function, if they are specified
-            if self.hasExpiryFunctionArgs:
-                await self.expiryFunction(self.expiryFunctionArgs)
+        try:
+            if self.asyncExpiryFunction:
+                # Pass args to the expiry function, if they are specified
+                if self.hasExpiryFunctionArgs:
+                    await self.expiryFunction(self.expiryFunctionArgs)
+                else:
+                    await self.expiryFunction()
+            # Do not await synchronous functions
             else:
-                await self.expiryFunction()
-        # Do not await synchronous functions
-        else:
-            # Pass args to the expiry function, if they are specified
-            if self.hasExpiryFunctionArgs:
-                self.expiryFunction(self.expiryFunctionArgs)
-            else:
-                self.expiryFunction()
+                # Pass args to the expiry function, if they are specified
+                if self.hasExpiryFunctionArgs:
+                    self.expiryFunction(self.expiryFunctionArgs)
+                else:
+                    self.expiryFunction()
+        except Exception as ex:
+            logging.bbLogger.log(type(self).__name__, TimedTaskHeap.callExpiryFunction.__name__,
+                                 f"failed to call heap expiry function with {type(ex)} {ex}",
+                                 trace=traceback.format_exc())
 
     
 

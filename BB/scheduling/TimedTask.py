@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 import inspect
 from types import FunctionType
+import traceback
+from .. import logging
 
 
 class TimedTask:
@@ -148,16 +150,21 @@ class TimedTask:
 
         :return: the results of the expiryFunction
         """
-        if self.asyncExpiryFunction:
-            if self.hasExpiryFunctionArgs:
-                return await self.expiryFunction(self.expiryFunctionArgs)
+        try:
+            if self.asyncExpiryFunction:
+                if self.hasExpiryFunctionArgs:
+                    return await self.expiryFunction(self.expiryFunctionArgs)
+                else:
+                    return await self.expiryFunction()
             else:
-                return await self.expiryFunction()
-        else:
-            if self.hasExpiryFunctionArgs:
-                return self.expiryFunction(self.expiryFunctionArgs)
-            else:
-                return self.expiryFunction()
+                if self.hasExpiryFunctionArgs:
+                    return self.expiryFunction(self.expiryFunctionArgs)
+                else:
+                    return self.expiryFunction()
+        except Exception as ex:
+            logging.bbLogger.log(type(self).__name__, TimedTask.callExpiryFunction.__name__,
+                                 f"failed to call timedtask expiry function with {type(ex)} {ex}",
+                                 trace=traceback.format_exc())
 
 
     
