@@ -613,8 +613,15 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
     hostGuild: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(guildId)
     hostGuild.statRaces.append(r)
 
-    await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} stat race created. Now announcing...")
-    await bbGlobals.client.announceOneNewStatRace(hostGuild, r)
+    doAnnounce = raceStart < datetime.now(timezone.utc)
+    if doAnnounce:
+        announcingStr = " Now announcing..."
+    else:
+        announcingStr = ""
+    await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} stat race created.{announcingStr}")
+
+    if doAnnounce:
+        await bbGlobals.client.announceOneNewStatRace(hostGuild, r)
     
 
 bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, helpSection="stat races",
