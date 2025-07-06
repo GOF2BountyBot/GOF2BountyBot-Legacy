@@ -689,4 +689,4 @@ async def dev_cmd_cancelGuildStatRace(message : discord.Message, args : str, isD
     await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} This race has been cancelled. No announcement has been made:\n"
                                + f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
 
-bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races")
+bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races", forceKeepArgsCasing=True)
