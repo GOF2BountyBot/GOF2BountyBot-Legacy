@@ -458,7 +458,7 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
         await message.channel.send("incorrect syntax. give +notify +faction +name +route +start +end +answer +reward +endtime +icon +doDailyWinsLimit")
         return
 
-    newBounty.issueTime = datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)
+    newBounty.issueTime = (datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)).timestamp()
 
     # activate and announce the new bounty
     callingBBGuild.bountiesDB.addBounty(newBounty)

@@ -451,7 +451,7 @@ class bbGuild(bbSerializable.bbSerializable):
         # ensure a new bounty can be created
         if self.bountiesDB.canMakeBounty():
             newBounty = bbBounty.Bounty(bountyDB=self.bountiesDB)
-            newBounty.issueTime = datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)
+            newBounty.issueTime = (datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)).timestamp()
             # activate and announce the bounty
             self.bountiesDB.addBounty(newBounty)
             await self.announceNewBounty(newBounty)
