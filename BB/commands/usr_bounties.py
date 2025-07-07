@@ -90,7 +90,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
             # list of completed bounties to remove from the bounties database
             toPop = []
             for bounty in callingBBGuild.bountiesDB.getFactionBounties(fac):
-                if bounty.issueTime > now:
+                if datetime.fromtimestamp(bounty.issueTime, timezone.utc) > now:
                     continue
 
                 # Check the passed system in current bounty
@@ -129,7 +129,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
         # Check if any bounties are close to the requested system in their route, defined by bbConfig.closeBountyThreshold
         for fac in callingBBGuild.bountiesDB.getFactions():
             for bounty in callingBBGuild.bountiesDB.getFactionBounties(fac):
-                if bounty.issueTime > now:
+                if datetime.fromtimestamp(bounty.issueTime, timezone.utc) > now:
                     continue
                 if requestedSystem in bounty.route:
                     if 0 < bounty.route.index(bounty.answer) - bounty.route.index(requestedSystem) < bbConfig.closeBountyThreshold:
@@ -287,8 +287,8 @@ async def cmd_route(message : discord.Message, args : str, isDM : bool):
         bounty = callingBBGuild.bountiesDB.getBounty(requestedBountyName.lower())
         outmessage = "**" + \
             lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + "**'s current route:\n> "
-        if bounty.issueTime > datetime.now(timezone.utc):
-            outmessage += f"*Releases <t:{int(bounty.issueTime.timestamp())}:R>!*"
+        if datetime.fromtimestamp(bounty.issueTime, timezone.utc) > datetime.now(timezone.utc):
+            outmessage += f"*Releases <t:{int(bounty.issueTime)}:R>!*"
         else:
             for system in bounty.route:
                 outmessage += " " + ("~~" if bounty.checked[system] != -1 else "") + system + (

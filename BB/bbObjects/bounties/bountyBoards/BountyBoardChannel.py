@@ -23,8 +23,8 @@ def makeBountyEmbed(bounty : bbBounty.Bounty) -> Embed:
     embed.set_footer(text=bounty.faction.title())
     embed.set_thumbnail(url=bounty.criminal.icon)
     embed.add_field(name="**Reward:**", value=lib.stringTyping.commaSplitNum(str(bounty.reward)) + " Credits")
-    if bounty.issueTime > datetime.now(timezone.utc):
-        embed.add_field(name="**Route:**", value=f"*Releases <t:{int(bounty.issueTime.timestamp())}:R>!*")
+    if datetime.fromtimestamp(bounty.issueTime, timezone.utc) > datetime.now(timezone.utc):
+        embed.add_field(name="**Route:**", value=f"*Releases <t:{int(bounty.issueTime)}:R>!*")
     else:
         routeStr = ""
         for system in bounty.route:

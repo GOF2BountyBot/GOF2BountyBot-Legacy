@@ -379,8 +379,8 @@ class bbGuild(bbSerializable.bbSerializable):
         :param bbBounty newBounty: the bounty to announce
         :param bool doNotify: Give true to ping, false to not ping
         """
-        if newBounty.issueTime > datetime.now(timezone.utc):
-            bbGlobals.newBountiesTTDB.scheduleTask(TimedTask.TimedTask(expiryTime=newBounty.issueTime, expiryFunction=self.announceNewBountyRoute, expiryFunctionArgs=newBounty))
+        if datetime.fromtimestamp(newBounty.issueTime, timezone.utc) > datetime.now(timezone.utc):
+            bbGlobals.newBountiesTTDB.scheduleTask(TimedTask.TimedTask(expiryTime=datetime.fromtimestamp(newBounty.issueTime, timezone.utc), expiryFunction=self.announceNewBountyRoute, expiryFunctionArgs=newBounty))
 
         msg = f"A {newBounty.reward} credit bounty is now available from **{newBounty.faction.title()}** central command:"
         if self.hasBountyBoardChannel:
@@ -410,10 +410,10 @@ class bbGuild(bbSerializable.bbSerializable):
                 bountyEmbed.add_field(name="Reward:", value=str(
                     newBounty.reward) + " Credits")
                 bountyEmbed.add_field(name="Possible Systems:", value=len(newBounty.route))
-                if newBounty.issueTime > datetime.now(timezone.utc):
+                if datetime.fromtimestamp(newBounty.issueTime, timezone.utc) > datetime.now(timezone.utc):
                     bountyEmbed.add_field(
                         name="**Route:**",
-                        value=f"*Releases <t:{int(newBounty.issueTime.timestamp())}:R>!*\nOnce released,"
+                        value=f"*Releases <t:{int(newBounty.issueTime)}:R>!*\nOnce released,"
                             + f"See the culprit's route with: `{bbConfig.commandPrefix}route {lib.discordUtil.criminalNameOrDiscrim(newBounty.criminal)}`",
                         inline=False)
                 else:
