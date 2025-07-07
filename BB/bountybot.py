@@ -315,13 +315,15 @@ class bbClient(ClientBaseClass):
 
         boardTitle = f"{r.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(r.startDate, r.endDate)} Stat Race: {boardTitle}"
 
+        defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict)
+
         # get the requested stats and sort users by the stat
         inputDict: Dict[int, Union[int, float]] = {}
         user: bbUser.bbUser
         for user in bbGlobals.usersDB.getUsers():
-            newValue = user.getStatByName(stat)
+            newValue = user.getStatByName(r.statName)
             if r.deltaMode:
-                oldValue = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else 0
+                oldValue = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser.getStatByName(r.statName)
                 inputDict[user.id] = newValue - oldValue
             else:
                 inputDict[user.id] = newValue

@@ -25,7 +25,7 @@ defaultShipLoadoutDict = {"name": "Betty", "builtIn":True,
 
 # Default attributes to give to new players
 defaultUserDict = {"credits":0, "bountyCooldownEnd":0, "lifetimeCredits":0, "systemsChecked":0, "bountyWins":0, "activeShip": defaultShipLoadoutDict, "inactiveWeapons":[{"item": {"name": "Nirai Impulse EX 1", "builtIn": True}, "count": 1}]}
-# Reference value not pre-calculated from defaultUserDict. This is not used in the game's code, but provides a reference for game design.
+# Reference value pre-calculated from defaultUserDict. This is not used in the game's code, but provides a reference for game design.
 defaultUserValue = 28970
 
 
