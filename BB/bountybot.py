@@ -68,6 +68,9 @@ class bbClient(ClientBaseClass):
 
         super().__init__(command_prefix="$", intents=intents)
         self.bb_loggedIn = False
+        self.userDataArchive.start()
+        self.endStatRaces.start()
+        self.announceNewStatRaces.start()
         
     
     def bb_saveAllDBs(self):
