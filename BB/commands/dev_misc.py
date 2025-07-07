@@ -671,8 +671,8 @@ async def dev_cmd_cancelGuildStatRace(message : discord.Message, args : str, isD
         await message.channel.send(":x: Give the guild id followed by the stat race id from `$get-stat-races`")
         return
     
-    guildId = int(args[0])
-    raceId = int(args[1])
+    guildId = int(argsSplit[0])
+    raceId = int(argsSplit[1])
 
     if not bbGlobals.guildsDB.guildIdExists(guildId):
         await message.channel.send(":x: Unrecognised guild")
