@@ -51,6 +51,10 @@ class GracefulKiller:
         self.kill_now = True
 
 
+def debugFmtDt(d: datetime) -> str:
+    return f"{d} ({d.timestamp()})"
+
+
 class bbClient(ClientBaseClass):
     """A minor extension to discord.ext.commands.Bot to include database saving and extended shutdown procedures.
 
@@ -162,10 +166,31 @@ class bbClient(ClientBaseClass):
         for g in bbGlobals.guildsDB or []:
             for race in g.statRaces:
                 if race.startDate == today:
+                    bbLogger.log(
+                        "bbClient",
+                        "announceNewStatRaces",
+                        "Stat race starts today - sending announcement\n"
+                        + f"Guild: {g.id}\n"
+                        + f"Today: {today}\n"
+                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}")
                     try:
                         await self.announceOneNewStatRace(g, race)
-                    except Exception:
-                        pass
+                    except Exception as ex:
+                        bbLogger.log(
+                            "bbClient",
+                            "announceNewStatRaces",
+                            f"Encountered {type(ex).__name__} exception when announcing new stat race: {ex}\n"
+                            + f"Guild: {g.id}\n"
+                            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}",
+                            trace=traceback.format_exc())
+                else:
+                    bbLogger.log(
+                        "bbClient",
+                        "announceNewStatRaces",
+                        "Stat race does not start today\n"
+                        + f"Guild: {g.id}\n"
+                        + f"Today: {today}\n"
+                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}")
 
     
     @announceNewStatRaces.before_loop
@@ -181,7 +206,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Stat race began, but the guild does not have an announce or play channel.\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
             return
         
         rewardStrings: Dict[int, str] = {}
@@ -196,7 +221,7 @@ class bbClient(ClientBaseClass):
                     bbClient.endOneStatRace.__name__,
                     f"Failed to deserialize reward with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {g.id}\n"
-                    + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
+                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
                     + f"Serialized item: {json.dumps(reward.item)}",
                     trace=traceback.format_exc())
                 continue
@@ -259,7 +284,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to send stat race starting announcement with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
 
     
@@ -347,7 +372,7 @@ class bbClient(ClientBaseClass):
                     bbClient.endOneStatRace.__name__,
                     f"Failed to deserialize reward with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {g.id}\n"
-                    + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
+                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
                     + f"Serialized item: {json.dumps(reward.item)}",
                     trace=traceback.format_exc())
                 continue
@@ -369,7 +394,7 @@ class bbClient(ClientBaseClass):
                         bbClient.endOneStatRace.__name__,
                         f"Failed to give reward to user {sortedUsers[place][0]} with {type(ex).__name__}: {ex}\n"
                         + f"Guild: {g.id}\n"
-                        + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
+                        + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
                         + f"Serialized item: {json.dumps(item.toDict())}",
                         trace=traceback.format_exc())
             leaderboardEmbed.add_field(
@@ -383,7 +408,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Stat race completed, but the guild does not have an announce or play channel.\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
         else:
             alertTypeId = UserAlerts.userAlertsTypesIDs[UserAlerts.UA_System_Misc]
             if g.hasUserAlertRoleID(alertTypeId):
@@ -399,7 +424,7 @@ class bbClient(ClientBaseClass):
                     bbClient.endOneStatRace.__name__,
                     f"Failed to send stat race ending announcement with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {g.id}\n"
-                    + f"Race: {r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
                     trace=traceback.format_exc())
 
 ####### GLOBAL VARIABLES #######
