@@ -24,6 +24,7 @@ dbSaveTT = None
 
 duelRequestTTDB = None
 
+botOperationsTTDB = None
 
 # Reaction Menus
 reactionMenusDB = None

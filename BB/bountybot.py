@@ -72,9 +72,6 @@ class bbClient(ClientBaseClass):
 
         super().__init__(command_prefix="$", intents=intents)
         self.bb_loggedIn = False
-        self.userDataArchive.start()
-        self.endStatRaces.start()
-        self.announceNewStatRaces.start()
         
     
     def bb_saveAllDBs(self):
@@ -113,29 +110,16 @@ class bbClient(ClientBaseClass):
         print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
 
     
-    @tasks.loop(hours=1)
     async def userDataArchive(self):
-        now = datetime.now(tz=timezone.utc)
-        if now.hour != 0:
-            return
-        today = now.date()
+        today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         dirPath = os.path.join(bbConfig.userDBBackupPath, str(today.month))
         fpath = os.path.join(dirPath, today.strftime("%d-%m-%Y.json"))
         os.makedirs(dirPath)
         lib.jsonHandler.saveDB(fpath, bbGlobals.usersDB)
 
     
-    @userDataArchive.before_loop
-    async def userDataArchive_waitUntilReady(self):
-        await self.wait_until_ready()
-
-    
-    @tasks.loop(hours=1)
     async def endStatRaces(self):
-        now = datetime.now(tz=timezone.utc)
-        if now.hour != 0:
-            return
-        today = datetime.combine(now.date(), time(), timezone.utc)
+        today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             completedRaces: List[int] = []
@@ -150,18 +134,9 @@ class bbClient(ClientBaseClass):
             for i in completedRaces:
                 g.statRaces.pop(i)
 
-    
-    @endStatRaces.before_loop
-    async def endStatRaces_waitUntilReady(self):
-        await self.wait_until_ready()
 
-
-    @tasks.loop(hours=1)
     async def announceNewStatRaces(self):
-        now = datetime.now(tz=timezone.utc)
-        if now.hour != 0:
-            return
-        today = datetime.combine(now.date(), time(), timezone.utc)
+        today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
         for g in bbGlobals.guildsDB or []:
             for race in g.statRaces:
@@ -191,11 +166,6 @@ class bbClient(ClientBaseClass):
                         + f"Guild: {g.id}\n"
                         + f"Today: {today}\n"
                         + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}")
-
-    
-    @announceNewStatRaces.before_loop
-    async def announceNewStatRaces_waitUntilReady(self):
-        await self.wait_until_ready()
 
 
     async def announceOneNewStatRace(self, g: "bbGuild.bbGuild", r: StatRace):
@@ -784,6 +754,36 @@ async def on_ready():
 
     bbGlobals.duelRequestTTDB = TimedTaskHeap.TimedTaskHeap()
 
+    bbGlobals.botOperationsTTDB = TimedTaskHeap.TimedTaskHeap()
+    
+    def getTomorrow():
+        today = datetime.combine(datetime.now(timezone.utc), time(), timezone.utc)
+        return today + timedelta(days=1)
+
+    def getTimeUntilTomorrow():
+        return getTomorrow() - datetime.now(timezone.utc)
+
+    userDataArchiveTT = TimedTask.DynamicRescheduleTask(
+        getTimeUntilTomorrow,
+        expiryFunction=bbGlobals.client.userDataArchive,
+        autoReschedule=True
+    )
+    bbGlobals.botOperationsTTDB.scheduleTask(userDataArchiveTT)
+    
+    endStatRacesTT = TimedTask.DynamicRescheduleTask(
+        getTimeUntilTomorrow,
+        expiryFunction=bbGlobals.client.endStatRaces,
+        autoReschedule=True
+    )
+    bbGlobals.botOperationsTTDB.scheduleTask(endStatRacesTT)
+
+    announceNewStatRacesTT = TimedTask.DynamicRescheduleTask(
+        getTimeUntilTomorrow,
+        expiryFunction=bbGlobals.client.announceNewStatRaces,
+        autoReschedule=True
+    )
+    bbGlobals.botOperationsTTDB.scheduleTask(announceNewStatRacesTT)
+
     if bbConfig.timedTaskCheckingType not in ["fixed", "dynamic"]:
         raise ValueError("bbConfig: Invalid timedTaskCheckingType '" +
                          bbConfig.timedTaskCheckingType + "'")
@@ -821,6 +821,8 @@ async def on_ready():
         await bbGlobals.duelRequestTTDB.doTaskChecking()
 
         await bbGlobals.reactionMenusTTDB.doTaskChecking()
+
+        await bbGlobals.botOperationsTTDB.doTaskChecking()
 
         # termination signal received from OS. Trigger graceful shutdown with database saving
         if bbGlobals.client.killer.kill_now:
