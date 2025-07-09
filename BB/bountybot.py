@@ -763,23 +763,32 @@ async def on_ready():
     def getTimeUntilTomorrow():
         return getTomorrow() - datetime.now(timezone.utc)
 
+    async def userDataArchive_wrapper(args):
+        await bbGlobals.client.userDataArchive()
+
     userDataArchiveTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=bbGlobals.client.userDataArchive,
+        expiryFunction=userDataArchive_wrapper,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(userDataArchiveTT)
     
+    async def endStatRaces_wrapper(args):
+        await bbGlobals.client.endStatRaces()
+
     endStatRacesTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=bbGlobals.client.endStatRaces,
+        expiryFunction=endStatRaces_wrapper,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(endStatRacesTT)
 
+    async def announceNewStatRaces_wrapper(args):
+        await bbGlobals.client.announceNewStatRaces()
+
     announceNewStatRacesTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=bbGlobals.client.announceNewStatRaces,
+        expiryFunction=announceNewStatRaces_wrapper,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(announceNewStatRacesTT)
