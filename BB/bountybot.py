@@ -760,7 +760,7 @@ async def on_ready():
         today = datetime.combine(datetime.now(timezone.utc), time(), timezone.utc)
         return today + timedelta(days=1)
 
-    def getTimeUntilTomorrow():
+    def getTimeUntilTomorrow(args):
         return getTomorrow() - datetime.now(timezone.utc)
 
     async def userDataArchive_wrapper(args):
