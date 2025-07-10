@@ -464,7 +464,15 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
     callingBBGuild.bountiesDB.addBounty(newBounty)
     await callingBBGuild.announceNewBounty(newBounty, doNotify)
 
-bbCommands.register("make-bounty", dev_cmd_make_bounty, 2, forceKeepArgsCasing=True, allowDM=True, helpSection="bounties", useDoc=True)
+bbCommands.register("make-bounty", dev_cmd_make_bounty, 2, forceKeepArgsCasing=True, allowDM=True, helpSection="bounties", longHelp=
+"""
+args should be separated by a space and then a plus symbol
+if no args are given, generate a new bounty at complete random
+if only one argument is given it is assumed to be a faction, and a bounty is generated for that faction
+otherwise, all 10 arguments required to generate a bounty must be given
+the route should be separated by only commas and no spaces. the endTime should be a UTC timestamp. Any argument can be given as 'auto' to be either inferred or randomly generated
+as such, '!bb make-bounty' is an alias for '!bb make-bounty +true +auto +auto +auto +auto +auto +auto +auto +auto +auto'
+""")
 
 
 async def dev_cmd_make_player_bounty(message : discord.Message, args : str, isDM : bool):
