@@ -247,34 +247,23 @@ class DynamicRescheduleTask(TimedTask):
     :param bool autoReschedule: Whether or not this task should automatically reschedule itself. You probably want this to be True, otherwise you may as well use a TimedTask. Default: False
     """
     def __init__(self, delayTimeGenerator, delayTimeGeneratorArgs=MISSING, issueTime=None, expiryTime=None, expiryFunction=None, expiryFunctionArgs={}, autoReschedule=False):
-        # Initialise TimedTask-inherited attributes
-        super(DynamicRescheduleTask, self).__init__(expiryDelta=delayTimeGenerator(delayTimeGeneratorArgs), issueTime=issueTime, expiryTime=expiryTime, expiryFunction=expiryFunction, expiryFunctionArgs=expiryFunctionArgs, autoReschedule=autoReschedule)
         self.delayTimeGenerator = delayTimeGenerator
         self.delayTimeGeneratorArgs = delayTimeGeneratorArgs
         self.hasDelayTimeGeneratorArgs = delayTimeGeneratorArgs is not MISSING
-        self.asyncDelayTimeGenerator = inspect.iscoroutinefunction(delayTimeGenerator)
+        super(DynamicRescheduleTask, self).__init__(expiryDelta=self.callDelayTimeGenerator(), issueTime=issueTime, expiryTime=expiryTime, expiryFunction=expiryFunction, expiryFunctionArgs=expiryFunctionArgs, autoReschedule=autoReschedule)
 
     
-    async def callDelayTimeGenerator(self) -> timedelta:
+    def callDelayTimeGenerator(self) -> timedelta:
         """Generate the next expiryTime using the delayTimeGenerator.
 
         :return: The results of delayTimeGenerator. Should be a timedelta.
         :rtype: datetime.timedelta
         """
-        # await asynchronous delayTimeGenerators
-        if self.asyncDelayTimeGenerator:
-            # Pass args to delayTimeGenerator if specified
-            if self.hasDelayTimeGeneratorArgs:
-                return await self.delayTimeGenerator(self.delayTimeGeneratorArgs)
-            else:
-                return await self.delayTimeGenerator()
-        # do not await synchronous delayTimeGenerators
+        # Pass args to delayTimeGenerator if specified
+        if self.hasDelayTimeGeneratorArgs:
+            return self.delayTimeGenerator(self.delayTimeGeneratorArgs)
         else:
-            # Pass args to delayTimeGenerator if specified
-            if self.hasDelayTimeGeneratorArgs:
-                return self.delayTimeGenerator(self.delayTimeGeneratorArgs)
-            else:
-                return self.delayTimeGenerator()
+            return self.delayTimeGenerator()
 
 
     
@@ -284,6 +273,6 @@ class DynamicRescheduleTask(TimedTask):
         # Update the task's issueTime to now
         self.issueTime = datetime.now(timezone.utc)
         # Create the new expiryTime from now + delayTimeGenerator result
-        self.expiryTime = self.issueTime + await self.callDelayTimeGenerator()
+        self.expiryTime = self.issueTime + self.callDelayTimeGenerator()
         # reset the gravestone to False, in case the task had been expired and marked for removal
         self.gravestone = False
