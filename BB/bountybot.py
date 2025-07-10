@@ -760,35 +760,26 @@ async def on_ready():
         today = datetime.combine(datetime.now(timezone.utc), time(), timezone.utc)
         return today + timedelta(days=1)
 
-    def getTimeUntilTomorrow(args):
+    def getTimeUntilTomorrow():
         return getTomorrow() - datetime.now(timezone.utc)
-
-    async def userDataArchive_wrapper(args):
-        await bbGlobals.client.userDataArchive()
 
     userDataArchiveTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=userDataArchive_wrapper,
+        expiryFunction=bbGlobals.client.userDataArchive,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(userDataArchiveTT)
-    
-    async def endStatRaces_wrapper(args):
-        await bbGlobals.client.endStatRaces()
 
     endStatRacesTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=endStatRaces_wrapper,
+        expiryFunction=bbGlobals.client.endStatRaces,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(endStatRacesTT)
 
-    async def announceNewStatRaces_wrapper(args):
-        await bbGlobals.client.announceNewStatRaces()
-
     announceNewStatRacesTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,
-        expiryFunction=announceNewStatRaces_wrapper,
+        expiryFunction=bbGlobals.client.announceNewStatRaces,
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(announceNewStatRacesTT)

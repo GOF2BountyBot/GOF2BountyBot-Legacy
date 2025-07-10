@@ -7,6 +7,7 @@ from types import FunctionType
 import traceback
 from .. import logging
 
+MISSING = object()
 
 class TimedTask:
     """A fairly generic class that, at its core, tracks when a requested amount of time has passed.
@@ -37,7 +38,7 @@ class TimedTask:
     """
 
     def __init__(self, issueTime : datetime = None, expiryTime : datetime = None, expiryDelta : timedelta = None,
-            expiryFunction : FunctionType = None, expiryFunctionArgs={}, autoReschedule : bool = False):
+            expiryFunction : FunctionType = None, expiryFunctionArgs=MISSING, autoReschedule : bool = False):
         """
         :param datetime.datetime issueTime: The datetime when this task was created. (Default now)
         :param datetime.datetime expiryTime: The datetime when this task should expire. (Default None)
@@ -60,7 +61,7 @@ class TimedTask:
         self.expiryFunction = expiryFunction
         self.hasExpiryFunction = expiryFunction is not None
         self.expiryFunctionArgs = expiryFunctionArgs
-        self.hasExpiryFunctionArgs = expiryFunctionArgs != {}
+        self.hasExpiryFunctionArgs = expiryFunctionArgs is not MISSING
         self.autoReschedule = autoReschedule
 
         # A task's 'gravestone' is marked as True when the TimedTask will no longer execute and can be removed from any TimedTask heap.
@@ -245,12 +246,12 @@ class DynamicRescheduleTask(TimedTask):
     :param expiryFunctionArgs: The data to pass to the expiryFunction. There is no type requirement, but a dictionary is recommended as a close representation of KWArgs. Default: {}
     :param bool autoReschedule: Whether or not this task should automatically reschedule itself. You probably want this to be True, otherwise you may as well use a TimedTask. Default: False
     """
-    def __init__(self, delayTimeGenerator, delayTimeGeneratorArgs={}, issueTime=None, expiryTime=None, expiryFunction=None, expiryFunctionArgs={}, autoReschedule=False):
+    def __init__(self, delayTimeGenerator, delayTimeGeneratorArgs=MISSING, issueTime=None, expiryTime=None, expiryFunction=None, expiryFunctionArgs={}, autoReschedule=False):
         # Initialise TimedTask-inherited attributes
         super(DynamicRescheduleTask, self).__init__(expiryDelta=delayTimeGenerator(delayTimeGeneratorArgs), issueTime=issueTime, expiryTime=expiryTime, expiryFunction=expiryFunction, expiryFunctionArgs=expiryFunctionArgs, autoReschedule=autoReschedule)
         self.delayTimeGenerator = delayTimeGenerator
         self.delayTimeGeneratorArgs = delayTimeGeneratorArgs
-        self.hasDelayTimeGeneratorArgs = delayTimeGeneratorArgs != {}
+        self.hasDelayTimeGeneratorArgs = delayTimeGeneratorArgs is not MISSING
         self.asyncDelayTimeGenerator = inspect.iscoroutinefunction(delayTimeGenerator)
 
     
