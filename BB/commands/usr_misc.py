@@ -573,8 +573,8 @@ async def cmd_getGuildStatRaces(message : discord.Message, args : str, isDM : bo
 bbCommands.register("stat-races", cmd_getGuildStatRaces, 0, allowDM=False, helpSection="stat races",
                     signatureStr="**stat-races**",
                     shortHelp="List currently active stat races in this server.",
-                    longHelp="List the currently active stat races in this server. For more information about a particular"
-                        + "race, including potential rewards and current standings, use `$stat-race <race number>` using a number"
+                    longHelp="List the currently active stat races in this server. For more information about a particular "
+                        + "race, including potential rewards and current standings, use `$stat-race <race number>` using a number "
                         + "from this command.")
 
 
