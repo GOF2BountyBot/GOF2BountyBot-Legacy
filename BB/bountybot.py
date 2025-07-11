@@ -29,7 +29,7 @@ from . import lib, bbGlobals
 from .userAlerts import UserAlerts
 from .logging import bbLogger
 from .bbObjects import bbGuild, bbUser
-from .bbObjects.statRace import StatRace
+from .bbObjects.statRace import StatRace, StatRaceResultsEntry
 
 
 class GracefulKiller:
@@ -126,7 +126,9 @@ class bbClient(ClientBaseClass):
             for i, race in enumerate(g.statRaces):
                 if race.endDate <= today:
                     try:
-                        await self.endOneStatRace(g, race)
+                        succeeded = await self.endOneStatRace(g, race)
+                        if not succeeded:
+                            continue
                     except Exception:
                         pass
                     else:
@@ -179,23 +181,30 @@ class bbClient(ClientBaseClass):
                 + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
             return
         
-        rewardStrings: Dict[int, str] = {}
-
-        for reward in r.rewards:
-            try:
-                item = bbItem.spawnItem(reward.item)
-            except Exception as ex:
-                rewardStrings[reward.fixedPlace] = "Reward creation failed - please contact a developer!"
-                bbLogger.log(
-                    bbClient.__name__,
-                    bbClient.endOneStatRace.__name__,
-                    f"Failed to deserialize reward with {type(ex).__name__}: {ex}\n"
-                    + f"Guild: {g.id}\n"
-                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
-                    + f"Serialized item: {json.dumps(reward.item)}",
-                    trace=traceback.format_exc())
-                continue
-            rewardStrings[reward.fixedPlace] = item.name
+        try:
+            # Pass empty dbs here because we're only interested in the rewards
+            results = r.calculateRewards(bbUserDB.bbUserDB(), bbUserDB.bbUserDB(), g)
+        except Exception as ex:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to calculate stat race rewards with {type(ex).__name__}: {ex}\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
+            return False
+        
+        try:
+            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=True, showWinnerStars=False, results=results)
+        except Exception as ex:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to make stat race leaderboard embed with {type(ex).__name__}: {ex}\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
+            return False
 
         alertTypeId = UserAlerts.userAlertsTypesIDs[UserAlerts.UA_System_Misc]
         if g.hasUserAlertRoleID(alertTypeId):
@@ -203,51 +212,13 @@ class bbClient(ClientBaseClass):
         else:
             alertStr = ""
 
-        if r.statName == "credits":
-            statName = "credits balance"
-            boardTitle = "Credits Balance"
-            boardDesc = "*Player credits balance"
-        elif r.statName == "systemsChecked":
-            statName = "number of systems checked"
-            boardTitle = "Systems Checked"
-            boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed"
-        elif r.statName == "bountyWins":
-            statName = "number of bounties won"
-            boardTitle = "Bounties Won"
-            boardDesc = "*Total number of bounties won"
-        elif r.statName == "lifetimeCredits":
-            statName = "lifetime credits earned"
-            boardTitle = "Lifetime Credits Earned"
-            boardDesc = "*Total credits earned from bounties"
-        elif r.statName == "value":
-            statName = "total value"
-            boardTitle = "Total Value"
-            boardDesc = "*The total value of player inventory, loadout and credits balance"
-        else:
-            err = f"unrecognised stat: {r.statName}"
-            bbLogger.log("bbClient", "announceOneNewStatRace", err)
-            raise ValueError(f"unrecognised stat: {r.statName}")            
 
-        boardDesc += ".*"
-        if r.orderAsc:
-            boardTitle = f"Lowest {boardTitle}"
-        if r.deltaMode:
-            boardTitle = f"{boardTitle} Delta"
-
-        boardTitle = f"{r.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(r.startDate, r.endDate)} Stat Race: {boardTitle}"
-
-        seeRewardsStr = "\nLet's take a look at the prizes you could win:" if rewardStrings else ""
-        rewardsEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, col=bbData.factionColours["neutral"], desc=boardDesc)
-
-        for place, rewardStr in sorted(rewardStrings.items(), key=lambda pair: pair[0]):
-            rewardsEmbed.add_field(
-                name=f"{place}{lib.stringTyping.getNumExtension(place)} place:",
-                value=rewardStr)
+        seeRewardsStr = "\nLet's take a look at the prizes you could win:" if any(r.reward is not None or r.rewardDeserializationFailed for r in results.values()) else ""
 
         try:
             await c.send(f"{alertStr}A stat race has just begun!\n"
-                         + f"Compete to get the {'lowest' if r.orderAsc else 'highest'} {statName} by <t:{int(r.endDate.timestamp())}:f>!{seeRewardsStr}",
-                         embed=rewardsEmbed if seeRewardsStr else None)
+                         + f"Compete to get the {'lowest' if r.orderAsc else 'highest'} {r.getFormattedStatName()} by <t:{int(r.endDate.timestamp())}:f>!{seeRewardsStr}",
+                         embed=leaderboardEmbed)
         except Exception as ex:
             bbLogger.log(
                 bbClient.__name__,
@@ -258,118 +229,52 @@ class bbClient(ClientBaseClass):
                 trace=traceback.format_exc())
 
     
-    async def endOneStatRace(self, g: "bbGuild.bbGuild", r: StatRace):
-        if r.deltaMode:
-            dirPath = os.path.join(bbConfig.userDBBackupPath, str(r.startDate.month))
-            fpath = os.path.join(dirPath, r.startDate.strftime("%d-%m-%Y.json"))
-            try:
-                rawStartSaveData = lib.jsonHandler.readJSON(fpath)
-            except FileNotFoundError:
-                bbLogger.log("bbClient", "endOneStatRace", f"file not found: {fpath}")
-                return
-            
-            startSaveData = bbUserDB.bbUserDB.fromDict(rawStartSaveData)
-        else:
-            startSaveData = bbUserDB.bbUserDB()
+    async def endOneStatRace(self, g: "bbGuild.bbGuild", r: StatRace) -> bool:
+        startSaveData = r.getStartingSaveData()
+        if startSaveData is None:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to get starting save data for stat race.\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
+            return False
 
-        if r.statName == "credits":
-            boardTitle = "Credits Balance"
-            boardUnit = "Credit"
-            boardUnits = "Credits"
-            boardDesc = "*Player credits balance"
-        elif r.statName == "systemsChecked":
-            boardTitle = "Systems Checked"
-            boardUnit = "System"
-            boardUnits = "Systems"
-            boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed"
-        elif r.statName == "bountyWins":
-            boardTitle = "Bounties Won"
-            boardUnit = "Bounty"
-            boardUnits = "Bounties"
-            boardDesc = "*Total number of bounties won"
-        elif r.statName == "lifetimeCredits":
-            boardTitle = "Lifetime Credits Earned"
-            boardUnit = "Credit"
-            boardUnits = "Credits"
-            boardDesc = "*Total credits earned from bounties"
-        elif r.statName == "value":
-            boardTitle = "Total Value"
-            boardUnit = "Credit"
-            boardUnits = "Credits"
-            boardDesc = "*The total value of player inventory, loadout and credits balance"
-        else:
-            err = f"unrecognised stat: {r.statName}"
-            bbLogger.log("bbClient", "endoneStatRace", err)
-            raise ValueError(f"unrecognised stat: {r.statName}")
+        try:
+            results = r.calculateRewards(startSaveData, bbGlobals.usersDB, g)
+        except Exception as ex:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to calculate stat race rewards with {type(ex).__name__}: {ex}\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
+            return False
+        
+        try:
+            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=False, showWinnerStars=True, results=results)
+        except Exception as ex:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to make stat race leaderboard embed with {type(ex).__name__}: {ex}\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
+            return False
 
-        boardDesc += ".*"
-        if r.orderAsc:
-            boardTitle = f"Lowest {boardTitle}"
-        if r.deltaMode:
-            boardTitle = f"{boardTitle} Delta"
-
-        boardTitle = f"{r.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(r.startDate, r.endDate)} Stat Race: {boardTitle}"
-
-        defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict)
-
-        # get the requested stats and sort users by the stat
-        inputDict: Dict[int, Union[int, float]] = {}
-        user: bbUser.bbUser
-        for user in bbGlobals.usersDB.getUsers():
-            newValue = user.getStatByName(r.statName)
-            if r.deltaMode:
-                oldValue = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser.getStatByName(r.statName)
-                inputDict[user.id] = newValue - oldValue
-            else:
-                inputDict[user.id] = newValue
-
-        sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not r.orderAsc)
-
-        # build the leaderboard embed
-        leaderboardEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, icon=bbData.winIcon, col=bbData.factionColours["neutral"], desc=boardDesc)
-
-        # add all users to the leaderboard embed with places and values
-        itemRewards: Dict[int, bbItem.bbItem] = {}
-        rewardStrings: Dict[int, str] = {}
-
-        for reward in r.rewards:
-            try:
-                item = bbItem.spawnItem(reward.item)
-            except Exception as ex:
-                rewardStrings[reward.fixedPlace] = "Reward creation failed - please contact a developer!"
-                bbLogger.log(
-                    bbClient.__name__,
-                    bbClient.endOneStatRace.__name__,
-                    f"Failed to deserialize reward with {type(ex).__name__}: {ex}\n"
-                    + f"Guild: {g.id}\n"
-                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
-                    + f"Serialized item: {json.dumps(reward.item)}",
-                    trace=traceback.format_exc())
-                continue
-            itemRewards[reward.fixedPlace] = item
-            rewardStrings[reward.fixedPlace] = f"You won a: {item.name}"
-
-        doStar = set() if len(r.rewards) == 10 else {x.fixedPlace - 1 for x in r.rewards}
-        for place in range(min(len(sortedUsers), 10)):
-            rewardStr = f"\n{rewardStrings[place + 1]}" if (place + 1) in rewardStrings else ""
-            item = itemRewards.get(place + 1, None)
-            if item is not None:
-                try:
-                    u: bbUser.bbUser = bbGlobals.usersDB.getOrAddID(sortedUsers[place][0])
-                    u.getInventoryForItem(item).addItem(item)
-                except Exception as ex:
-                    rewardStr += "Reward handout failed - please contact a developer!"
-                    bbLogger.log(
-                        bbClient.__name__,
-                        bbClient.endOneStatRace.__name__,
-                        f"Failed to give reward to user {sortedUsers[place][0]} with {type(ex).__name__}: {ex}\n"
-                        + f"Guild: {g.id}\n"
-                        + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
-                        + f"Serialized item: {json.dumps(item.toDict())}",
-                        trace=traceback.format_exc())
-            leaderboardEmbed.add_field(
-                value=str(place + 1) + ". " + self.get_user(sortedUsers[place][0]).mention + rewardStr,
-                name=("⭐ " if place in doStar else "") + str(sortedUsers[place][1]) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
+        try:
+            r.distributeRewards(bbGlobals.usersDB, g, {e.userId: e.reward for e in results.values() if isinstance(e, StatRaceResultsEntry) and e.reward is not None})
+        except Exception as ex:
+            bbLogger.log(
+                bbClient.__name__,
+                bbClient.endOneStatRace.__name__,
+                f"Failed to distribute stat race rewards with {type(ex).__name__}. Continuing anyway. {ex}\n"
+                + f"Guild: {g.id}\n"
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                trace=traceback.format_exc())
 
         c = g.getAnnounceChannel() if g.hasAnnounceChannel() else g.getPlayChannel() if g.hasPlayChannel() else None
         if c is None:
@@ -387,7 +292,7 @@ class bbClient(ClientBaseClass):
                 alertStr = ""
 
             try:
-                await c.send(f"{alertStr}The {boardTitle} is finished! Let's take a look at the scores:", embed=leaderboardEmbed)
+                await c.send(f"{alertStr}A stat race has finished! Let's take a look at the scores:", embed=leaderboardEmbed)
             except Exception as ex:
                 bbLogger.log(
                     bbClient.__name__,
@@ -396,6 +301,8 @@ class bbClient(ClientBaseClass):
                     + f"Guild: {g.id}\n"
                     + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
                     trace=traceback.format_exc())
+        
+        return True
 
 ####### GLOBAL VARIABLES #######
 

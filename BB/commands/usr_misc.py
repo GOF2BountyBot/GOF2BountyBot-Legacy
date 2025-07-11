@@ -2,16 +2,21 @@ from aiohttp import client_exceptions
 import operator
 import traceback
 import discord
+from datetime import datetime
 
 from . import commandsDB as bbCommands
 from .. import lib, bbGlobals
 from ..bbConfig import bbConfig, bbData
-from ..bbObjects import bbUser
+from ..bbObjects import bbUser, bbGuild
 from ..reactionMenus import ReactionMenu, ReactionPollMenu, PagedReactionMenu
 from ..scheduling import TimedTask
 from ..userAlerts import UserAlerts
 from ..logging import bbLogger
 from . import util_help
+from ..bbDatabases import bbUserDB
+
+
+bbCommands.addHelpSection(0, "stat races")
 
 
 async def cmd_help(message : discord.Message, args : str, isDM : bool):
@@ -533,3 +538,100 @@ async def cmd_poll(message : discord.Message, args : str, isDM : bool):
     bbGlobals.usersDB.getUser(message.author.id).pollOwned = True
 
 bbCommands.register("poll", cmd_poll, 0, forceKeepArgsCasing=True, allowDM=False, signatureStr="**poll** *<subject>*\n**<option1 emoji> <option1 name>**\n...    ...\n*[kwargs]*", shortHelp="Start a reaction-based poll. Each option must be on its own new line, as an emoji, followed by a space, followed by the option name.", longHelp="Start a reaction-based poll. Each option must be on its own new line, as an emoji, followed by a space, followed by the option name. The `subject` is the question that users answer in the poll and is optional, to exclude your subject simply give a new line.\n\n__Optional Arguments__\nOptional arguments should be given by `name=value`, with each arg on a new line.\n- Give `multiplechoice=no` to only allow one vote per person (default: yes).\n- Give `target=@role mention` to limit poll participants only to users with the specified role.\n- You may specify the length of the poll, with each time division on a new line. Acceptable time divisions are: `seconds`, `minutes`, `hours`, `days`. (default: minutes=5)")
+
+
+async def cmd_getGuildStatRaces(message : discord.Message, args : str, isDM : bool):
+    if isDM:
+        await message.reply(":x: This command can only be used from a server!")
+        return
+    
+    if not bbGlobals.guildsDB.guildIdExists(message.guild.id):
+        await message.reply("This server does not have any active stat races right now.")
+        return
+
+    g: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(message.guild.id)
+    if not g.statRaces:
+        await message.reply("This server does not have any active stat races right now.")
+        return
+    
+    racesEmbed = lib.discordUtil.makeEmbed(
+        titleTxt=f"Active Stat Races",
+        thumb=("https://cdn.discordapp.com/icons/" + str(message.guild.id) + "/" + message.guild.icon + ".png?size=64") if message.guild.icon is not None else "",
+        desc="See `$stat-race <number>` for rewards and current standings!")
+    for i, r in list(enumerate(sorted(g.statRaces, key=lambda r: r.endDate)))[:5]:
+        racesEmbed.add_field(
+            name=f"Race #{i + 1}: {r.getFormattedStatName()}", 
+            value=f"<t:{int(r.startDate.timestamp())}:F> - <t:{int(r.endDate.timestamp())}:F> {r.statName}\n"
+                + f"{'Lowest ' if r.orderAsc else ''}{r.getFormattedStatName()} {'increase' if r.deltaMode else ''}\n"
+                + f"`$stat-race {i+1}`")
+    
+    if len(g.statRaces) > 5:
+        racesEmbed.set_footer(text=f"Showing the soonest 5 races out of {len(g.statRaces)}")
+
+    await message.channel.send(embed=racesEmbed)
+
+bbCommands.register("stat-races", cmd_getGuildStatRaces, 0, allowDM=False, helpSection="stat races",
+                    shortHelp="List currently active stat races in this server.",
+                    longHelp="List the currently active stat races in this server. For more information about a particular"
+                        + "race, including potential rewards and current standings, use `$stat-race <race number>` using a number"
+                        + "from this command.")
+
+
+def debugFmtDt(d: datetime) -> str:
+    return f"{d} ({d.timestamp()})"
+
+
+async def cmd_getOneGuildStatRace(message : discord.Message, args : str, isDM : bool):
+    if isDM:
+        await message.reply(":x: This command can only be used from a server!")
+        return
+    
+    if not bbGlobals.guildsDB.guildIdExists(message.guild.id):
+        await message.reply("This server does not have any active stat races right now.")
+        return
+
+    g: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(message.guild.id)
+    if not g.statRaces:
+        await message.reply("This server does not have any active stat races right now.")
+        return
+    
+    if not args:
+        await message.reply(":x: Give me the race number! See `$stat-races`.")
+        return
+
+    if not lib.stringTyping.isInt(args):
+        await message.reply(":x: Invalid race number! See `$stat-races`.")
+        return
+    
+    raceNumber = int(args) - 1
+
+    if raceNumber < 0 or raceNumber > len(g.statRaces) - 1:
+        await message.reply(":x: Invalid race number! See `$stat-races`.")
+        return
+    
+    race = sorted(g.statRaces, key=lambda r: r.endDate)[raceNumber]
+
+    startSaveData = race.getStartingSaveData()
+    if startSaveData is None:
+        bbLogger.log(
+            "usr_misc",
+            "cmd_getOneGuildStatRace",
+            f"Failed to get starting save data for stat race\n"
+            + f"Guild: {args}\n"
+            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}",
+            trace=traceback.format_exc())
+    
+    rewards = race.calculateRewards(startSaveData or bbUserDB.bbUserDB(), bbGlobals.usersDB, g)
+    racesEmbed = race.makeLeaderboardEmbed(onlyShowRewards=startSaveData is None, showWinnerStars=False, results=rewards)
+    
+    racesEmbed.set_thumbnail(url=("https://cdn.discordapp.com/icons/" + str(message.guild.id) + "/" + message.guild.icon + ".png?size=64") if message.guild.icon is not None else "")
+
+    if startSaveData is None:
+        racesEmbed.description += "\n\nAn error occurred when calculating the current standings, please inform a developer."
+
+    await message.channel.send(embed=racesEmbed)
+
+bbCommands.register("stat-race", cmd_getOneGuildStatRace, 0, allowDM=False, helpSection="stat races",
+                    shortHelp="Get the rewards and current standings for a stat race. Give a stat race number from `$stat-races`.",
+                    longHelp="Gets the details of an stat race, including the potential rewards, and the current standings."
+                    + "\nGive a race number from `$stat-races` (required).")
