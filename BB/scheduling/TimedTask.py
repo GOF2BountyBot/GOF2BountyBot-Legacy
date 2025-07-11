@@ -246,7 +246,7 @@ class DynamicRescheduleTask(TimedTask):
     :param expiryFunctionArgs: The data to pass to the expiryFunction. There is no type requirement, but a dictionary is recommended as a close representation of KWArgs. Default: {}
     :param bool autoReschedule: Whether or not this task should automatically reschedule itself. You probably want this to be True, otherwise you may as well use a TimedTask. Default: False
     """
-    def __init__(self, delayTimeGenerator, delayTimeGeneratorArgs=MISSING, issueTime=None, expiryTime=None, expiryFunction=None, expiryFunctionArgs={}, autoReschedule=False):
+    def __init__(self, delayTimeGenerator, delayTimeGeneratorArgs=MISSING, issueTime=None, expiryTime=None, expiryFunction=None, expiryFunctionArgs=MISSING, autoReschedule=False):
         self.delayTimeGenerator = delayTimeGenerator
         self.delayTimeGeneratorArgs = delayTimeGeneratorArgs
         self.hasDelayTimeGeneratorArgs = delayTimeGeneratorArgs is not MISSING
