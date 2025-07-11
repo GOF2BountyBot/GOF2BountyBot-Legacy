@@ -571,7 +571,7 @@ async def cmd_getGuildStatRaces(message : discord.Message, args : str, isDM : bo
     await message.channel.send(embed=racesEmbed)
 
 bbCommands.register("stat-races", cmd_getGuildStatRaces, 0, allowDM=False, helpSection="stat races",
-                    signatureStr="**stat-race** **<race number>**",
+                    signatureStr="**stat-races**",
                     shortHelp="List currently active stat races in this server.",
                     longHelp="List the currently active stat races in this server. For more information about a particular"
                         + "race, including potential rewards and current standings, use `$stat-race <race number>` using a number"
@@ -633,7 +633,7 @@ async def cmd_getOneGuildStatRace(message : discord.Message, args : str, isDM : 
     await message.channel.send(embed=racesEmbed)
 
 bbCommands.register("stat-race", cmd_getOneGuildStatRace, 0, allowDM=False, helpSection="stat races",
-                    signatureStr="**stat-race**",
+                    signatureStr="**stat-race** **<race number>**",
                     shortHelp="Get the rewards and current standings for a stat race. Give a stat race number from `$stat-races`.",
                     longHelp="Gets the details of an stat race, including the potential rewards, and the current standings."
                     + "\nGive a race number from `$stat-races` (required).")
