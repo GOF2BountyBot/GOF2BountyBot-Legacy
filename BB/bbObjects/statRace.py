@@ -89,7 +89,7 @@ class StatRace(bbSerializable):
         endSaveData: "bbUserDB.bbUserDB", 
         guild: "bbGuild.bbGuild"
     ) -> Dict[int, Union[StatRaceResultsEntry, UnclaimedStatRaceResultsEntry]]:
-        defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict)
+        defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict, id=0)
 
         # get the requested stats and sort users by the stat
         inputDict: Dict[int, Union[int, float]] = {}
