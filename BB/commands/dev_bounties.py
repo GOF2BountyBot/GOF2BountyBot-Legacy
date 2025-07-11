@@ -348,6 +348,8 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
             return
         
         newFaction = args.split("+")[2]
+        if newFaction.lower() == "auto":
+            newFaction = ""
         newBounty = bbBounty.Bounty(
             bountyDB=callingBBGuild.bountiesDB, config=bbBountyConfig.BountyConfig(faction=newFaction))
 
