@@ -114,14 +114,14 @@ class bbClient(ClientBaseClass):
         today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         dirPath = os.path.join(bbConfig.userDBBackupPath, str(today.month))
         fpath = os.path.join(dirPath, today.strftime("%d-%m-%Y.json"))
-        os.makedirs(dirPath)
+        os.makedirs(dirPath, exist_ok=True)
         lib.jsonHandler.saveDB(fpath, bbGlobals.usersDB)
 
     
     async def endStatRaces(self):
         today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
-        for g in bbGlobals.guildsDB or []:
+        for g in bbGlobals.guildsDB.getGuilds() if bbGlobals.guildsDB is not None else []:
             completedRaces: List[int] = []
             for i, race in enumerate(g.statRaces):
                 if race.endDate <= today:
@@ -140,7 +140,7 @@ class bbClient(ClientBaseClass):
     async def announceNewStatRaces(self):
         today = datetime.combine(datetime.now(tz=timezone.utc).date(), time(), timezone.utc)
         g: "bbGuild.bbGuild"
-        for g in bbGlobals.guildsDB or []:
+        for g in bbGlobals.guildsDB.getGuilds() if bbGlobals.guildsDB is not None else []:
             for race in g.statRaces:
                 if race.startDate == today:
                     bbLogger.log(

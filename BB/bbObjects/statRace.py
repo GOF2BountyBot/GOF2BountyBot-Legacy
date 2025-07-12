@@ -41,7 +41,7 @@ class StatRaceReward(bbSerializable):
 
     def toDict(self, **kwargs) -> dict:
         return {
-            "item": json.dumps(self.item),
+            "item": self.item,
             "fixedPlace": self.fixedPlace
         }
 
