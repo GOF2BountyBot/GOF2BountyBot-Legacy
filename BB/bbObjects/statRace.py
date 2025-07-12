@@ -197,7 +197,7 @@ class StatRace(bbSerializable):
         if self.deltaMode:
             boardTitle = f"{boardTitle} Delta"
 
-        boardTitle = f"{self.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(self.startDate, self.endDate)} Stat Race: {boardTitle}"
+        boardTitle = f"{self.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(self.startDate, self.endDate).title()} Stat Race: {boardTitle}"
 
         # build the leaderboard embed
         leaderboardEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, icon=bbData.winIcon, col=bbData.factionColours["neutral"], desc=boardDesc)
