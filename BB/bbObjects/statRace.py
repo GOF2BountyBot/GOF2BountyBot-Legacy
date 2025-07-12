@@ -218,19 +218,20 @@ class StatRace(bbSerializable):
             return leaderboardEmbed
 
         for place, entry in topPlaces:
+            placeStr = f"{entry.place}{lib.stringTyping.getNumExtension(entry.place)} Place" if onlyShowRewards else f"{entry.place}. "
             if isinstance(entry, StatRaceResultsEntry) and not onlyShowRewards:
-                rewardStr = (f"\nYou won a: {entry.reward.name}" if entry.reward is not None else
+                rewardStr = (f"\nYou won a: {f'{entry.reward.emoji.sendable }' if entry.reward.hasEmoji else ''}**{entry.reward.name}**!" if entry.reward is not None else
                     "\nReward creation failed - please contact a developer!" if entry.rewardDeserializationFailed
                     else "")
                 leaderboardEmbed.add_field(
-                    value=f"{entry.place}. <@{entry.userId}>{rewardStr}",
+                    value=placeStr + f"<@{entry.userId}>{rewardStr}",
                     name=("⭐ " if place in doStar else "") + str(entry.statValue) + " " + (boardUnit if entry.statValue == 1 else boardUnits), inline=False)
             else:
-                rewardStr = (f"\n{entry.reward.name}" if entry.reward is not None else
+                rewardStr = (f"\n{f'{entry.reward.emoji.sendable }' if entry.reward.hasEmoji else ''}*{entry.reward.name}*\n{entry.reward.statsStringShort()}" if entry.reward is not None else
                     "\nReward creation failed - please contact a developer!" if entry.rewardDeserializationFailed
                     else "")
                 leaderboardEmbed.add_field(
-                    value=f"{entry.place}. {rewardStr}",
+                    value=placeStr + rewardStr,
                     name="⭐ " if place in doStar else "", inline=False)
             
         return leaderboardEmbed

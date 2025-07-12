@@ -39,17 +39,19 @@ def td_format(fromTime : datetime, toTime: datetime) -> str:
 
     strings=[]
     periods = [
-        ('year',        d.years),
-        ('month',       d.months),
-        ('week',        d.weeks),
-        ('day',         d.days),
-        ('hour',        d.hours),
-        ('minute',      d.minutes),
-        ('second',      d.seconds)
+        ('year',        lambda: d.years,    lambda: relativedelta(years=d.years)),
+        ('month',       lambda: d.months,   lambda: relativedelta(months=d.months)),
+        ('week',        lambda: d.weeks,    lambda: relativedelta(weeks=d.weeks)),
+        ('day',         lambda: d.days,     lambda: relativedelta(days=d.days)),
+        ('hour',        lambda: d.hours,    lambda: relativedelta(hours=d.hours)),
+        ('minute',      lambda: d.minutes,  lambda: relativedelta(minutes=d.minutes)),
+        ('second',      lambda: d.seconds,  lambda: relativedelta(seconds=d.seconds))
     ]
 
-    for period_name, val in periods:
+    for period_name, valFunc, deltaFunc in periods:
+        val = valFunc()
         if val != 0:
+            d -= deltaFunc()
             has_s = 's' if val > 1 else ''
             strings.append("%s %s%s" % (val, period_name, has_s))
 
