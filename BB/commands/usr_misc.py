@@ -623,7 +623,7 @@ async def cmd_getOneGuildStatRace(message : discord.Message, args : str, isDM : 
             trace=traceback.format_exc())
     
     rewards = race.calculateRewards(startSaveData or bbUserDB.bbUserDB(), bbGlobals.usersDB, g)
-    racesEmbed = race.makeLeaderboardEmbed(onlyShowRewards=startSaveData is None, showWinnerStars=False, results=rewards)
+    racesEmbed = race.makeLeaderboardEmbed(onlyShowRewards=startSaveData is None, raceIsOver=False, results=rewards)
     
     racesEmbed.set_thumbnail(url=("https://cdn.discordapp.com/icons/" + str(message.guild.id) + "/" + message.guild.icon + ".png?size=64") if message.guild.icon is not None else "")
 

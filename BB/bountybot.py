@@ -195,7 +195,7 @@ class bbClient(ClientBaseClass):
             return False
         
         try:
-            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=True, showWinnerStars=False, results=results)
+            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=True, raceIsOver=False, results=results)
         except Exception as ex:
             bbLogger.log(
                 bbClient.__name__,
@@ -254,7 +254,7 @@ class bbClient(ClientBaseClass):
             return False
         
         try:
-            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=False, showWinnerStars=True, results=results)
+            leaderboardEmbed = r.makeLeaderboardEmbed(onlyShowRewards=False, raceIsOver=True, results=results)
         except Exception as ex:
             bbLogger.log(
                 bbClient.__name__,
