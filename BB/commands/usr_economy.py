@@ -342,7 +342,7 @@ async def cmd_shop_buy(message : discord.Message, args : str, isDM : bool):
     else:
         raise NotImplementedError("Valid but unsupported item name: " + item)
 
-bbCommands.register("buy", cmd_shop_buy, 0, allowDM=False, helpSection="economy", signatureStr="**buy <item-type> <item-number>** *[keep]*", shortHelp="Buy the requested item from the shop. Item numbers can be seen in the `$COMMANDPREFIX$shop`.\n🌎 This command must be used in your **home server**.", longHelp="Buy the requested item from the shop. Item numbers are shown next to items in the `$COMMANDPREFIX$shop`.\nWhen buying a ship, your old active ship will be sold, and your items will be moved to the new one. Specify `keep` to instead move active ship to your hangar. E.g: `$COMMANDPREFIX$buy ship <ship number> keep`*\n🌎 This command must be used in your **home server**.")
+bbCommands.register("buy", cmd_shop_buy, 0, allowDM=False, helpSection="economy", signatureStr="**buy <item-type> <item-number>** *[keep]*", shortHelp="Buy the requested item from the shop. Item numbers can be seen in the `$COMMANDPREFIX$shop`.\n🌎 This command must be used in your **home server**.", longHelp="Buy the requested item from the shop. Item numbers are shown next to items in the `$COMMANDPREFIX$shop`.\nWhen buying a ship, your old active ship will be sold, and your items will be moved to the new one. Specify `keep` to instead move active ship to your hangar. E.g: `$COMMANDPREFIX$buy ship <ship number> keep`\n🌎 This command must be used in your **home server**.")
 
 
 async def cmd_shop_sell(message : discord.Message, args : str, isDM : bool):
