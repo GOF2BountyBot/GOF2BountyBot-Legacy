@@ -132,7 +132,7 @@ class BountyConfig:
                 self.builtIn = True
             else:
                 if self.faction == "":
-                    possibleFactions = [f for f in bbData.bountyFactions if bountyDB.factionCanMakeBounty(self.faction)]
+                    possibleFactions = [f for f in bbData.bountyFactions if bountyDB.factionCanMakeBounty(f)]
                     if possibleFactions:
                         self.faction = random.choice(possibleFactions)
                     elif doDBCheck:
@@ -149,7 +149,7 @@ class BountyConfig:
 
                 if self.name == "":
                     self.builtIn = True
-                    possibleNames = [n for n in bbData.bountyNames[self.faction] if not bountyDB.bountyNameExists(self.name)]
+                    possibleNames = [n for n in bbData.bountyNames[self.faction] if not bountyDB.bountyNameExists(n)]
                     if possibleNames:
                         self.name = random.choice(possibleNames)
                     elif doDBCheck:
