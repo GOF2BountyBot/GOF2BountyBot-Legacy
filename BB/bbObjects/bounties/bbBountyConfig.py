@@ -132,9 +132,14 @@ class BountyConfig:
                 self.builtIn = True
             else:
                 if self.faction == "":
-                    self.faction = random.choice(bbData.bountyFactions)
-                    while doDBCheck and not bountyDB.factionCanMakeBounty(self.faction):
+                    possibleFactions = [f for f in bbData.bountyFactions if bountyDB.factionCanMakeBounty(self.faction)]
+                    if possibleFactions:
+                        self.faction = random.choice(possibleFactions)
+                    elif doDBCheck:
+                        raise OverflowError("BOUCONF_CONS_DBFULL: Attempted to generate new bounty config when no slots are available in the guild")
+                    else:
                         self.faction = random.choice(bbData.bountyFactions)
+                    
 
                 else:
                     if self.faction not in bbData.bountyFactions:
@@ -144,9 +149,14 @@ class BountyConfig:
 
                 if self.name == "":
                     self.builtIn = True
-                    self.name = random.choice(bbData.bountyNames[self.faction])
-                    while doDBCheck and bountyDB.bountyNameExists(self.name):
+                    possibleNames = [n for n in bbData.bountyNames[self.faction] if not bountyDB.bountyNameExists(self.name)]
+                    if possibleNames:
+                        self.name = random.choice(possibleNames)
+                    elif doDBCheck:
+                        raise IndexError("BOUCONF_CONS_NOFREENAME: Bounty config generation failed to find a free criminal for faction: '" + self.faction + "'")
+                    else:
                         self.name = random.choice(bbData.bountyNames[self.faction])
+                            
                 else:
                     if doDBCheck and bountyDB.bountyNameExists(self.name):
                         raise KeyError("BountyConfig: attempted to create config for pre-existing bounty: " + self.name)
@@ -160,14 +170,22 @@ class BountyConfig:
         
         if self.route == []:
             if self.start == "":
-                self.start = random.choice(list(bbData.builtInSystemObjs.keys()))
-                while self.start == self.end or not bbData.builtInSystemObjs[self.start].hasJumpGate():
+                possibleStarts = [s.name for s in bbData.builtInSystemObjs.values() if s.name != self.end and s.hasJumpGate()]
+                if possibleStarts:
+                    self.start = random.choice(possibleStarts)
+                elif doDBCheck:
+                    raise IndexError("BOUCONF_CONS_NOFREESTART: Bounty config generation failed to find a free start system with a jump gate. End system: '" + self.end + "'")
+                else:
                     self.start = random.choice(list(bbData.builtInSystemObjs.keys()))
             elif self.start not in bbData.builtInSystemObjs:
                 raise KeyError("BountyConfig: Invalid start system requested '" + self.start + "'")
             if self.end == "":
-                self.end = random.choice(list(bbData.builtInSystemObjs.keys()))
-                while self.start == self.end or not bbData.builtInSystemObjs[self.end].hasJumpGate():
+                possibleEnds = [s.name for s in bbData.builtInSystemObjs.values() if s.name != self.start and s.hasJumpGate()]
+                if possibleEnds:
+                    self.end = random.choice(possibleEnds)
+                elif doDBCheck:
+                    raise IndexError("BOUCONF_CONS_NOFREESTART: Bounty config generation failed to find a free end system with a jump gate. Start system: '" + self.start + "'")
+                else:
                     self.end = random.choice(list(bbData.builtInSystemObjs.keys()))
             elif self.end not in bbData.builtInSystemObjs:
                 raise KeyError("BountyConfig: Invalid end system requested '" + self.end + "'")
