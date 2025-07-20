@@ -674,6 +674,10 @@ class bbUser(bbSerializable.bbSerializable):
             return self.inactiveTurrets
         elif isinstance(item, bbToolItem.bbToolItem):
             return self.inactiveTools
+        elif isinstance(item, bbModule.bbModule):
+            return self.inactiveModules
+        else:
+            raise ValueError(f"No inventory for item of type {type(item).__name__}")
 
 
     def __str__(self) -> str:
