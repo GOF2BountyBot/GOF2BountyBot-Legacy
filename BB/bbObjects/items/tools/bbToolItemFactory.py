@@ -1,4 +1,4 @@
-from . import bbShipUpgradeTool, bbToolItem, bbShipSkinTool, bbCrate
+from . import bbShipUpgradeTool, bbToolItem, bbShipSkinTool, bbCrate, bbCreditsTool
 from .. import bbShip, bbWeapon, bbModuleFactory, bbTurret
 from .... import lib
 
@@ -41,7 +41,8 @@ def fromDict(toolDict : dict) -> bbToolItem.bbToolItem:
 
     toolTypeConstructors = {"bbShipSkinTool": bbShipSkinTool.bbShipSkinTool.fromDict,
                             "bbShipUpgradeTool": bbShipUpgradeTool.bbShipUpgradeTool.fromDict,
-                        "bbCrate": crateFromDict}
+                            "bbCreditsTool": bbCreditsTool.bbCreditsTool.fromDict,
+                            "bbCrate": crateFromDict}
     
     if "type" not in toolDict:
         raise NameError("Required dictionary attribute missing: 'type'")
