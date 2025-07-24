@@ -57,7 +57,7 @@ class StatRace(bbSerializable):
     rewards: List[StatRaceReward]
     startDate: datetime
     endDate: datetime
-    deltaMode: bool
+    scoreMode: str
     orderAsc: bool
     statName: str
 
@@ -66,7 +66,7 @@ class StatRace(bbSerializable):
             "rewards": [r.toDict() for r in self.rewards],
             "startDate": self.startDate.timestamp(),
             "endDate": self.endDate.timestamp(),
-            "deltaMode": self.deltaMode,
+            "scoreMode": self.scoreMode,
             "orderAsc": self.orderAsc,
             "statName": self.statName
         }
@@ -78,7 +78,7 @@ class StatRace(bbSerializable):
             rewards=[StatRaceReward.fromDict(r) for r in data["rewards"]],
             startDate=datetime.fromtimestamp(data["startDate"], timezone.utc),
             endDate=datetime.fromtimestamp(data["endDate"], timezone.utc),
-            deltaMode=data["deltaMode"],
+            scoreMode=data["scoreMode"],
             orderAsc=data["orderAsc"],
             statName=data["statName"])
     
@@ -95,12 +95,16 @@ class StatRace(bbSerializable):
         inputDict: Dict[int, Union[int, float]] = {}
         user: bbUser.bbUser
         for user in endSaveData.getUsers():
-            newValue = user.getStatByName(self.statName)
-            if self.deltaMode:
-                oldValue = startSaveData.getUser(user.id).getStatByName(self.statName) if startSaveData.userIDExists(user.id) else defaultUser.getStatByName(self.statName)
-                inputDict[user.id] = newValue - oldValue
+            if self.scoreMode == "periodonly":
+                reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
+                inputDict[user.id] = user.getPeriodOnlyStatByName(self.statName, reference)
+            elif self.scoreMode == "delta":
+                reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
+                inputDict[user.id] = user.getDeltaStatByName(self.statName, reference)
+            elif self.scoreMode == "lifetime":
+                inputDict[user.id] = user.getStatByName(self.statName)
             else:
-                inputDict[user.id] = newValue
+                raise ValueError(f"invalid scoreMode: {self.scoreMode}")
 
         sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not self.orderAsc)
         results: Dict[int, Union[StatRaceResultsEntry, UnclaimedStatRaceResultsEntry]] = {}
@@ -115,7 +119,7 @@ class StatRace(bbSerializable):
                     StatRace.makeLeaderboardEmbed.__name__,
                     f"Failed to deserialize reward with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {guild.id}\n"
-                    + f"Race: {debugFmtDt(self.startDate)} - {debugFmtDt(self.endDate)} {self.statName} {'delta' if self.deltaMode else 'non-delta'} {'asc' if self.orderAsc else 'desc'}\n"
+                    + f"Race: {debugFmtDt(self.startDate)} - {debugFmtDt(self.endDate)} {self.statName} {self.scoreMode} {'asc' if self.orderAsc else 'desc'}\n"
                     + f"Serialized item: {json.dumps(reward.item)}",
                     trace=traceback.format_exc())
                 item = None
@@ -153,6 +157,14 @@ class StatRace(bbSerializable):
             return "total value"
         else:
             raise ValueError(f"unrecognised stat: {self.statName}") 
+        
+
+    def getFormattedScoreModeExt(self) -> str:
+        if self.scoreMode == "increase":
+            return "increase"
+        if self.scoreMode == "periodonly":
+            return "during the race"
+        return ""
     
 
     def makeLeaderboardEmbed(
@@ -177,7 +189,7 @@ class StatRace(bbSerializable):
             boardUnits = "Bounties"
             boardDesc = "*Total number of bounties won"
         elif self.statName == "lifetimeCredits":
-            boardTitle = "Lifetime Credits Earned"
+            boardTitle = "Credits Earned From Bounties"
             boardUnit = "Credit"
             boardUnits = "Credits"
             boardDesc = "*Total credits earned from bounties"
@@ -194,8 +206,10 @@ class StatRace(bbSerializable):
         boardDesc += ".*"
         if self.orderAsc:
             boardTitle = f"Lowest {boardTitle}"
-        if self.deltaMode:
+        if self.scoreMode == "delta":
             boardTitle = f"{boardTitle} Delta"
+        elif self.scoreMode == "periodonly":
+            boardTitle = f"{boardTitle} During the Race"
 
         boardTitle = f"{self.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(self.startDate, self.endDate).title()} Stat Race: {boardTitle}"
 
@@ -243,7 +257,7 @@ class StatRace(bbSerializable):
     
 
     def getStartingSaveData(self) -> Optional["bbUserDB.bbUserDB"]:
-        if not self.deltaMode:
+        if self.scoreMode == "lifetime":
             return bbUserDB.bbUserDB()
         
         dirPath = os.path.join(bbConfig.userDBBackupPath, str(self.startDate.month))
@@ -273,6 +287,6 @@ class StatRace(bbSerializable):
                     StatRace.distributeRewards.__name__,
                     f"Failed to give reward to user {userId} with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {guild.id}\n"
-                    + f"Race: {debugFmtDt(self.startDate)} - {debugFmtDt(self.endDate)} {self.statName} {'delta' if self.deltaMode else 'non-delta'} {'asc' if self.orderAsc else 'desc'}\n"
+                    + f"Race: {debugFmtDt(self.startDate)} - {debugFmtDt(self.endDate)} {self.statName} {self.scoreMode} {'asc' if self.orderAsc else 'desc'}\n"
                     + f"Serialized item: {json.dumps(item.toDict())}",
                     trace=traceback.format_exc())

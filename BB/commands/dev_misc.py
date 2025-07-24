@@ -519,8 +519,11 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
         await message.channel.send(":x: startInDays must be at least 1")
         return
 
-    deltaModeMatch = re.match(".*delta=(false)|(true)", args, re.IGNORECASE)
-    deltaMode = (not deltaModeMatch) or deltaModeMatch.group(1).lower() == "true"
+    scoreModeMatch = re.match(".*scoremode=(\\[a-z]+)", args, re.IGNORECASE)
+    scoreMode = scoreModeMatch.group(1).lower() if scoreModeMatch else "lifetime"
+    if scoreMode not in ("lifetime", "delta", "periodonly"):
+        await message.channel.send(":x: invalid score mode")
+        return
 
     orderAscMatch = re.match(".*orderAsc=(false)|(true)", args, re.IGNORECASE)
     orderAsc = True if orderAscMatch and orderAscMatch.group(1).lower() == "true" else False
@@ -616,7 +619,7 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
         await message.channel.send(":x: Unrecognised guild")
         return
     
-    r = StatRace(rewards, raceStart, raceEnd, deltaMode, orderAsc, statName)
+    r = StatRace(rewards, raceStart, raceEnd, scoreMode, orderAsc, statName)
     hostGuild: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(guildId)
     hostGuild.statRaces.append(r)
 
@@ -633,11 +636,12 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
 
 bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, helpSection="stat races", forceKeepArgsCasing=True,
                     longHelp="Make a leaderboard over the given period for the given stat, and award the given prizes" \
-                        + " to the top scorers. Give the kwargs all on the first line, and then after a new line, the rewards as json."
+                        + " to the top scorers. Give the kwargs all on the first line, and then after a new line, the rewards as json.\n"
+                        + "`{\"place-1\": item-1, \"place-2\": item-2}` where `place` is a winner place from 1 to 10, and `item` is a serialized bbItem.\n"
                         + "kwargs:\n"
                         + "- `guildId` (int)\n"
                         + "- `statname` (str, currently credits, lifetimeCredits, systemsChecked, bountyWins, value, incorrectChecks, checkAccuracy)\n"
-                        + "- `delta` (bool, default false)\n"
+                        + "- `scoreMode` (str, `lifetime`, `delta`, or `periodOnly`, default `lifetime`)\n"
                         + "- `orderAsc` (bool, default false)\n"
                         + "- `startInDays` (int, default 1)\n"
                         + "- `months` (int)\n"
@@ -662,7 +666,7 @@ async def dev_cmd_getGuildStatRaces(message : discord.Message, args : str, isDM 
     for i, r in enumerate(g.statRaces):
         racesEmbed.add_field(
             name=f"{i}", 
-            value=f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}\n"
+            value=f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}\n"
                 + f"rewards for places: {', '.join(str(place.fixedPlace) + ' ' for place in r.rewards)}")
     
     await message.channel.send(embed=racesEmbed)
@@ -692,6 +696,6 @@ async def dev_cmd_cancelGuildStatRace(message : discord.Message, args : str, isD
     r = g.statRaces.pop(raceId)
     
     await message.channel.send(f"{bbConfig.defaultSubmitEmoji.sendable} This race has been cancelled. No announcement has been made:\n"
-                               + f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+                               + f"{r.startDate.timestamp()} - {r.endDate.timestamp()} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}")
 
 bbCommands.register("cancel-stat-race", dev_cmd_cancelGuildStatRace, 2, allowDM=True, helpSection="stat races")

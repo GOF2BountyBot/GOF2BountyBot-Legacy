@@ -487,6 +487,51 @@ class bbUser(bbSerializable.bbSerializable):
             raise ValueError("Unknown stat name: " + str(stat))
 
 
+    def getPeriodOnlyStatByName(self, stat: str, reference: "bbUser") -> Union[int, float]:
+        if stat == "id":
+            return self.id
+        elif stat == "credits":
+            return self.credits - reference.getStatByName("credits")
+        elif stat == "lifetimeCredits":
+            return self.lifetimeCredits - reference.getStatByName("lifetimeCredits")
+        elif stat == "bountyCooldownEnd":
+            return self.bountyCooldownEnd - reference.getStatByName("bountyCooldownEnd")
+        elif stat == "systemsChecked":
+            return self.systemsChecked - reference.getStatByName("systemsChecked")
+        elif stat == "incorrectChecks":
+            return self.systemsChecked - self.bountyWins - reference.getStatByName("incorrectChecks")
+        elif stat == "checkAccuracy":
+            if self.bountyWins <= reference.bountyWins or self.systemsChecked <= reference.systemsChecked:
+                return 0
+            return bbConfig.truncToRes((self.bountyWins - reference.bountyWins) / (self.systemsChecked - reference.systemsChecked) * 100)
+        elif stat == "bountyWins":
+            return self.bountyWins - reference.getStatByName("bountyWins")
+        elif stat == "value":
+            modulesValue = 0
+            for module in self.inactiveModules.keys:
+                modulesValue += self.inactiveModules.items[module].count * module.getValue()
+            turretsValue = 0
+            for turret in self.inactiveTurrets.keys:
+                turretsValue += self.inactiveTurrets.items[turret].count * turret.getValue()
+            weaponsValue = 0
+            for weapon in self.inactiveWeapons.keys:
+                weaponsValue += self.inactiveWeapons.items[weapon].count * weapon.getValue()
+            shipsValue = 0
+            for ship in self.inactiveShips.keys:
+                shipsValue += self.inactiveShips.items[ship].count * ship.getValue()
+            toolsValue = 0
+            for tool in self.inactiveTools.keys:
+                toolsValue += self.inactiveTools.items[tool].count * tool.getValue()
+
+            return modulesValue + turretsValue + weaponsValue + shipsValue + self.activeShip.getValue() + self.credits - reference.getStatByName("value")
+        else:
+            raise ValueError("Unknown stat name: " + str(stat))
+
+
+    def getDeltaStatByName(self, stat: str, reference: "bbUser") -> Union[int, float]:
+        return self.getStatByName(stat) - reference.getStatByName(stat)
+
+
     def getInactivesByName(self, item : str) -> bbInventory:
         """Get the all of the user's inactive (hangar) items of the named type.
         The given bbInventory is mutable, and can alter the contents of the user's inventory.

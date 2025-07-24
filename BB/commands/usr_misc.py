@@ -562,7 +562,7 @@ async def cmd_getGuildStatRaces(message : discord.Message, args : str, isDM : bo
         racesEmbed.add_field(
             name=f"Race #{i + 1}: {r.getFormattedStatName()}", 
             value=f"<t:{int(r.startDate.timestamp())}:F> - <t:{int(r.endDate.timestamp())}:F> {r.statName}\n"
-                + f"{'Lowest ' if r.orderAsc else ''}{r.getFormattedStatName()} {'increase' if r.deltaMode else ''}\n"
+                + f"{'Lowest ' if r.orderAsc else ''}{r.getFormattedStatName()} {r.getFormattedScoreModeExt()}\n"
                 + f"`$stat-race {i+1}`")
     
     if len(g.statRaces) > 5:
@@ -619,7 +619,7 @@ async def cmd_getOneGuildStatRace(message : discord.Message, args : str, isDM : 
             "cmd_getOneGuildStatRace",
             f"Failed to get starting save data for stat race\n"
             + f"Guild: {args}\n"
-            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}",
+            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {race.scoreMode} {'asc' if race.orderAsc else 'desc'}",
             trace=traceback.format_exc())
     
     rewards = race.calculateRewards(startSaveData or bbUserDB.bbUserDB(), bbGlobals.usersDB, g)
