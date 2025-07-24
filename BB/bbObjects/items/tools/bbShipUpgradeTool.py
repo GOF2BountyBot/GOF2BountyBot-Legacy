@@ -18,7 +18,7 @@ class bbShipUpgradeTool(bbToolItem.bbToolItem):
     This tool is single use. If a calling user is given, the tool is removed from that user's inventory after use.
     """
     def __init__(self, upgrade : bbShipUpgrade.bbShipUpgrade, value : int = 0, wiki : str = "", icon : str = bbConfig.defaultShipUpgradeToolIcon,
-            emoji : lib.emojis.dumbEmoji = None, techLevel : int = -1, builtIn : bool = False):
+            emoji : lib.emojis.dumbEmoji = None, techLevel : int = -1, builtIn : bool = False, autoUse : bool = False):
         """
         :param bbShipUpgrade upgrade: The upgrade that this tool applies.
         :param int value: The number of credits that this item can be bought/sold for at a shop. (Default 0)
@@ -30,7 +30,7 @@ class bbShipUpgradeTool(bbToolItem.bbToolItem):
         """
         if emoji is None:
             emoji = bbConfig.defaultShipUpgradeToolEmoji
-        super().__init__(f"Ship upgrade: {upgrade.name}", [], value=value, wiki=wiki if wiki else upgrade.wiki if upgrade.hasWiki else "", icon=icon, emoji=emoji, techLevel=techLevel if techLevel > -1 else upgrade.techLevel, builtIn=builtIn)
+        super().__init__(f"Ship upgrade: {upgrade.name}", [], value=value, wiki=wiki if wiki else upgrade.wiki if upgrade.hasWiki else "", icon=icon, emoji=emoji, techLevel=techLevel if techLevel > -1 else upgrade.techLevel, builtIn=builtIn, autoUse=autoUse)
         self.upgrade = upgrade
 
     
@@ -139,4 +139,4 @@ class bbShipUpgradeTool(bbToolItem.bbToolItem):
         upgrade = bbData.builtInUpgradeObjs[toolDict["name"]] if toolDict["builtIn"] else bbShipUpgrade.bbShipUpgrade.fromDict(toolDict["upgrade"])
         if toolDict["builtIn"]:
             return bbData.builtInToolObjs[f"Ship Upgrade: {upgrade.name}"]
-        return bbShipUpgradeTool(upgrade, value=0, builtIn=False)
+        return bbShipUpgradeTool(upgrade, value=0, builtIn=False, autoUse=toolDict.get("autoUse", False))

@@ -13,11 +13,11 @@ from ....reactionMenus.ConfirmationReactionMenu import InlineConfirmationMenu
 class bbCrate(bbToolItem.bbToolItem):
     def __init__(self, itemPool, name : str = "", value : int = 0, wiki : str = "",
             manufacturer : str = "", icon : str = "", emoji : lib.emojis.dumbEmoji = lib.emojis.dumbEmoji.EMPTY,
-            techLevel : int = -1, builtIn : bool = False):
+            techLevel : int = -1, builtIn : bool = False, autoUse : bool = false):
 
         super().__init__(name, [], value=value, wiki=wiki,
             manufacturer=manufacturer, icon=icon, emoji=emoji,
-            techLevel=techLevel, builtIn=builtIn)
+            techLevel=techLevel, builtIn=builtIn, autoUse=autoUse)
         
         for item in itemPool:
             if not bbItem.isSpawnableItemInstance(item):
@@ -128,4 +128,5 @@ class bbCrate(bbToolItem.bbToolItem):
             icon=crateDict["icon"] if "icon" in crateDict else "",
             emoji=lib.emojis.dumbEmoji.fromDict(crateDict["emoji"]) if "emoji" in crateDict else lib.emojis.dumbEmoji.EMPTY,
             techLevel=crateDict["techLevel"] if "techLevel" in crateDict else -1,
-            builtIn=crateDict["builtIn"] if "builtIn" in crateDict else False)
+            builtIn=crateDict["builtIn"] if "builtIn" in crateDict else False,
+            autoUse=crateDict.get("autoUse", False))

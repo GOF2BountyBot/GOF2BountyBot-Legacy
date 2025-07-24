@@ -19,7 +19,7 @@ class bbShipSkinTool(bbToolItem.bbToolItem):
     This tool is single use. If a calling user is given, the tool is removed from that user's inventory after use.
     """
     def __init__(self, shipSkin : bbShipSkin, value : int = 0, wiki : str = "", icon : str = bbConfig.defaultShipSkinToolIcon,
-            emoji : lib.emojis.dumbEmoji = None, techLevel : int = -1, builtIn : bool = False):
+            emoji : lib.emojis.dumbEmoji = None, techLevel : int = -1, builtIn : bool = False, autoUse : bool = False):
         """
         :param bbShipSkin shipSkin: The skin that this tool applies.
         :param int value: The number of credits that this item can be bought/sold for at a shop. (Default 0)
@@ -31,7 +31,7 @@ class bbShipSkinTool(bbToolItem.bbToolItem):
         """
         if emoji is None:
             emoji = bbConfig.defaultShipSkinToolEmoji
-        super().__init__(lib.stringTyping.shipSkinNameToToolName(shipSkin.name), [shipSkin.name, "Skin: " + shipSkin.name, "Ship Skin " + shipSkin.name + "Skin " + shipSkin.name], value=value, wiki=wiki if wiki else shipSkin.wiki if shipSkin.hasWiki else "", manufacturer=shipSkin.designer, icon=icon, emoji=emoji, techLevel=techLevel if techLevel > -1 else shipSkin.averageTL, builtIn=builtIn)
+        super().__init__(lib.stringTyping.shipSkinNameToToolName(shipSkin.name), [shipSkin.name, "Skin: " + shipSkin.name, "Ship Skin " + shipSkin.name + "Skin " + shipSkin.name], value=value, wiki=wiki if wiki else shipSkin.wiki if shipSkin.hasWiki else "", manufacturer=shipSkin.designer, icon=icon, emoji=emoji, techLevel=techLevel if techLevel > -1 else shipSkin.averageTL, builtIn=builtIn, autoUse=autoUse)
         self.shipSkin = shipSkin
 
     
@@ -153,4 +153,4 @@ class bbShipSkinTool(bbToolItem.bbToolItem):
         shipSkin = bbData.builtInShipSkins[toolDict["name"]] if toolDict["builtIn"] else bbShipSkin.bbShipSkin.fromDict(toolDict["skin"])
         if toolDict["builtIn"]:
             return bbData.builtInToolObjs[lib.stringTyping.shipSkinNameToToolName(shipSkin.name)]
-        return bbShipSkinTool(shipSkin, value=bbConfig.shipSkinValueForTL(shipSkin.averageTL), builtIn=False)
+        return bbShipSkinTool(shipSkin, value=bbConfig.shipSkinValueForTL(shipSkin.averageTL), builtIn=False, autoUse=toolDict.get("autoUse", False))
