@@ -11,7 +11,7 @@ from ..reactionMenus.ConfirmationReactionMenu import InlineConfirmationMenu
 from ..bbConfig import bbConfig
 from ..bbObjects.items import bbItem
 from ..bbObjects.statRace import StatRace, StatRaceReward
-from ..bbObjects import bbGuild
+from ..bbObjects import bbGuild, bbUser
 
 from . import util_help
 
@@ -506,6 +506,11 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
         return
     
     statName = statNameMatch.group(1)
+    try:
+        bbUser.bbUser(0).getStatByName(statName)
+    except ValueError:
+        await message.channel.send(":x: Unknown stat name")
+        return
 
     startInDaysMatch = re.match(".*startInDays=(\\d+)", args, re.IGNORECASE)
     startInDays = int(startInDaysMatch.group(1)) if startInDaysMatch else 1
@@ -631,7 +636,7 @@ bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, he
                         + " to the top scorers. Give the kwargs all on the first line, and then after a new line, the rewards as json."
                         + "kwargs:\n"
                         + "- `guildId` (int)\n"
-                        + "- `statname` (str, currently credits, lifetimeCredits, systemsChecked, bountyWins, value)\n"
+                        + "- `statname` (str, currently credits, lifetimeCredits, systemsChecked, bountyWins, value, incorrectChecks, checkAccuracy)\n"
                         + "- `delta` (bool, default false)\n"
                         + "- `orderAsc` (bool, default false)\n"
                         + "- `startInDays` (int, default 1)\n"

@@ -459,6 +459,10 @@ class bbUser(bbSerializable.bbSerializable):
             return self.bountyCooldownEnd
         elif stat == "systemsChecked":
             return self.systemsChecked
+        elif stat == "incorrectChecks":
+            return self.systemsChecked - self.bountyWins
+        elif stat == "checkAccuracy":
+            return bbConfig.truncToRes(self.bountyWins / self.systemsChecked * 100)
         elif stat == "bountyWins":
             return self.bountyWins
         elif stat == "value":
