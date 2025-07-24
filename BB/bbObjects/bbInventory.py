@@ -1,6 +1,10 @@
 from __future__ import annotations
 from . import bbInventoryListing
 from ..baseClasses import bbSerializable
+from .items.tools import bbToolItem
+from . import bbUser
+
+import asyncio
 
 class bbInventory(bbSerializable.bbSerializable):
     """A database of bbInventoryListings.
@@ -262,3 +266,18 @@ class TypeRestrictedInventory(bbInventory):
         if not isinstance(newListing.item, self.itemType):
             raise TypeError("Given item does not match this inventory's item type restriction. Expected '" + self.itemType.__name__ + "', given '" + type(newListing.item).__name__ + "'")
         super()._addListing(newListing)
+
+
+class ToolInventory(TypeRestrictedInventory):
+    def __init__(self, owningUser: "bbUser.bbUser"):
+        super().__init__(bbToolItem.bbToolItem)
+        self.owningUser = owningUser
+
+    
+    def addItem(self, item: object, quantity: int = 1):
+        if not isinstance(item, bbToolItem.bbToolItem):
+            raise TypeError("Given item does not match this inventory's item type restriction. Expected '" + bbToolItem.bbToolItem.__name__ + "', given '" + type(item).__name__ + "'")
+        super().addItem(item, quantity=quantity)
+        if item.autoUse:
+            # TODO: schedule this with logging with lib.discordUtil
+            asyncio.create_task(item.use(callingBBUser=self.owningUser))

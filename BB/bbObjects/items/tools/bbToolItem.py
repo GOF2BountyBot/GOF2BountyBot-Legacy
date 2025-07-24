@@ -11,7 +11,7 @@ class bbToolItem(bbItem.bbItem):
 
     def __init__(self, name : str, aliases : List[str], value : int = 0, wiki : str = "",
             manufacturer : str = "", icon : str = "", emoji : lib.emojis.dumbEmoji = lib.emojis.dumbEmoji.EMPTY,
-            techLevel : int = -1, builtIn : bool = False):
+            techLevel : int = -1, builtIn : bool = False, autoUse: bool = False):
         """
         :param str name: The name of the item. Must be unique. (a model number is a good starting point)
         :param list[str] aliases: A list of alternative names this item may be referred to by.
@@ -24,7 +24,8 @@ class bbToolItem(bbItem.bbItem):
         :param bool builtIn: Whether this is a BountyBot standard item (loaded in from bbData) or a custom spawned item (Default False)
         """
         super().__init__(name, aliases, value=value, wiki=wiki, manufacturer=manufacturer, icon=icon, emoji=emoji, techLevel=techLevel, builtIn=builtIn)
-        
+        self.autoUse = autoUse
+
 
     @abstractmethod
     async def use(self, *args, **kwargs):
@@ -77,5 +78,6 @@ class bbToolItem(bbItem.bbItem):
         """
         data = super().toDict(**kwargs)
         data["itemType"] = "bbToolItem"
+        data["autoUse"] = self.autoUse
         return data
     

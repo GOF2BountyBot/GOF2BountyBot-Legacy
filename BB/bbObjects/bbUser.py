@@ -1,6 +1,6 @@
 # Typing imports
 from __future__ import annotations
-from typing import Union, List, TYPE_CHECKING
+from typing import Optional, Union, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from .battles import DuelRequest
 
@@ -8,7 +8,7 @@ from .items import bbShip, bbModuleFactory, bbWeapon, bbTurret
 from .items.tools import bbToolItemFactory, bbToolItem
 from .items.modules import bbModule
 from ..bbConfig import bbConfig
-from . import bbInventory
+from . import bbInventory, bbInventoryListing
 from ..userAlerts import UserAlerts
 from datetime import date, datetime, timezone
 from discord import Guild, Member
@@ -92,7 +92,7 @@ class bbUser(bbSerializable.bbSerializable):
                     inactiveModules : bbInventory.bbInventory = bbInventory.TypeRestrictedInventory(bbModule.bbModule),
                     inactiveWeapons : bbInventory.bbInventory = bbInventory.TypeRestrictedInventory(bbWeapon.bbWeapon),
                     inactiveTurrets : bbInventory.bbInventory = bbInventory.TypeRestrictedInventory(bbTurret.bbTurret),
-                    inactiveTools : bbInventory.bbInventory = bbInventory.TypeRestrictedInventory(bbToolItem.bbToolItem),
+                    inactiveTools : Optional[bbInventory.bbInventory] = None,
                     lastSeenGuildId : int = -1, duelWins : int = 0, duelLosses : int = 0, duelCreditsWins : int = 0,
                     duelCreditsLosses : int = 0, alerts : dict[Union[type, str], Union[UserAlerts.UABase or bool]] = {},
                     bountyWinsToday : int = 0, dailyBountyWinsReset : datetime = None, pollOwned : bool = False,
@@ -172,7 +172,11 @@ class bbUser(bbSerializable.bbSerializable):
         self.inactiveModules = inactiveModules
         self.inactiveWeapons = inactiveWeapons
         self.inactiveTurrets = inactiveTurrets
-        self.inactiveTools = inactiveTools
+        self.inactiveTools = bbInventory.ToolInventory(self)
+        if inactiveTools is not None:
+            listing: bbInventoryListing.bbInventoryListing
+            for listing in inactiveTools.items.values():
+                self.inactiveTools._addListing(listing)
 
         self.lastSeenGuildId = lastSeenGuildId
         self.hasLastSeenGuildId = lastSeenGuildId != -1
@@ -772,11 +776,13 @@ class bbUser(bbSerializable.bbSerializable):
         if "inactiveTurrets" in userDict:
             for turretListingDict in userDict["inactiveTurrets"]:
                 inactiveTurrets.addItem(bbTurret.bbTurret.fromDict(turretListingDict["item"]), quantity=turretListingDict["count"])
-
-        inactiveTools = bbInventory.TypeRestrictedInventory(bbToolItem.bbToolItem)
+        
         if "inactiveTools" in userDict:
+            inactiveTools = bbInventory.TypeRestrictedInventory(bbToolItem.bbToolItem)
             for toolListingDict in userDict["inactiveTools"]:
                 inactiveTools.addItem(bbToolItemFactory.fromDict(toolListingDict["item"]), quantity=toolListingDict["count"])
+        else:
+            inactiveTools = None
 
         return bbUser(id, credits=userDict["credits"], lifetimeCredits=userDict["lifetimeCredits"],
                         bountyCooldownEnd=userDict["bountyCooldownEnd"], systemsChecked=userDict["systemsChecked"],
