@@ -13,7 +13,7 @@ from ....reactionMenus.ConfirmationReactionMenu import InlineConfirmationMenu
 class bbCrate(bbToolItem.bbToolItem):
     def __init__(self, itemPool, name : str = "", value : int = 0, wiki : str = "",
             manufacturer : str = "", icon : str = "", emoji : lib.emojis.dumbEmoji = lib.emojis.dumbEmoji.EMPTY,
-            techLevel : int = -1, builtIn : bool = False, autoUse : bool = false):
+            techLevel : int = -1, builtIn : bool = False, autoUse : bool = False):
 
         super().__init__(name, [], value=value, wiki=wiki,
             manufacturer=manufacturer, icon=icon, emoji=emoji,
