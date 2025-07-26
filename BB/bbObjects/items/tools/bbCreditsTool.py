@@ -97,7 +97,7 @@ class bbCreditsTool(bbToolItem.bbToolItem):
             toolDict.get("wiki", ""),
             toolDict.get("manufacturer", ""),
             toolDict.get("icon", ""),
-            toolDict.get("emoji", lib.emojis.dumbEmoji.EMPTY),
+            lib.emojis.dumbEmoji.fromDict(toolDict["emoji"]) if "emoji" in toolDict else lib.emojis.dumbEmoji.EMPTY,
             toolDict.get("techLevel", -1),
             toolDict.get("builtIn", False),
             toolDict.get("autoUse", False))
