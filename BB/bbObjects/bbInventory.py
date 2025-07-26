@@ -1,8 +1,11 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from . import bbInventoryListing
 from ..baseClasses import bbSerializable
 from .items.tools import bbToolItem
-from . import bbUser
+
+if TYPE_CHECKING:
+    from . import bbUser
 
 import asyncio
 
