@@ -1,0 +1,94 @@
+# GitHub's default python testing workflow.
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: testing
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install flake8 pytest pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --statistics
+    - name: Run tests
+      run: |
+        # run tests and generate coverage
+        pytest --cov=. --junitxml=pytest.xml --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
+    - name: Pytest coverage comment
+      id: coverageComment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: ./pytest-coverage.txt
+        junitxml-path: ./pytest.xml
+    - name: Run pyright
+      uses: jakebailey/pyright-action@v1.3.0
+    - name: Check for test failures/low coverage
+      run: |
+        # Reject if there were any failures or errors, or coverage below 80%
+        covperc=${{ steps.coverageComment.outputs.coverage }}
+        # Strip % character off the end of code coverage (no need to convert to int in bash)
+        if [[ ${covperc%\%*} < 80 ]] ; then
+          echo "::error title=Test coverage too low::Tests achieve ${{ steps.coverageComment.outputs.coverage }} coverage, but at least 80% is required"
+          exit 1
+        fi
+        if [[ ${{ steps.coverageComment.outputs.errors }} > 0 ]] ; then
+          echo "::error title=Test errors::Tests had ${{ steps.coverageComment.outputs.errors }} errors, but must have 0 to pass"
+          exit 1
+        fi
+        if [[ ${{ steps.coverageComment.outputs.failures }} > 0 ]] ; then
+          echo "::error title=Test failures::Tests had ${{ steps.coverageComment.outputs.failures }} failures, but must have 0 to pass"
+          exit 1
+        fi
+
+        # Extract branch name
+        # var REF = 'refs/pull/27/merge.json';
+        REF=${{ github.ref }}
+        # console.log('github.ref: ' + REF);
+        echo "github.ref: $REF"
+        # var PATHS = REF.split('/');
+        IFS='/' read -ra PATHS <<< "$REF"
+        # var BRANCH_NAME = PATHS[1] + PATHS[2];
+        BRANCH_NAME="${PATHS[1]}_${PATHS[2]}"
+        # console.log(BRANCH_NAME); // 'pull_27'
+        echo $BRANCH_NAME
+        # process.env.BRANCH = 'pull_27';
+        echo "BRANCH=$(echo ${BRANCH_NAME})" >> $GITHUB_ENV
+    - name: Create readme test coverage Badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 8a5430ecc0f87b003367174b1521f3bb
+        filename: AEPi__${{ env.BRANCH }}.json
+        label: test coverage
+        message: ${{ steps.coverageComment.outputs.coverage }}
+        valColorRange: ${{ steps.coverageComment.outputs.coverage }}
+        maxColorRange: 100
+        minColorRange: 0

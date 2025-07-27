@@ -3,7 +3,7 @@ import os
 import asyncio
 from PIL import Image
 from io import BytesIO
-import AEPi
+from lib.AEPi.src import AEPi
 
 from . import commandsDB as bbCommands
 from ..bbConfig import bbData, bbConfig
