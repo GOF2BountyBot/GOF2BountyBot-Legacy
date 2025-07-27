@@ -74,7 +74,7 @@ async def fixImageAspectRatio(skinPath: str, message: discord.Message, itemName:
     }
 
     actionMenu = DummySingleUserReactionMenu(menuMsg, message.author,
-                                                timedelta(**bbConfig.timeouts.selectImageSizeHandling),
+                                                timedelta(seconds=bbConfig.toolUseConfirmTimeoutSeconds),
                                                 menuOptions,
                                                 menuOptions.keys(),
                                                 desc="Your image is not square, should I crop it or stretch it?"

@@ -297,6 +297,9 @@ skinRenderShowmeSamples = 4
 skinRenderShowmeHDResolution = [1920, 1080]
 skinRenderShowmeHDSamples = 4
 
+# Percentage tolerance to give when deciding whether an image is of the correct aspect ratio
+aspectRatioTolerance = 0.1
+
 
 
 ##### SCHEDULING #####
