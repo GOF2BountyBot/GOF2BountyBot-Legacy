@@ -11,6 +11,7 @@ from ..reactionMenus import ReactionRolePicker, ReactionSkinRegionPicker
 from ..bbObjects.items import bbShip
 from ..logging import bbLogger
 from ..shipRenderer import shipRenderer
+from . import util_autoskin
 
 from . import util_help
 
@@ -346,175 +347,43 @@ async def admin_cmd_showmeHD(message : discord.Message, args : str, isDM : bool)
     :param str args: string containing a ship name
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
+    if isDM:
+        prefix: str = bbConfig.defaultCommandPrefix
+    else:
+        prefix = bbGlobals.guildsDB.getGuild(message.guild.id).commandPrefix
+
     # verify a item was given
     if args == "":
-        await message.channel.send(":x: Please provide a ship! Example: `" + bbConfig.commandPrefix + "ship Groza Mk II`")
+        await message.reply(mention_author=False,
+                            content=f":x: Please provide a ship! Example: `{prefix}showme ship Groza Mk II`")
         return
 
-    full = False
-    if args.endswith("-full"):
-        args = args.split("-full")[0]
-        full = True
-    
-    # look up the ship object
-    itemName = args.rstrip(" ").title()
-    itemObj = None
-    for ship in bbData.builtInShipData.values():
-        shipObj = bbShip.bbShip.fromDict(ship)
-        if shipObj.isCalled(itemName):
-            itemObj = shipObj
+    full = args.endswith("-full")
+    if full:
+        args = args.split("-full")[0].rstrip()
 
-    # report unrecognised ship names
-    if itemObj is None:
-        if len(itemName) < 20:
-            await message.channel.send(":x: **" + itemName + "** is not in my database! :detective:")
-        else:
-            await message.channel.send(":x: **" + itemName[0:15] + "**... is not in my database! :detective:")
-        return
-
-    shipData = bbData.builtInShipData[itemObj.name]
-    if not shipData["skinnable"]:
-        await message.channel.send(":x: That ship is not skinnable!")
-        return
-
-    if len(bbGlobals.currentRenders) >= bbConfig.maxConcurrentRenders:
-        await message.channel.send(":x: My rendering queue is full currently. Please try this command again once someone else's render has completed.")
-        return
-    if itemObj.name in bbGlobals.currentRenders:
-        await message.channel.send(":x: Someone else is currently rendering this ship! Please use this command again once my other " + itemObj.name + " render has completed.")
+    result = await util_autoskin.collectAutoskinArgs(message, args, bbConfig.skinRenderShowmeHDResolution[0],
+                                                                        bbConfig.skinRenderShowmeHDResolution[1],
+                                                                        bbConfig.skinRenderShowmeHDSamples, full)
+    if result is None:
         return
         
-    bbGlobals.currentRenders.append(itemObj.name)
-
-    if len(message.attachments) < 1:
-        await message.channel.send(":x: Please attach a 2048x2048 jpg to render.")
-        bbGlobals.currentRenders.remove(itemObj.name)
-        return
-    skinFile = message.attachments[0]
-    if (not skinFile.filename.lower().endswith(".jpg")) or not (skinFile.width == 2048 and skinFile.height == 2048):
-        await message.channel.send(":x: Please attach a 2048x2048 jpg to render.")
-        bbGlobals.currentRenders.remove(itemObj.name)
-        return
-    try:
-        await skinFile.save(CWD + os.sep + bbConfig.tempRendersDir + os.sep + str(message.id) + "_0.jpg")
-    except (discord.HTTPException, discord.NotFound):
-        await message.channel.send(":x: I couldn't download your skin file. Did you delete it?")
-        bbGlobals.currentRenders.remove(itemObj.name)
-        return
-
-    skinPaths = {0:CWD + os.sep + bbConfig.tempRendersDir + os.sep + str(message.id) + "_0.jpg"}
-    disabledLayers = []
-
-    if not full:
-        layerIndices = [i for i in range(1, shipData["textureRegions"] + 1)]
-
-        layersPickerMsg = await message.channel.send("** **")
-        layersPickerMenu = ReactionSkinRegionPicker.ReactionSkinRegionPicker(layersPickerMsg, message.author, bbConfig.toolUseConfirmTimeoutSeconds, numRegions=shipData["textureRegions"])
-        pickedLayers = []
-        menuOutput = await layersPickerMenu.doMenu()
-        if bbConfig.spiralEmoji in menuOutput:
-            pickedLayers = layerIndices
-        elif bbConfig.defaultCancelEmoji in menuOutput:
-            await message.channel.send("🛑 Skin render cancelled.")
-            for skinPath in skinPaths.values():
-                os.remove(skinPath)
-            bbGlobals.currentRenders.remove(itemObj.name)
-            return
-        else:
-            for react in menuOutput:
-                try:
-                    pickedLayers.append(bbConfig.numberEmojis.index(react))
-                except ValueError:
-                    pass
-        
-        remainingIndices = [i for i in layerIndices if i not in pickedLayers]
-
-        if remainingIndices:
-            disabledLayersPickerMenu = ReactionSkinRegionPicker.ReactionSkinRegionPicker(layersPickerMsg, message.author, bbConfig.toolUseConfirmTimeoutSeconds, possibleRegions=remainingIndices, desc="Would you like to disable any regions?")
-            menuOutput = await disabledLayersPickerMenu.doMenu()
-            if bbConfig.spiralEmoji in menuOutput:
-                disabledLayers = remainingIndices
-            elif bbConfig.defaultCancelEmoji in menuOutput:
-                await message.channel.send("🛑 Skin render cancelled.")
-                for skinPath in skinPaths.values():
-                    os.remove(skinPath)
-                bbGlobals.currentRenders.remove(itemObj.name)
-                return
-            else:
-                for react in menuOutput:
-                    try:
-                        disabledLayers.append(bbConfig.numberEmojis.index(react))
-                    except ValueError:
-                        pass
-        
-        def showmeAdditionalMessageCheck(newMessage):
-            return newMessage.author is message.author and (newMessage.content.lower().startswith(bbConfig.commandPrefix + "cancel") or len(newMessage.attachments) > 0)
-
-        for regionNum in pickedLayers:
-            nextLayerMsg = await message.channel.send("Please send your image for texture region #" + str(regionNum) + ", or `" + bbConfig.commandPrefix + "cancel` to cancel the render, within " + str(bbConfig.toolUseConfirmTimeoutSeconds) + " seconds.")
-            try:
-                imgMsg = await bbGlobals.client.wait_for("message", check=showmeAdditionalMessageCheck, timeout=bbConfig.toolUseConfirmTimeoutSeconds)
-            except asyncio.TimeoutError:
-                await nextLayerMsg.edit(content="This menu has now expired. Please try the command again.")
-            else:
-                if imgMsg.content.lower().startswith(bbConfig.commandPrefix + "cancel"):
-                    await message.channel.send("🛑 Skin render cancelled.")
-                    for skinPath in skinPaths.values():
-                        os.remove(skinPath)
-                    bbGlobals.currentRenders.remove(itemObj.name)
-                    return
-                nextLayer = imgMsg.attachments[0]
-                if (not nextLayer.filename.lower().endswith(".jpg")) or not (nextLayer.width == 2048 and nextLayer.height == 2048):
-                    await message.channel.send(":x: Please only give 2048x2048 jpgs!\n🛑 Skin render cancelled.")
-                    for skinPath in skinPaths.values():
-                        os.remove(skinPath)
-                    bbGlobals.currentRenders.remove(itemObj.name)
-                    return
-                try:
-                    await nextLayer.save(CWD + os.sep + bbConfig.tempRendersDir + os.sep + str(message.id) + "_" + str(regionNum) + ".jpg")
-                except (discord.HTTPException, discord.NotFound):
-                    await message.channel.send(":x: I couldn't download your skin file. Did you delete it?\n🛑 Skin render cancelled.")
-                    for skinPath in skinPaths.values():
-                        os.remove(skinPath)
-                    bbGlobals.currentRenders.remove(itemObj.name)
-                    return
-                skinPaths[regionNum] = CWD + os.sep + bbConfig.tempRendersDir + os.sep + str(message.id) + "_" + str(regionNum) + ".jpg"
-
-    waitMsg = await message.channel.send("🤖 Render started! I'll ping you when I'm done.")
-    
-    renderPath = shipData["path"] + os.sep + "skins" + os.sep + str(message.id) + "-RENDER.png"
-    outSkinPath = shipData["path"] + os.sep + "skins" + os.sep + str(message.id) + ".jpg"
-
-    await lib.discordUtil.startLongProcess(waitMsg)
-    try:
-        await shipRenderer.renderShip(str(message.id), shipData["path"], shipData["model"], skinPaths, disabledLayers, bbConfig.skinRenderShowmeHDResolution[0], bbConfig.skinRenderShowmeHDResolution[1], full=full)
-    except shipRenderer.RenderFailed:
-        await message.channel.send(message.author.mention + "\n🥺 Render failed! The error has been logged, please try a different ship.")
-        bbLogger.log("Main", "admin_cmd_showmeHD", "HD ship render failed with args: '" + args + "'")
-    else:
-        with open(renderPath, "rb") as f:
-            imageEmbedMsg = await bbGlobals.client.get_channel(bbConfig.showmeSkinRendersChannel).send("HD-u" + str(message.author.id) + "g" + ("DM" if message.channel.type in [discord.ChannelType.private, discord.ChannelType.group] else str(message.guild.id)) + "c" + str(message.channel.id) + "m" + str(message.id), file=discord.File(f))
-            renderEmbed = lib.discordUtil.makeEmbed(col=lib.discordUtil.randomColour(), img=imageEmbedMsg.attachments[0].url, authorName="Skin Render Complete!", icon="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/259/robot_1f916.png", footerTxt="Custom skinned " + itemObj.name.capitalize())
-            await message.channel.send(message.author.mention, embed=renderEmbed)
-    
-    bbGlobals.currentRenders.remove(itemObj.name)
-
-    try:
-        os.remove(renderPath)
-    except FileNotFoundError:
-        pass
-    
-    for skinPath in skinPaths.values():
-        os.remove(skinPath)
-    
-    try:
-        os.remove(outSkinPath)
-    except FileNotFoundError:
-        pass
-
-    await lib.discordUtil.endLongProcess(waitMsg)
-    return
+    shipName, rendererArgs = result
+    await util_autoskin.doAutoSkin(message, rendererArgs, shipName, "HD")
     
 
-bbCommands.register("showmehd", admin_cmd_showmeHD, 1, allowDM=False, signatureStr="**showmeHD <ship-name>** *[-full]*", shortHelp="Render your specified ship with the given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME.", longHelp="You must attach a 2048x2048 jpg to your message. Render your specified ship with the given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME. Give `-full` to disable autoskin and render exactly your provided image, with no additional texturing.")
-bbCommands.register("showmehd", admin_cmd_showmeHD, 2, allowDM=True, signatureStr="**showmeHD <ship-name>** *[-full]*", shortHelp="Render your specified ship with the given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME.", longHelp="You must attach a 2048x2048 jpg to your message. Render your specified ship with the given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME. Give `-full` to disable autoskin and render exactly your provided image, with no additional texturing.")
+bbCommands.register("showmehd", admin_cmd_showmeHD, 1, allowDM=True, signatureStr="**showmeHD <ship-name>** *[-full]*",
+                        shortHelp="Render your specified ship with the given skin, in full HD 1080p! " \
+                                    + "⚠ WARNING: THIS WILL TAKE A LONG TIME.",
+                        longHelp="You must attach a 2048x2048 jpg to your message. Render your specified ship with the " \
+                                    + "given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME. Give `-full` " \
+                                    + "to disable autoskin and render exactly your provided image, " \
+                                    + "with no additional texturing.")
+
+bbCommands.register("showmehd", admin_cmd_showmeHD, 2, allowDM=True, signatureStr="**showmeHD <ship-name>** *[-full]*",
+                        shortHelp="Render your specified ship with the given skin, in full HD 1080p! " \
+                                    + "⚠ WARNING: THIS WILL TAKE A LONG TIME.",
+                        longHelp="You must attach a 2048x2048 jpg to your message. Render your specified ship with the " \
+                                    + "given skin, in full HD 1080p! ⚠ WARNING: THIS WILL TAKE A LONG TIME. Give `-full` " \
+                                    + "to disable autoskin and render exactly your provided image, " \
+                                    + "with no additional texturing.")

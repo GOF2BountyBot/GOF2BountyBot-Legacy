@@ -55,7 +55,7 @@ class bbGuild(bbSerializable.bbSerializable):
             playChannel : channel.TextChannel = None, shop : bbShop.bbShop = None,
             bountyBoardChannel : BountyBoardChannel.BountyBoardChannel = None, alertRoles : Dict[str, int] = {},
             ownedRoleMenus : int = 0, bountiesDisabled : bool = False, shopDisabled : bool = False,
-            statRaces: Optional[List[StatRace]] = None):
+            statRaces: Optional[List[StatRace]] = None, rendersChannel :  Union[TextChannel, None] = None):
         """
         :param int id: The ID of the guild, directly corresponding to a discord guild's ID.
         :param bbBountyDB.bbBountyDB bountiesDB: This guild's active bounties
@@ -81,6 +81,7 @@ class bbGuild(bbSerializable.bbSerializable):
         self.id = id
         self.announceChannel = announceChannel
         self.playChannel = playChannel
+        self.rendersChannel = rendersChannel
 
         self.shopDisabled = shopDisabled
         if shopDisabled:
@@ -206,6 +207,34 @@ class bbGuild(bbSerializable.bbSerializable):
         if not self.hasAnnounceChannel():
             raise ValueError("Attempted to remove announce channel on a bbGuild that has no announceChannel")
         self.announceChannel = None
+
+
+    
+    def setRendersChannel(self, rendersChannel : TextChannel):
+        """Set the discord channel of the guild's autoskin renders channel.
+
+        :param TextChannel rendersChannel: The discord channel object of the guild's autoskin renders channel
+        """
+        self.rendersChannel = rendersChannel
+
+
+    def hasRendersChannel(self) -> bool:
+        """Whether or not this guild has a renders channel
+
+        :return: True if this guild has a renders channel, False otherwise
+        :rtype bool:
+        """
+        return self.rendersChannel is not None
+
+
+    def removeRendersChannel(self):
+        """Remove and deactivate this guild's announcements channel.
+
+        :raise ValueError: If this guild does not have a renders channel
+        """
+        if not self.hasRendersChannel():
+            raise ValueError("Attempted to remove renders channel on a BasedGuild that has no rendersChannel")
+        self.rendersChannel = None
 
 
 
@@ -599,6 +628,7 @@ class bbGuild(bbSerializable.bbSerializable):
         """
         data = {"announceChannel":self.announceChannel.id if self.hasAnnounceChannel() else -1,
                     "playChannel":self.playChannel.id if self.hasPlayChannel() else -1, 
+                    "rendersChannel":   self.rendersChannel.id if self.hasRendersChannel() else -1,
                     "alertRoles": self.alertRoles,
                     "ownedRoleMenus": self.ownedRoleMenus,
                     "bountiesDisabled": self.bountiesDisabled,
@@ -643,6 +673,9 @@ class bbGuild(bbSerializable.bbSerializable):
             announceChannel = dcGuild.get_channel(guildDict["announceChannel"])
         if "playChannel" in guildDict and guildDict["playChannel"] != -1:
             playChannel = dcGuild.get_channel(guildDict["playChannel"])
+            
+        rendersChannel = guildDict.get("rendersChannel", -1)
+        rendersChannel = dcGuild.get_channel(rendersChannel) if rendersChannel != -1 else None
 
 
         bountiesDisabled = id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935] or guildDict.get("bountiesDisabled", False)
@@ -662,4 +695,5 @@ class bbGuild(bbSerializable.bbSerializable):
                         alertRoles=guildDict["alertRoles"] if "alertRoles" in guildDict else {}, ownedRoleMenus=guildDict["ownedRoleMenus"] if "ownedRoleMenus" in guildDict else 0,
                         bountiesDisabled=bountiesDisabled,
                         shopDisabled=id in [965011734173712426, 723708988830515231, 723708655031156742, 723706906517962814, 723705817764986900, 723704665560055848, 723704087962583131, 723703454635393056, 723702782640783361, 723704350131748935],
-                        statRaces=statRaces)
+                        statRaces=statRaces,
+                        rendersChannel=rendersChannel)

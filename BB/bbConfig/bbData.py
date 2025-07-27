@@ -95,6 +95,29 @@ factionColours = {"terran":Colour.gold(), "vossk":Colour.dark_green(), "midorian
 # Ships to not have tech levels in GOF2, so tech levels will be automaticaly generated for the sake of the bot during bbConfig package init.
 builtInShipData = {}
 
+def findShipDataByAlias(shipName: str, ignoreCase: bool = True) -> dict:
+    """Look up ship data in builtInShipData by name or alias
+
+    :param shipName: The name of the ship to find
+    :type shipName: str
+    :param ignoreCase: Whether or not to allow casing discrepencies in the ship name (Default True)
+    :type ignoreCase: bool, optional
+    :raises KeyError: If no ship data could be found withh the given name
+    :return: The ship data, which could be deserialized into a Ship object
+    :rtype: dict
+    """
+    try:
+        return next(
+            i for i in builtInShipData.values()
+            if shipName == i["name"].lower() \
+            or shipName in \
+                ([n.lower() for n in i.get("aliases", [])] \
+                if ignoreCase else \
+                i.get("aliases", []))
+        )
+    except StopIteration:
+        raise KeyError(f"Unknown ship: {shipName}")
+
 for subdir, dirs, files in os.walk(shipsDir):
     for dirname in dirs:
         dirpath = subdir + os.sep + dirname

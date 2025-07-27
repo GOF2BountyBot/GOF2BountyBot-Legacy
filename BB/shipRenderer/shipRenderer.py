@@ -7,10 +7,12 @@ Written by Trimatix
 from PIL import Image, ImageChops, ImageOps
 import subprocess
 # import sys
-from typing import List, Dict
+from typing import Any, List, Dict
 import os
+import pathlib
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 CWD = os.getcwd()
@@ -34,7 +36,7 @@ def trim(im : Image) -> Image:
     :return: im, with all surrounding empty space removed
     :rtype: Image
     """
-    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
     diff = ImageChops.difference(im, bg)
     diff = ImageChops.add(diff, diff, 2.0, -100)
     bbox = diff.getbbox()
@@ -60,8 +62,14 @@ def compositeTextures(outTexPath : str, shipPath : str, textures : Dict[int, str
 
     :param str outTexPath: Path to which the resulting texture should be saved, including file name and extension
     :param str shipPath: Path to the bbShip being rendered
-    :param Dict[int, str] textures: Dictionary associating mask indices to texture file paths to composite. If a mask index is not in textures or disabledLayers, the default texture for that region will be used. The first element corresponds to the underlayer to render beneith the ship's base texture (foreground elements). All (currently 2) remaining textures are overlayed with respect to the ship's texture region masks.
-    :param List[int] disabledLayers: List of texture regions to 'disable' - setting them to the bottom texture. TODO: Instead of doing this by recompositing the bottom texture, just iterate through disabled layers and apply masks. Apply bottom texture at the end.
+    :param Dict[int, str] textures: Dictionary associating mask indices to texture file paths to composite.
+                                    If a mask index is not in textures or disabledLayers, the default texture for that region
+                                    will be used. The first element corresponds to the underlayer to render beneith the ship's
+                                    base texture (foreground elements). All (currently 2) remaining textures are overlayed
+                                    with respect to the ship's texture region masks.
+    :param List[int] disabledLayers: List of texture regions to 'disable' - setting them to the bottom texture.
+                                    TODO: Instead of doing this by recompositing the bottom texture, just iterate through
+                                    disabled layers and apply masks. Apply bottom texture at the end.
     """
     # Load and combine the base texture and under layer
     workingTex = ensureImageMode(Image.open(textures[0]))
@@ -71,7 +79,7 @@ def compositeTextures(outTexPath : str, shipPath : str, textures : Dict[int, str
     maxLayerNum = max(max(textures), max(disabledLayers)) if disabledLayers else max(textures)
 
     # For each layer number
-    for maskNum in range(1,maxLayerNum+1):
+    for maskNum in range(1, maxLayerNum + 1):
         if maskNum in textures:
             # If skinning this region, load the texture with the corresponding index
             newTex = ensureImageMode(Image.open(textures[maskNum]))
@@ -86,7 +94,8 @@ def compositeTextures(outTexPath : str, shipPath : str, textures : Dict[int, str
         try:
             mask = Image.open(shipPath + os.sep + "mask" + str(maskNum) + ".jpg")
         except FileNotFoundError:
-            print("WARNING: Attempted to " + ("render" if maskNum in textures else "disable") + " texture region " + str(maskNum) + " but mask" + str(maskNum) + ".jpg does not exist. shipPath:" + shipPath)
+            print("WARNING: Attempted to " + ("render" if maskNum in textures else "disable") + " texture region " \
+                    + str(maskNum) + " but mask" + str(maskNum) + ".jpg does not exist. shipPath:" + shipPath)
         else:
             # Load in the mask
             # Gimp and pillow use opposite shades to represent opacity in a mask, so invert the mask
@@ -94,6 +103,11 @@ def compositeTextures(outTexPath : str, shipPath : str, textures : Dict[int, str
             # Apply the texture with respect to the mask
             workingTex = Image.composite(workingTex, newTex, mask)
 
+    parent = pathlib.Path(outTexPath).parent
+    # Make sure the enclosing folder exists
+    if not parent.is_dir():
+        os.makedirs(parent)
+    # Save result
     workingTex.convert("RGB").save(outTexPath)
 
 
@@ -102,27 +116,39 @@ def setRenderArgs(args : List[str]):
 
     :param List[str] args: List of arguments to write to file
     """
-    with open(SCRIPT_PATH + os.sep + "render_vars","w") as f:
+    with open(SCRIPT_PATH + os.sep + "render_vars", "w") as f:
         for arg in args:
             f.write(arg + "\n")
 
 
 def start_render():
-    subprocess.call("blender -b \"" + SCRIPT_PATH + os.sep + "cube.blend\" -P \"" + SCRIPT_PATH + os.sep + "_render.py\"", shell=True)
+    subprocess.call("blender -b \"" + SCRIPT_PATH + os.sep + "cube.blend\" -P \"" + SCRIPT_PATH + os.sep + "_render.py\"",
+                    shell=True)
 
 
-async def renderShip(skinName : str, shipPath : str, shipModelName : str, textures : Dict[int, str], disabledLayers: List[int], res_x : int, res_y : int, full=False): # TODO: Add 'useBaseTexture' argument. Pass to render_vars. If true, should bypass skinBase (for 'full' skins that don't use skinBase)
+async def renderShip(skinName : str, shipPath : str, shipModelName : str, textures : Dict[int, str],
+                        disabledLayers: List[int], res_x : int, res_y : int, numSamples: int, full=False):
     """Render the given ship model with the specified skin layer(s).
     The resulting image is cropped to content and saved in shipPath + "/skins/" + skinName.jpg
+    TODO: Add 'useBaseTexture' argument. Pass to render_vars. If true, should bypass skinBase
+    (for 'full' skins that don't use skinBase)
 
     :param str skinName: The name of the skin being rendered. Depicts the name of the output file.
     :param str shipPath: Path to the bbShip being rendered. Must contain shipModelName
     :param str shipModelName: The name of the model file to render. Not a path. Must be contained within shipPath
-    :param Dict[int, str] textures: Dictionary associating mask indices to texture file paths to composite. If a mask index is not in textures or disabledLayers, the default texture for that region will be used. The first element corresponds to the underlayer to render beneith the ship's base texture (foreground elements). All (currently 2) remaining textures are overlayed with respect to the ship's texture region masks.
+    :param Dict[int, str] textures: Dictionary associating mask indices to texture file paths to composite. If a mask index is
+                                    not in textures or disabledLayers, the default texture for that region will be used.
+                                    The first element corresponds to the underlayer to render beneith the ship's base texture
+                                    (foreground elements). All (currently 2) remaining textures are overlayed with respect to
+                                    the ship's texture region masks.
     :param List[int] disabledLayers: List of texture regions to 'disable' - setting them to the bottom texture.
-    :param int res_x: The width in pixels of the render resolution. This is not the the width of the final image, as empty space around the rendered object is cropped out automatically.
-    :param int res_y: The height in pixels of the render resolution. This is not the the height of the final image, as empty space around the rendered object is cropped out automatically.
-    :param bool full: When True, ignore all texture regions and base textures included with the ship, and render the first element in textures as the texture for the model. (Default False)
+    :param int res_x: The width in pixels of the render resolution. This is not the the width of the final image, as empty
+                        space around the rendered object is cropped out automatically.
+    :param int res_y: The height in pixels of the render resolution. This is not the the height of the final image, as empty
+                        space around the rendered object is cropped out automatically.
+    :param int numSamples: The number of samples to render per pixel.
+    :param bool full: When True, ignore all texture regions and base textures included with the ship, and render the first
+                        element in textures as the texture for the model. (Default False)
     """
     # Generate render arguments
     current_model = shipPath + os.sep + shipModelName
@@ -139,11 +165,17 @@ async def renderShip(skinName : str, shipPath : str, shipModelName : str, textur
         raise ValueError("Attempted to render an image below 240p (height=" + str(res_y) + ")")
     render_resolution = str(res_x) + "x" + str(res_y)
 
+    if numSamples < 1:
+        raise ValueError("numSamples must be at least 1")
+    if numSamples > 128:
+        raise ValueError("maximum numSamples is 128")
+
     if not full:
         compositeTextures(texture_output_file, shipPath, textures, disabledLayers)
 
     # Pass the arguments to the renderer
-    setRenderArgs([render_resolution, render_output_file, current_model, textures[0] if full else texture_output_file])
+    setRenderArgs([render_resolution, render_output_file, current_model, textures[0] if full else \
+                                                                            texture_output_file, str(numSamples)])
     # Render the requested model
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(ThreadPoolExecutor(), start_render)
@@ -155,5 +187,47 @@ async def renderShip(skinName : str, shipPath : str, shipModelName : str, textur
         raise RenderFailed()
     # Crop it to content
     new_im = trim(bg)
+    # Make sure the enclosing folder exists
+    parent = pathlib.Path(render_output_file).parent
+    if not parent.is_dir():
+        os.makedirs(parent)
     # Save it back to file
     new_im.save(render_output_file)
+
+
+@dataclass
+class AutoskinArgs:
+    """A dataclass representation of the arguments required for renderShip.
+    This class is compatible with variadic function parameter unpacking:
+    ```
+    >>> x = AutoskinArgs("skin", "ship/path.bbShip", "model.obj", {0: "mytex.jpg"}, [2, 3], 1920, 1080, 128)
+    >>> renderShip(**x)
+    """
+    skinName: str
+    shipPath: str
+    shipModelName: str
+    textures: Dict[int, str]
+    disabledLayers: List[int]
+    res_x : int
+    res_y : int
+    numSamples: int
+    full: bool = False
+
+    def keys(self) -> List[str]:
+        return self.__dataclass_fields__.keys()
+
+    def __getitem__(self, k: str) -> Any:
+        """Get a config setting by name
+
+        :param k: Name of the parameter to read
+        :type k: str
+        :return: The current value of the parameter
+        :rtype: Any
+        """
+        return getattr(self, k)
+
+
+async def renderShipByArgs(args: AutoskinArgs):
+    """Call renderShip, using an AutoskinArgs object instead of individual arguments.
+    """
+    return await renderShip(**args)

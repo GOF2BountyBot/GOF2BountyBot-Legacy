@@ -10,6 +10,7 @@ from typing import Union, Dict, List
 import asyncio
 from types import FunctionType
 from ..baseClasses import bbSerializable
+from datetime import timedelta
 
 
 async def deleteReactionMenu(menuID : int):
@@ -629,3 +630,39 @@ class SingleUserReactionMenu(ReactionMenu):
         else:
             updatedMsg = await self.msg.channel.fetch_message(self.msg.id)
             return [lib.emojis.dumbEmojiFromReaction(react.emoji) for react in updatedMsg.reactions if self.targetMember in await react.users().flatten() and lib.emojis.dumbEmojiFromReaction(react.emoji) in self.options]
+
+
+# inline-style menus cannot be serializable :(
+# @saveableMenu
+class DummySingleUserReactionMenu(SingleUserReactionMenu):
+    def __init__(self, msg: Message, targetMember: Union[Member, User], activeTime: timedelta,
+                options: Union[Dict[lib.emojis.dumbEmoji, str], List[lib.emojis.dumbEmoji]],
+                returnTriggers: List[lib.emojis.dumbEmoji], titleTxt: str = "", desc: str = "",
+                col: Colour = Colour.blue(), footerTxt: str = "", img: str = "",
+                thumb: str = "", icon: str = "", authorName: str = ""):
+
+        if isinstance(options, dict):
+            dummyOptions = {e: DummyReactionMenuOption(n, e) for e, n in options.items()}
+        else:
+            dummyOptions = {e: DummyReactionMenuOption(e.sendable, e) for e in options}
+
+        super().__init__(msg, targetMember, int(activeTime.total_seconds()), options=dummyOptions, returnTriggers=returnTriggers,
+                            titleTxt=titleTxt, desc=desc, col=col, footerTxt=footerTxt, img=img, thumb=thumb, icon=icon,
+                            authorName=authorName)
+
+
+    # @classmethod
+    # def fromDict(cls, data: dict, msg: Message = None, **kwargs) -> "DummySingleUserReactionMenu":
+    #     if msg is None:
+    #         raise ValueError("Required argument not given: msg")
+        
+    #     options = {}
+    #     for e, n in data.get("options", {}).items():
+    #         emoji = lib.emojis.BasedEmoji.fromDict(e)
+    #         options[emoji] = DummyReactionMenuOption.fromDict(n)
+
+    #     return DummySingleUserReactionMenu(msg, options, activeTime = timedelta(seconds=data["timeout"]),
+    #             options: Union[Dict[lib.emojis.BasedEmoji, str], List[lib.emojis.BasedEmoji]],
+    #             returnTriggers: List[lib.emojis.BasedEmoji], titleTxt: str = "", desc: str = "",
+    #             col: Colour = Colour.blue(), footerTxt: str = "", img: str = "",
+    #             thumb: str = "", icon: str = "", authorName: str = "")

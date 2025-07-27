@@ -149,7 +149,7 @@ class bbClient(ClientBaseClass):
                         "Stat race starts today - sending announcement\n"
                         + f"Guild: {g.id}\n"
                         + f"Today: {today}\n"
-                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}")
+                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {race.scoreMode} {'asc' if race.orderAsc else 'desc'}")
                     try:
                         await self.announceOneNewStatRace(g, race)
                     except Exception as ex:
@@ -158,7 +158,7 @@ class bbClient(ClientBaseClass):
                             "announceNewStatRaces",
                             f"Encountered {type(ex).__name__} exception when announcing new stat race: {ex}\n"
                             + f"Guild: {g.id}\n"
-                            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}",
+                            + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {race.scoreMode} {'asc' if race.orderAsc else 'desc'}",
                             trace=traceback.format_exc())
                 else:
                     bbLogger.log(
@@ -167,7 +167,7 @@ class bbClient(ClientBaseClass):
                         "Stat race does not start today\n"
                         + f"Guild: {g.id}\n"
                         + f"Today: {today}\n"
-                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {'delta' if race.deltaMode else 'non-delta'} {'asc' if race.orderAsc else 'desc'}")
+                        + f"Race: {debugFmtDt(race.startDate)} - {debugFmtDt(race.endDate)} {race.statName} {race.scoreMode} {'asc' if race.orderAsc else 'desc'}")
 
 
     async def announceOneNewStatRace(self, g: "bbGuild.bbGuild", r: StatRace):
@@ -178,7 +178,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Stat race began, but the guild does not have an announce or play channel.\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}")
             return
         
         try:
@@ -190,7 +190,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to calculate stat race rewards with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
             return False
         
@@ -202,7 +202,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to make stat race leaderboard embed with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
             return False
 
@@ -225,7 +225,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to send stat race starting announcement with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
 
     
@@ -237,7 +237,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to get starting save data for stat race.\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
             return False
 
@@ -249,7 +249,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to calculate stat race rewards with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
             return False
         
@@ -261,7 +261,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to make stat race leaderboard embed with {type(ex).__name__}: {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
             return False
 
@@ -273,7 +273,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Failed to distribute stat race rewards with {type(ex).__name__}. Continuing anyway. {ex}\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                 trace=traceback.format_exc())
 
         c = g.getAnnounceChannel() if g.hasAnnounceChannel() else g.getPlayChannel() if g.hasPlayChannel() else None
@@ -283,7 +283,7 @@ class bbClient(ClientBaseClass):
                 bbClient.endOneStatRace.__name__,
                 f"Stat race completed, but the guild does not have an announce or play channel.\n"
                 + f"Guild: {g.id}\n"
-                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}")
+                + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}")
         else:
             alertTypeId = UserAlerts.userAlertsTypesIDs[UserAlerts.UA_System_Misc]
             if g.hasUserAlertRoleID(alertTypeId):
@@ -299,7 +299,7 @@ class bbClient(ClientBaseClass):
                     bbClient.endOneStatRace.__name__,
                     f"Failed to send stat race ending announcement with {type(ex).__name__}: {ex}\n"
                     + f"Guild: {g.id}\n"
-                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {'delta' if r.deltaMode else 'non-delta'} {'asc' if r.orderAsc else 'desc'}",
+                    + f"Race: {debugFmtDt(r.startDate)} - {debugFmtDt(r.endDate)} {r.statName} {r.scoreMode} {'asc' if r.orderAsc else 'desc'}",
                     trace=traceback.format_exc())
         
         return True

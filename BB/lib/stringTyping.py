@@ -72,3 +72,21 @@ def shipSkinNameToToolName(skinName : str) -> str:
     :return: The name that should be given to a bbShipSkinTool that applies the named shipSkin
     """
     return "Ship Skin: " + skinName
+
+
+def truncateWithEllipse(s: str, maxLength: int, truncatedLength: int, ellipse: str = "...") -> str:
+    """If `s` is longer than `maxLength`, truncate it to `truncatedLength` and append `ellipse`.
+    If `s` is not longer than `maxLength`, do nothing.
+
+    :param s: The string to potentially truncate
+    :type s: str
+    :param maxLength: The cutoff before truncation is triggered
+    :type maxLength: int
+    :param truncatedLength: The number of characters that should remain after truncation is triggered (ignoring `ellipse`)
+    :type truncatedLength: int
+    :param ellipse: The string to append onto truncated strings (Default "...")
+    :type ellipse: str, optional
+    :return: `s` truncated to `truncatedLength` and with `ellipse` appended if `s` is longer than `maxLength`, `s` otherwise
+    :rtype: str
+    """
+    return s if len(s) <= maxLength else s[:truncatedLength] + ellipse

@@ -8,7 +8,6 @@ import bpy
 import os
 from math import radians
 from pathlib import Path
-from typing import List
 
 
 
@@ -17,18 +16,32 @@ from typing import List
 # Determine the location of this script file. Used  for configuring script working paths below.
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-# The camera's view distance. 5000 Should be plenty, but for larger models you may need to raise it. Tested with the Vossk Battlecruiser model.
+# The camera's view distance. 5000 Should be plenty, but for larger models you may need to raise it.
+# Tested with the Vossk Battlecruiser model.
 CAM_CLIP = 5000
-# Working directory for the script. This is used for temporarily saving intermediate textures e.g between mask applications (TODO: Save the completed texture to a cache directory [the bbShipSkin dir])
+# Working directory for the script. This is used for temporarily saving intermediate textures
+# e.g between mask applications (TODO: Save the completed texture to a cache directory [the bbShipSkin dir])
 RENDER_TEMP_DIR = script_path + os.sep + "temp"
 # Path to the script's render variables file.
 # Line 1:   Path to the model to render
-# Line 2:   If rendering a single texture, the path to that texture. If rendering a base texture on top of another image, the path to the base texture.
+# Line 2:   If rendering a single texture, the path to that texture.
+#           If rendering a base texture on top of another image, the path to the base texture.
 # Line 3:   The path to the under-layer image if using one; the image to place underneith the base texture
-# Line 4:   The path to the secondary texture region image if using one; This will be composited with respect to the secondary_mask.jpg found in the same directory as the model. This mask MUST exist in order for a passed secondary texture region image to be used.
-# Line 4:   The path to the tertiary texture region image if using one; This will be composited with respect to the tertiary_mask.jpg found in the same directory as the model. This mask MUST exist in order for a passed tertiary texture region image to be used.
+# Line 4:   The path to the secondary texture region image if using one;
+#           This will be composited with respect to the secondary_mask.jpg found in the same directory as the model.
+#           This mask MUST exist in order for a passed secondary texture region image to be used.
+# Line 4:   The path to the tertiary texture region image if using one;
+#           This will be composited with respect to the tertiary_mask.jpg found in the same directory as the model.
+#           This mask MUST exist in order for a passed tertiary texture region image to be used.
 RENDER_ARGS_PATH = script_path + os.sep + "render_vars"
 
+
+if not os.path.isdir(RENDER_TEMP_DIR):
+    os.makedirs(RENDER_TEMP_DIR)
+
+argsDir = os.path.dirname(RENDER_TEMP_DIR) if RENDER_TEMP_DIR else ""
+if not os.path.isdir(argsDir):
+    os.makedirs(argsDir)
 
 
 ##### UTIL OBJECTS #####
@@ -50,13 +63,15 @@ class RenderArgs:
     :vartype material: str
     """
 
-    def __init__(self, res_x : int, res_y : int, output_file_path : str, model_path : str, texture_path : str):
+    def __init__(self, res_x : int, res_y : int, output_file_path : str, model_path : str, texture_path : str,
+            numSamples: int):
         """
         :param int res_x: The width in pixels of the render resolution.
         :param int res_y: The height in pixels of the render resolution.
         :param str output_file_path: The path to render the output image to, including the file name and extension
         :param str model_path: The path to the model to render
         :param str texture_path: path to the texture file to render on the model
+        :param int numSamples: The number of samples to render per pixel
         """
         self.res_x = res_x
         self.res_y = res_y
@@ -67,6 +82,7 @@ class RenderArgs:
         self.model_filename_noext = Path(self.model_fullpath).stem
         self.texture_path = texture_path
         self.material = str(Path(self.model_fullpath).with_suffix(".mtl"))
+        self.numSamples = numSamples
 
 
 def getRenderArgs() -> RenderArgs:
@@ -76,10 +92,10 @@ def getRenderArgs() -> RenderArgs:
     :rtype: RenderArgs
     """
     args = []
-    with open(RENDER_ARGS_PATH,"r") as f:
+    with open(RENDER_ARGS_PATH, "r") as f:
         for line in f.readlines():
             args.append(line.rstrip("\n"))
-    return RenderArgs(int(args[0].split("x")[0]), int(args[0].split("x")[1]), args[1], args[2], args[3])
+    return RenderArgs(int(args[0].split("x")[0]), int(args[0].split("x")[1]), args[1], args[2], args[3], int(args[4]))
 
 
 
@@ -121,11 +137,12 @@ for obj in ctx.visible_objects:
 ctx.scene.render.resolution_x = args.res_x
 ctx.scene.render.resolution_y = args.res_y
 ctx.scene.render.resolution_percentage = 100
-bpy.context.scene.cycles.samples = 8
+bpy.context.scene.cycles.samples = args.numSamples
 # Set the renderer (eevee renders some strange perspective stuff...?)
 ctx.scene.render.engine = 'CYCLES'
 # Set the render output file
-# ctx.scene.render.filepath = RENDER_OUTPUT_DIR + ("" if RENDER_OUTPUT_DIR.endswith(os.sep) else os.sep) + args.model_filename_noext
+# ctx.scene.render.filepath = RENDER_OUTPUT_DIR + ("" if RENDER_OUTPUT_DIR.endswith(os.sep) else os.sep) \
+#                             + args.model_filename_noext
 ctx.scene.render.filepath = args.output_file_path
 
 # Move the camera so that the model fills the frame

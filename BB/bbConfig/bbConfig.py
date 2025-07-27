@@ -286,12 +286,16 @@ skinRendersChannel = 770036783026667540
 showmeSkinRendersChannel = 771368555019108352
 # Resolution of skin render icons
 skinRenderIconResolution = [600, 600]
+skinRenderIconSamples = 8
 # Resolution of skin render emojis (currently unused)
 skinRenderEmojiResolution = [400, 400]
+skinRenderEmojiSamples = 8
 # Resolution of skin renders from cmd_showme_ship calls
-skinRenderShowmeResolution = [800, 600]
+skinRenderShowmeResolution = [352, 240]
+skinRenderShowmeSamples = 4
 # Resolution of skin renders from admin_cmd_showmeHD calls
 skinRenderShowmeHDResolution = [1920, 1080]
+skinRenderShowmeHDSamples = 4
 
 
 
@@ -345,6 +349,9 @@ defaultShipSkinToolEmoji = UninitializedDumbEmoji(777166858516299786)
 
 defaultShipUpgradeToolIcon = "https://em-content.zobj.net/source/twitter/408/wrench_1f527.png"
 defaultShipUpgradeToolEmoji = dumbEmoji(unicode="🔧")
+
+cropEmoji = dumbEmoji(unicode="✂")
+stretchEmoji = dumbEmoji(unicode="↔")
 
 def shipSkinValueForTL(averageTL : int) -> int:
     """Calculate how skins are valued with respect to their average compatible ship techlevel.
