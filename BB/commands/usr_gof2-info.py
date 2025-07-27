@@ -21,6 +21,7 @@ from ..reactionMenus import ReactionMenu
 bbCommands.addHelpSection(0, "gof2 info")
 CWD = os.getcwd()
 
+SCROLL_ICON = "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/twitter/282/scroll_1f4dc.png"
 
 async def cmd_map(message : discord.Message, args : str, isDM : bool):
     """send the image of the GOF2 starmap. If -g is passed, send the grid image
