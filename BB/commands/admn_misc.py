@@ -347,10 +347,7 @@ async def admin_cmd_showmeHD(message : discord.Message, args : str, isDM : bool)
     :param str args: string containing a ship name
     :param bool isDM: Whether or not the command is being called from a DM channel
     """
-    if isDM:
-        prefix: str = bbConfig.defaultCommandPrefix
-    else:
-        prefix = bbGlobals.guildsDB.getGuild(message.guild.id).commandPrefix
+    prefix = bbConfig.commandPrefix
 
     # verify a item was given
     if args == "":

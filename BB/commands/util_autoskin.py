@@ -118,10 +118,7 @@ async def collectAutoskinArgs(message: discord.Message, userShipName: str, res_x
     :return: The collected parameter values, or None if an error occurred
     :rtype: Optional[shipRenderer.AutoskinArgs]
     """
-    if message.guild is None:
-        prefix: str = bbConfig.defaultCommandPrefix
-    else:
-        prefix = bbGlobals.guildsDB.getGuild(message.guild.id).commandPrefix
+    prefix = bbConfig.commandPrefix
 
     # look up the ship data
     try:

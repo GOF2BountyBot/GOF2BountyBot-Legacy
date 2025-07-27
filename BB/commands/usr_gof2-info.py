@@ -622,10 +622,10 @@ async def cmd_showme_ship(message : discord.Message, args : str, isDM : bool):
     reskin = "+" in args
 
     if isDM:
-        prefix = bbConfig.defaultCommandPrefix
+        prefix = bbConfig.commandPrefix
     else:
         callingBGuild: bbGuild.bbGuild = bbGlobals.guildsDB.getGuild(message.guild.id)
-        prefix = callingBGuild.commandPrefix
+        prefix = bbConfig.commandPrefix
         if reskin and callingBGuild.hasRendersChannel() and callingBGuild.rendersChannel.id != message.channel.id:
             await message.reply(f":x: Skin renders are restricted to {callingBGuild.rendersChannel.mention}.")
             return
@@ -905,7 +905,7 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
         await message.reply(":x: For content moderation purposes, autoskin cannot be used from DMs.")
         return
     else:
-        prefix = bbGlobals.guildsDB.getGuild(message.guild.id).commandPrefix
+        prefix = bbConfig.commandPrefix
 
     # verify a item was given
     if args == "":
