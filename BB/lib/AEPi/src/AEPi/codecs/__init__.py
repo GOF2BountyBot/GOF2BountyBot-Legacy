@@ -4,16 +4,16 @@ from ..exceptions import CodecLoadException
 # Discover codecs
 
 try:
-    import EtcPakCodec
+    from . import EtcPakCodec
 except CodecLoadException:
     pass
 
 try:
-    import Tex2ImgCodec
+    from . import Tex2ImgCodec
 except CodecLoadException:
     pass
 
 try:
-    import RawCodec
+    from . import RawCodec
 except CodecLoadException:
     pass
