@@ -1027,14 +1027,17 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
 
         if formatEmojis[2] in imgFormats:
             im = Image.open(texPath)
+            aeiBytes = BytesIO()
             aei = AEPi.AEI(im, format=AEPi.CompressionFormat.ETC1)
+            aei.write(aeiBytes)
 
-            aeiFile = discord.File(aei, filename=fName + ".aei")
+            aeiFile = discord.File(aeiBytes, filename=fName + ".aei")
             await message.reply("Autoskin complete!",
                                 file=aeiFile, mention_author=True)
             aeiFile.close()
             aei.close()
             im.close()
+            aeiBytes.close()
 
         try:
             os.remove(texPath)
