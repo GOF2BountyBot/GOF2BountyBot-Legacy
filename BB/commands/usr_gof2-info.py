@@ -884,7 +884,7 @@ async def cmd_showme(message : discord.Message, args : str, isDM : bool):
     else:	
         await message.channel.send(":x: Unknown object type! (criminal/ship/weapon/module/turret/commodity)")	
 
-botCommands.register("showme", cmd_showme, 0, allowDM=True, aliases=["show", "render"], helpSection="gof2 info",
+bbCommands.register("showme", cmd_showme, 0, allowDM=True, aliases=["show", "render"], helpSection="gof2 info",
                         signatureStr="**showme <object-type> <name>** *[[full]+ [skinName]]*",
                         shortHelp="Get an image of the named item. This command can also render ships with a given skin.",
                         longHelp="Get a larger image of the requested item. If your item is a ship, you may also specify a " \
@@ -1044,7 +1044,7 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
             botState.currentRenders.remove(parsedShipName)
 
 
-botCommands.register("texture", cmd_texture, 0, aliases=["tex"], helpSection="gof2 info", signatureStr="**texture <ship-name>**",
+bbCommands.register("texture", cmd_texture, 0, aliases=["tex"], helpSection="gof2 info", signatureStr="**texture <ship-name>**",
                     shortHelp="Generate a ship texture file from your own images with autoskin. This is the same system as " \
                                 + "`showmme ship`.",
                     longHelp="Generate the texture file for custom ship skin with autoskin. This is the system used by" \
@@ -1198,7 +1198,7 @@ async def cmd_list(message : discord.Message, args : str, isDM : bool):
         # resultsMenu = PagedReactionMenu.PagedReactionMenu()
         # resultsEmbed = lib.discordUtil.makeEmbed()
 
-botCommands.register("list", cmd_list, 0, allowDM=True, helpSection="gof2 info",
+bbCommands.register("list", cmd_list, 0, allowDM=True, helpSection="gof2 info",
                         signatureStr="**list** *[level <tech-level>]* *[manufacturer]* **<object-type>**",
                         shortHelp="List all objects in the game that match the given criteria. For example: " \
                             + "`list vossk criminals` or `list level 3 terran ships`")
