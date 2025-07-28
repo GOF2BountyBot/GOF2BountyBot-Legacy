@@ -1028,14 +1028,13 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
         if formatEmojis[2] in imgFormats:
             im = Image.open(texPath)
             aeiBytes = BytesIO()
-            aei = AEPi.AEI(im, format=AEPi.CompressionFormat.ETC1)
-            aei.write(aeiBytes)
+            with AEPi.AEI(im, format=AEPi.CompressionFormat.ETC1) as aei:
+                aei.write(aeiBytes)
 
             aeiFile = discord.File(aeiBytes, filename=fName + ".aei")
             await message.reply("Autoskin complete!",
                                 file=aeiFile, mention_author=True)
             aeiFile.close()
-            aei.close()
             im.close()
             aeiBytes.close()
 
@@ -1047,8 +1046,8 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
         for skinPath in rendererArgs.textures.values():
             os.remove(skinPath)
     
-        if parsedShipName in botState.currentRenders:
-            botState.currentRenders.remove(parsedShipName)
+        if parsedShipName in bbGlobals.currentRenders:
+            bbGlobals.currentRenders.remove(parsedShipName)
 
 
 bbCommands.register("texture", cmd_texture, 0, aliases=["tex"], helpSection="gof2 info", signatureStr="**texture <ship-name>**",
