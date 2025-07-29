@@ -96,7 +96,7 @@ class bbUser(bbSerializable.bbSerializable):
                     lastSeenGuildId : int = -1, duelWins : int = 0, duelLosses : int = 0, duelCreditsWins : int = 0,
                     duelCreditsLosses : int = 0, alerts : dict[Union[type, str], Union[UserAlerts.UABase or bool]] = {},
                     bountyWinsToday : int = 0, dailyBountyWinsReset : datetime = None, pollOwned : bool = False,
-                    homeGuildID : int = -1, guildTransferCooldownEnd : datetime = None):
+                    homeGuildID : int = -1, guildTransferCooldownEnd : datetime = None, statChangeTimes: Optional[dict[str, float]] = None):
         """
         :param int id: The user's unique ID. The same as their unique discord ID.
         :param int credits: The amount of credits (currency) this user has (Default 0)
@@ -160,12 +160,12 @@ class bbUser(bbSerializable.bbSerializable):
             guildTransferCooldownEnd = datetime.now(timezone.utc)
 
         self.id = id
-        self.credits = credits
-        self.lifetimeCredits = lifetimeCredits
+        self._credits = credits
+        self._lifetimeCredits = lifetimeCredits
         # TODO: Should probably change this to a datetime, like guildTransferCooldownEnd etc
         self.bountyCooldownEnd = bountyCooldownEnd
-        self.systemsChecked = systemsChecked
-        self.bountyWins = bountyWins
+        self._systemsChecked = systemsChecked
+        self._bountyWins = bountyWins
 
         self.activeShip = activeShip
         self.inactiveShips = inactiveShips
@@ -220,6 +220,46 @@ class bbUser(bbSerializable.bbSerializable):
         self.homeGuildID = homeGuildID
         self.guildTransferCooldownEnd = guildTransferCooldownEnd
 
+        self.statChangeTimes = statChangeTimes or {}
+
+
+    @property
+    def credits(self) -> int:
+        return self._credits
+
+    @credits.setter
+    def credits(self, v: int):
+        self._credits = v
+        self.onStatChanged("credits")
+    
+    @property
+    def lifetimeCredits(self) -> int:
+        return self._lifetimeCredits
+
+    @lifetimeCredits.setter
+    def lifetimeCredits(self, v: int):
+        self._lifetimeCredits = v
+        self.onStatChanged("lifetimeCredits")
+    
+    @property
+    def systemsChecked(self) -> int:
+        return self._systemsChecked
+
+    @systemsChecked.setter
+    def systemsChecked(self, v: int):
+        self._systemsChecked = v
+        self.onStatChanged("systemsChecked")
+    
+    @property
+    def bountyWins(self) -> int:
+        return self._bountyWins
+
+    @bountyWins.setter
+    def bountyWins(self, v: int):
+        self._bountyWins = v
+        self.onStatChanged("bountyWins")
+    
+
     
     def resetUser(self):
         """Reset the user's attributes back to their default values.
@@ -242,6 +282,7 @@ class bbUser(bbSerializable.bbSerializable):
         self.pollOwned = False
         self.homeGuildID = -1
         self.guildTransferCooldownEnd = datetime.now(timezone.utc)
+        self.statChangeTimes.clear()
 
 
     def numInventoryPages(self, item : str, maxPerPage : int) -> int:
@@ -430,7 +471,8 @@ class bbUser(bbSerializable.bbSerializable):
                 "inactiveModules":inactiveModulesDict, "inactiveWeapons":inactiveWeaponsDict, "inactiveTurrets": inactiveTurretsDict, "inactiveTools": inactiveToolsDict,
                 "lastSeenGuildId":self.lastSeenGuildId, "duelWins": self.duelWins, "duelLosses": self.duelLosses, "duelCreditsWins": self.duelCreditsWins,
                 "bountyWinsToday": self.bountyWinsToday, "dailyBountyWinsReset": self.dailyBountyWinsReset.timestamp(), "pollOwned": self.pollOwned,
-                "duelCreditsLosses": self.duelCreditsLosses, "homeGuildID": self.homeGuildID, "guildTransferCooldownEnd": self.guildTransferCooldownEnd.timestamp()}
+                "duelCreditsLosses": self.duelCreditsLosses, "homeGuildID": self.homeGuildID, "guildTransferCooldownEnd": self.guildTransferCooldownEnd.timestamp(),
+                "statChangeTimes": self.statChangeTimes}
 
 
     def userDump(self) -> str:
@@ -489,6 +531,37 @@ class bbUser(bbSerializable.bbSerializable):
             return modulesValue + turretsValue + weaponsValue + shipsValue + self.activeShip.getValue() + self.credits
         else:
             raise ValueError("Unknown stat name: " + str(stat))
+
+
+    def getStatUpdatedTime(self, stat : str) -> datetime:
+        """Get the time when a user attribute last changed, by its string name.
+        """
+        if stat in ("id", "bountyCooldownEnd"):
+            return datetime.min
+        
+        if stat in ("checkAccuracy", "incorrectChecks"):
+            changeTimeKeys = ["systemsChecked", "bountyWins"]
+        elif stat == "value":
+            changeTimeKeys = ["credits"]
+        else:
+            changeTimeKeys = [stat]
+        
+        times = [self.statChangeTimes[k] for k in changeTimeKeys if k in self.statChangeTimes]
+        
+        if not times:
+            return datetime.min
+        
+        return datetime.fromtimestamp(min(times), timezone.utc)
+
+
+    def onStatChanged(self, stat : str):
+        """Get the time when a user attribute last changed, by its string name.
+        """
+        if stat in ("id", "bountyCooldownEnd", "checkAccuracy", "incorrectChecks", "value"):
+            return
+        
+        ts = datetime.now(timezone.utc).timestamp()
+        self.statChangeTimes[stat] = ts
 
 
     def getPeriodOnlyStatByName(self, stat: str, reference: "bbUser") -> Union[int, float]:
@@ -798,4 +871,5 @@ class bbUser(bbSerializable.bbSerializable):
                         dailyBountyWinsReset=datetime.fromtimestamp(userDict["dailyBountyWinsReset"], timezone.utc) if "dailyBountyWinsReset" in userDict else datetime.now(timezone.utc),
                         pollOwned=userDict["pollOwned"] if "pollOwned" in userDict else False,
                         homeGuildID=userDict["homeGuildID"] if "homeGuildID" in userDict else -1,
-                        guildTransferCooldownEnd=datetime.fromtimestamp(userDict["guildTransferCooldownEnd"], timezone.utc) if "guildTransferCooldownEnd" in userDict else datetime.now(timezone.utc))
+                        guildTransferCooldownEnd=datetime.fromtimestamp(userDict["guildTransferCooldownEnd"], timezone.utc) if "guildTransferCooldownEnd" in userDict else datetime.now(timezone.utc),
+                        statChangeTimes=userDict.get("statChangeTimes", {}))

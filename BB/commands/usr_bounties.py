@@ -108,10 +108,9 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
                     # reward all contributing users
                     rewards = bounty.calcRewards()
                     for userID in rewards:
-                        bbGlobals.usersDB.getUser(
-                            userID).credits += rewards[userID]["reward"]
-                        bbGlobals.usersDB.getUser(
-                            userID).lifetimeCredits += rewards[userID]["reward"]
+                        u = bbGlobals.usersDB.getUser(userID)
+                        u.credits += rewards[userID]["reward"]
+                        u.lifetimeCredits += rewards[userID]["reward"]
                     # add this bounty to the list of bounties to be removed
                     toPop += [bounty]
                     # Announce the bounty has ben completed

@@ -338,6 +338,7 @@ class bbShop(bbSerializable.bbSerializable):
         if self.userCanAffordItemObj(user, requestedModule):
             self.modulesStock.removeItem(requestedModule)
             user.credits -= requestedModule.getValue()
+
             user.inactiveShips.addItem(requestedModule)
         else:
             raise RuntimeError("user " + str(user.id) + " attempted to buy module " + requestedModule.name + " but can't afford it: " + str(user.credits) + " < " + str(requestedModule.getValue()))

@@ -14,6 +14,9 @@ import operator
 import os
 
 
+MAX_RACE_PLACES = 10
+
+
 def debugFmtDt(d: datetime) -> str:
     return f"{d} ({d.timestamp()})"
 
@@ -91,22 +94,26 @@ class StatRace(bbSerializable):
     ) -> Dict[int, Union[StatRaceResultsEntry, UnclaimedStatRaceResultsEntry]]:
         defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict, id=0)
 
-        # get the requested stats and sort users by the stat
-        inputDict: Dict[int, Union[int, float]] = {}
+        # get the requested stats and sort users by the stat and the last updated timestamp
+        # when orderAsc is false, the timestamp is negative
+        inputDict: Dict[int, Tuple[Union[int, float], float]] = {}
         user: bbUser.bbUser
         for user in endSaveData.getUsers():
             if self.scoreMode == "periodonly":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
-                inputDict[user.id] = user.getPeriodOnlyStatByName(self.statName, reference)
+                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
+                inputDict[user.id] = (user.getPeriodOnlyStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdated)
             elif self.scoreMode == "delta":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
-                inputDict[user.id] = user.getDeltaStatByName(self.statName, reference)
+                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
+                inputDict[user.id] = (user.getDeltaStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdated)
             elif self.scoreMode == "lifetime":
-                inputDict[user.id] = user.getStatByName(self.statName)
+                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
+                inputDict[user.id] = (user.getStatByName(self.statName), (-1 if self.orderAsc else 1) * lastUpdated)
             else:
                 raise ValueError(f"invalid scoreMode: {self.scoreMode}")
 
-        sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not self.orderAsc)
+        sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not self.orderAsc)[:MAX_RACE_PLACES]
         results: Dict[int, Union[StatRaceResultsEntry, UnclaimedStatRaceResultsEntry]] = {}
 
         for reward in self.rewards:
@@ -135,7 +142,7 @@ class StatRace(bbSerializable):
                 entry = sortedUsers[reward.fixedPlace - 1]
                 results[reward.fixedPlace] = StatRaceResultsEntry(
                     entry[0],
-                    entry[1],
+                    entry[1][0],
                     reward.fixedPlace,
                     item,
                     itemFailed
@@ -216,7 +223,7 @@ class StatRace(bbSerializable):
         # build the leaderboard embed
         leaderboardEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, icon=bbData.winIcon, col=bbData.factionColours["neutral"], desc=boardDesc)
 
-        doStar = set() if not raceIsOver or len(self.rewards) == 10 else {x.fixedPlace - 1 for x in self.rewards}
+        doStar = set() if not raceIsOver or len(self.rewards) == MAX_RACE_PLACES else {x.fixedPlace - 1 for x in self.rewards}
         topPlaces = sorted(results.items(), key=lambda pair: pair[0])
         noRewards = False
         if onlyShowRewards:
