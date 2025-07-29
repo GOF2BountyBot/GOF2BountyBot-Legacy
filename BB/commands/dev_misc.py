@@ -456,6 +456,58 @@ async def dev_cmd_setbalance(message : discord.Message, args : str, isDM : bool)
 bbCommands.register("setbalance", dev_cmd_setbalance, 2, allowDM=True, useDoc=True)
 
 
+async def dev_cmd_setUserStatLastUpdatedTime(message : discord.Message, args : str, isDM : bool):
+    argsSplit = args.split(" ")
+    # verify both a user and a balance were given
+    if len(argsSplit) < 3:
+        await message.channel.send(":x: Please give a user mention followed by the stat name then the new timestamp")
+        return
+    if not lib.stringTyping.isInt(argsSplit[2]):
+        await message.channel.send(":x: new timestamp is not a number")
+        return
+    # verify the requested user
+    requestedUser = bbGlobals.client.get_user(
+        int(argsSplit[0].lstrip("<@!").rstrip(">")))
+    if requestedUser is None:
+        await message.channel.send(":x: invalid user!!")
+        return
+    if not bbGlobals.usersDB.userIDExists(requestedUser.id):
+        requestedBBUser = bbGlobals.usersDB.addUser(requestedUser.id)
+    else:
+        requestedBBUser = bbGlobals.usersDB.getUser(requestedUser.id)
+    # update the balance
+    requestedBBUser.statChangeTimes[argsSplit[1]] = int(argsSplit[2])
+    await message.channel.send("Done!")
+    
+bbCommands.register("setuserstatlastupdated", dev_cmd_setUserStatLastUpdatedTime, 2, allowDM=True, useDoc=True)
+
+
+async def dev_cmd_clearUserStatLastUpdatedTimes(message : discord.Message, args : str, isDM : bool):
+    argsSplit = args.split(" ")
+    # verify both a user and a balance were given
+    if len(argsSplit) < 3:
+        await message.channel.send(":x: Please give a user mention followed by the stat name then the new timestamp")
+        return
+    if not lib.stringTyping.isInt(argsSplit[2]):
+        await message.channel.send(":x: new timestamp is not a number")
+        return
+    # verify the requested user
+    requestedUser = bbGlobals.client.get_user(
+        int(argsSplit[0].lstrip("<@!").rstrip(">")))
+    if requestedUser is None:
+        await message.channel.send(":x: invalid user!!")
+        return
+    if not bbGlobals.usersDB.userIDExists(requestedUser.id):
+        requestedBBUser = bbGlobals.usersDB.addUser(requestedUser.id)
+    else:
+        requestedBBUser = bbGlobals.usersDB.getUser(requestedUser.id)
+    # update the balance
+    requestedBBUser.statChangeTimes.clear()
+    await message.channel.send("Done!")
+
+bbCommands.register("clearuserstatlastupdated", dev_cmd_clearUserStatLastUpdatedTimes, 2, allowDM=True, useDoc=True)
+
+
 async def dev_cmd_reset_transfer_cool(message : discord.Message, args : str, isDM : bool):
     """developer command resetting a user's home guild transfer cooldown.
 
