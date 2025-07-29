@@ -101,15 +101,18 @@ class StatRace(bbSerializable):
         for user in endSaveData.getUsers():
             if self.scoreMode == "periodonly":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
-                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
-                inputDict[user.id] = (user.getPeriodOnlyStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdated)
+                lastUpdated = user.getStatUpdatedTime(self.statName)
+                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
+                inputDict[user.id] = (user.getPeriodOnlyStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdatedStamp)
             elif self.scoreMode == "delta":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
-                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
-                inputDict[user.id] = (user.getDeltaStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdated)
+                lastUpdated = user.getStatUpdatedTime(self.statName)
+                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
+                inputDict[user.id] = (user.getDeltaStatByName(self.statName, reference), (-1 if self.orderAsc else 1) * lastUpdatedStamp)
             elif self.scoreMode == "lifetime":
-                lastUpdated = user.getStatUpdatedTime(self.statName).timestamp()
-                inputDict[user.id] = (user.getStatByName(self.statName), (-1 if self.orderAsc else 1) * lastUpdated)
+                lastUpdated = user.getStatUpdatedTime(self.statName)
+                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
+                inputDict[user.id] = (user.getStatByName(self.statName), (-1 if self.orderAsc else 1) * lastUpdatedStamp)
             else:
                 raise ValueError(f"invalid scoreMode: {self.scoreMode}")
 
