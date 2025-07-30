@@ -457,6 +457,7 @@ bbCommands.register("setbalance", dev_cmd_setbalance, 2, allowDM=True, useDoc=Tr
 
 
 async def dev_cmd_setUserStatLastUpdatedTime(message : discord.Message, args : str, isDM : bool):
+    """set last updated time for a user stat"""
     argsSplit = args.split(" ")
     # verify both a user and a balance were given
     if len(argsSplit) < 3:
@@ -483,6 +484,7 @@ bbCommands.register("setuserstatlastupdated", dev_cmd_setUserStatLastUpdatedTime
 
 
 async def dev_cmd_clearUserStatLastUpdatedTimes(message : discord.Message, args : str, isDM : bool):
+    """clear all of user's stat last updated times"""
     argsSplit = args.split(" ")
     # verify both a user and a balance were given
     if len(argsSplit) < 3:
