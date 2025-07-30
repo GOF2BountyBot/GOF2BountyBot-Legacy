@@ -4,6 +4,7 @@ from discord import Message, Embed, Colour
 from typing import List
 from ..bbConfig import bbConfig, bbData
 from .. import logging
+import traceback
 
 
 class IncorrectCommandCallContext(Exception):
@@ -84,7 +85,18 @@ class CommandRegistry:
         
         if isDM and not self.allowDM:
             raise IncorrectCommandCallContext("Attempted to call command '" + self.ident + "' from DMs, but command is not allowed in DMs.")
-        await self.func(message, args if self.forceKeepArgsCasing else args.lower(), isDM)
+        try:
+            await self.func(message, args if self.forceKeepArgsCasing else args.lower(), isDM)
+        except Exception:
+            if self.accessLevel == 2:
+                try:
+                    if message.author.dm_channel is None:
+                        await message.author.create_dm()
+                    if message.author.dm_channel is not None:
+                        await message.author.dm_channel.send(traceback.format_exc())
+                except:
+                    pass
+            raise
 
 
 class HeirarchicalCommandsDB:
