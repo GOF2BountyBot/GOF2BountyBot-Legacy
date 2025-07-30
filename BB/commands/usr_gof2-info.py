@@ -1076,7 +1076,7 @@ async def cmd_list(message : discord.Message, args : str, isDM : bool):
 
     for arg in args.split(" "):
         if levelFound:
-            if not lib.stringTyping.isInt(arg) or int(arg) < cfg.minTechLevel or int(arg) > cfg.maxTechLevel:
+            if not lib.stringTyping.isInt(arg) or int(arg) < bbConfig.minTechLevel or int(arg) > bbConfig.maxTechLevel:
                 await message.channel.send(":x: Item tech level must be a number between 1 and 10.")
                 return
             itemLevel = int(arg)
