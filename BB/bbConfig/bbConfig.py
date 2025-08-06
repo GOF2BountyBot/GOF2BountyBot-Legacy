@@ -26,7 +26,7 @@ def truncToRes(num : float) -> float:
 ##### COMMANDS #####
 
 # List of module names from BB.commands to import
-includedCommandModules = (  "usr_misc", "usr_homeguilds", "usr_gof2-info", "usr_bounties", "usr_loadout", "usr_economy",
+includedCommandModules = (  "usr_misc", "usr_homeguilds", "usr_gof2-info", "usr_bounties", "usr_loadout", "usr_economy", "usr_dataprivacy",
                             "admn_channels", "admn_misc",
                             "dev_misc", "dev_channels", "dev_bounties", "dev_items", "dev_skins")
 
@@ -342,6 +342,7 @@ defaultAcceptEmoji = dumbEmoji(unicode="👍")
 defaultRejectEmoji = dumbEmoji(unicode="👎")
 defaultNextEmoji = dumbEmoji(unicode='⏩')
 defaultPreviousEmoji = dumbEmoji(unicode='⏪')
+defaultDownloadEmoji = dumbEmoji(unicode='📥')
 
 # Path to the directory to use when temporarily saving textures downloaded from showme commands.
 tempRendersDir = "rendering-temp"
