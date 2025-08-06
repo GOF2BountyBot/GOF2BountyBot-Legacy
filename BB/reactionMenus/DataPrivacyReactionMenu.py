@@ -96,7 +96,7 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
             nowStr = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(":", ".")
             dcFile = File(zipBuffer, filename=f"BB_BatchUserDataExport_{self.userId}_{nowStr}.zip")
             try:
-                await sendChannel.send("Here is all user data currently stored about you:", file=)dcFile
+                await sendChannel.send("Here is all user data currently stored about you:", file=dcFile)
             except Forbidden:
                 await self.msg.channel.send(":x: I can't DM you, " + dcUser.mention + "! Please enable DMs from users who are not friends.")
 
