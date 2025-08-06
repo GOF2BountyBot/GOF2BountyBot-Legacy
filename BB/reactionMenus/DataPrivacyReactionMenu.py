@@ -102,6 +102,8 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
                     await sendChannel.send(f"{len(failedDates)} savedata backup(s) could not be added to the zip file. The error has been logged. Please contact a developer.")
             except Forbidden:
                 await self.msg.channel.send(":x: I can't DM you, " + dcUser.mention + "! Please enable DMs from users who are not friends.")
+        
+        await self.delete()
 
 
     def toDict(self, **kwargs) -> dict:
