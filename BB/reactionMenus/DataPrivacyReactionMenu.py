@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 
 
 def getSanitizedJson(user: bbUser.bbUser) -> str:
-    return json.dumps(user, indent=4, sort_keys=True)
+    return json.dumps(user.toDict(), indent=4, sort_keys=True)
 
 
 class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
