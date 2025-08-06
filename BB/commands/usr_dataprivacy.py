@@ -12,17 +12,17 @@ bbCommands.addHelpSection(0, "data privacy")
 
 async def cmd_dataPrivacy(message : discord.Message, args : str, isDM : bool):
     if message.author.dm_channel is None:
-            await message.author.create_dm()
-        if message.author.dm_channel is None:
-            sendChannel = message.channel
-        else:
-            sendChannel = message.author.dm_channel
+        await message.author.create_dm()
+    if message.author.dm_channel is None:
+        sendChannel = message.channel
+    else:
+        sendChannel = message.author.dm_channel
 
-        try:
-            menuMsg = await sendChannel.send("‎")
-        except discord.Forbidden:
-            await message.channel.send(":x: I can't DM you, " + message.author.display_name + "! Please enable DMs from users who are not friends.")
-            return
+    try:
+        menuMsg = await sendChannel.send("‎")
+    except discord.Forbidden:
+        await message.channel.send(":x: I can't DM you, " + message.author.display_name + "! Please enable DMs from users who are not friends.")
+        return
 
     helpTT = TimedTask.TimedTask(expiryDelta=lib.timeUtil.timeDeltaFromDict(bbConfig.helpEmbedTimeout), expiryFunction=ReactionMenu.markExpiredMenuAndRemoveOptions, expiryFunctionArgs=menuMsg.id)
     bbGlobals.reactionMenusTTDB.scheduleTask(helpTT)
