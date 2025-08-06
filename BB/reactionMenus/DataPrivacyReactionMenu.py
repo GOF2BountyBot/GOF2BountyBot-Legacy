@@ -97,6 +97,9 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
             dcFile = File(zipBuffer, filename=f"BB_BatchUserDataExport_{self.userId}_{nowStr}.zip")
             try:
                 await sendChannel.send("Here is all user data currently stored about you:", file=dcFile)
+
+                if failedDates:
+                    await sendChannel.send(f"{len(failedDates)} savedata backup(s) could not be added to the zip file. The error has been logged. Please contact a developer.")
             except Forbidden:
                 await self.msg.channel.send(":x: I can't DM you, " + dcUser.mention + "! Please enable DMs from users who are not friends.")
 
