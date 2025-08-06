@@ -67,7 +67,7 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
                 if endReached:
                     break
                 for fileName in (fname for fname in files if fname.lower().endswith(".json")):
-                    filePath = os.path.join(bbConfig.userDBBackupPath, subdir, fileName)
+                    filePath = os.path.join(subdir, fileName)
                     try:
                         raw = lib.jsonHandler.readJSON(filePath)
                         userDb = bbUserDB.bbUserDB.fromDict(raw)
