@@ -71,7 +71,7 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
                     try:
                         raw = lib.jsonHandler.readJSON(filePath)
                         userDb = bbUserDB.bbUserDB.fromDict(raw)
-                    except json.JSONDecodeError:
+                    except Exception:
                         bbLogger.log(
                             DataPrivacyReactionMenu.__name__, 
                             DataPrivacyReactionMenu.exportUserData.__name__,
