@@ -481,7 +481,7 @@ async def on_ready():
             elif isinstance(uninitEmoji, str):
                 setattr(bbConfig, varName, lib.emojis.dumbEmojiFromStr(uninitEmoji))
             elif isinstance(uninitEmoji, dict):
-                setattr(bbConfig, varName, lib.emojis.dumbEmojiFromDict(uninitEmoji))
+                setattr(bbConfig, varName, lib.emojis.dumbEmoji.fromDict(uninitEmoji))
             # Unrecognised uninitialized value
             else:
                 raise ValueError("Unrecognised UninitializedDumbEmoji value type. Expecting int, str or dict, given '" + uninitEmoji.__class__.__name__ + "'")

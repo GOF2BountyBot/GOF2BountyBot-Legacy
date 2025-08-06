@@ -35,7 +35,7 @@ def fromDict(toolDict : dict) -> bbToolItem.bbToolItem:
             wiki=crateDict["wiki"] if "wiki" in crateDict else "",
             manufacturer=crateDict["manufacturer"] if "manufacturer" in crateDict else "",
             icon=crateDict["icon"] if "icon" in crateDict else "",
-            emoji=lib.emojis.dumbEmojiFromDict(crateDict["emoji"]) if "emoji" in crateDict else lib.emojis.dumbEmoji.EMPTY,
+            emoji=lib.emojis.dumbEmoji.fromDict(crateDict["emoji"]) if "emoji" in crateDict else lib.emojis.dumbEmoji.EMPTY,
             techLevel=crateDict["techLevel"] if "techLevel" in crateDict else -1,
             builtIn=crateDict["builtIn"] if "builtIn" in crateDict else False)
 

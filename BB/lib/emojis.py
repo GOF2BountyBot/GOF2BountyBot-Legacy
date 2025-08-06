@@ -196,7 +196,7 @@ def isCustomEmoji(s : str) -> bool:
 
 def dumbEmojiFromStr(s : str) -> dumbEmoji:
     """Construct a dumbEmoji object from a string containing either a unicode emoji or a discord custom emoji.
-    s may also be a dumbEmoji (returns s), a dictionary-serialized dumbEmoji (returns dumbEmojiFromDict(s)), or
+    s may also be a dumbEmoji (returns s), a dictionary-serialized dumbEmoji (returns dumbEmoji.fromDict(s)), or
     only an ID of a discord custom emoji (may be either str or int)
 
     :param str s: A string containing only one of: A unicode emoji, a discord custom emoji, or the ID of a discord custom emoji.
