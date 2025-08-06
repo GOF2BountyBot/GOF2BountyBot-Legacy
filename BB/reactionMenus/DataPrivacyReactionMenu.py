@@ -13,7 +13,7 @@ from ..bbDatabases import bbUserDB
 from ..logging import bbLogger
 from typing import List, Optional, Union, Dict, cast
 from io import BytesIO
-from zipfile import ZipFile, ZIP_LZMA
+from zipfile import ZipFile, ZIP_DEFLATED
 import os
 import traceback
 from datetime import datetime, timezone
@@ -60,7 +60,7 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
         
         bUser = cast("bbUser.bbUser", bbGlobals.usersDB.getUser(self.userId))
         endReached = False
-        with BytesIO() as zipBuffer, ZipFile(zipBuffer, "w", compression=ZIP_LZMA) as zipFile:
+        with BytesIO() as zipBuffer, ZipFile(zipBuffer, "w", compression=ZIP_DEFLATED) as zipFile:
             zipFile.writestr("current.json", getSanitizedJson(bUser))
             failedDates: List[str] = []
             for subdir, _, files in os.walk(bbConfig.userDBBackupPath):
