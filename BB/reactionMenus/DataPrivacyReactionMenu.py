@@ -60,30 +60,31 @@ class DataPrivacyReactionMenu(ReactionMenu.ReactionMenu):
         
         bUser = cast("bbUser.bbUser", bbGlobals.usersDB.getUser(self.userId))
         endReached = False
-        with BytesIO() as zipBuffer, ZipFile(zipBuffer, "w", compression=ZIP_DEFLATED) as zipFile:
-            zipFile.writestr("current.json", getSanitizedJson(bUser))
-            failedDates: List[str] = []
-            for subdir, _, files in os.walk(bbConfig.userDBBackupPath):
-                if endReached:
-                    break
-                for fileName in (fname for fname in files if fname.lower().endswith(".json")):
-                    filePath = os.path.join(subdir, fileName)
-                    try:
-                        raw = lib.jsonHandler.readJSON(filePath)
-                        userDb = bbUserDB.bbUserDB.fromDict(raw)
-                    except Exception:
-                        bbLogger.log(
-                            DataPrivacyReactionMenu.__name__, 
-                            DataPrivacyReactionMenu.exportUserData.__name__,
-                            f"Failed to deserialize backup {filePath}",
-                            trace=traceback.format_exc())
-                        failedDates.append(fileName[:-5])
-                        continue
-                    if not userDb.userIDExists(self.userId):
-                        endReached = True
+        with BytesIO() as zipBuffer:
+            with ZipFile(zipBuffer, "w", compression=ZIP_DEFLATED) as zipFile:
+                zipFile.writestr("current.json", getSanitizedJson(bUser))
+                failedDates: List[str] = []
+                for subdir, _, files in os.walk(bbConfig.userDBBackupPath):
+                    if endReached:
                         break
-                    userBackup = userDb.getUser(self.userId)
-                    zipFile.writestr(f"{fileName[:-5]}.json", getSanitizedJson(userBackup))
+                    for fileName in (fname for fname in files if fname.lower().endswith(".json")):
+                        filePath = os.path.join(subdir, fileName)
+                        try:
+                            raw = lib.jsonHandler.readJSON(filePath)
+                            userDb = bbUserDB.bbUserDB.fromDict(raw)
+                        except Exception:
+                            bbLogger.log(
+                                DataPrivacyReactionMenu.__name__, 
+                                DataPrivacyReactionMenu.exportUserData.__name__,
+                                f"Failed to deserialize backup {filePath}",
+                                trace=traceback.format_exc())
+                            failedDates.append(fileName[:-5])
+                            continue
+                        if not userDb.userIDExists(self.userId):
+                            endReached = True
+                            break
+                        userBackup = userDb.getUser(self.userId)
+                        zipFile.writestr(f"{fileName[:-5]}.json", getSanitizedJson(userBackup))
         
             if dcUser.dm_channel is None:
                 await dcUser.create_dm()
