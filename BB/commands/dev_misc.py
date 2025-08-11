@@ -607,10 +607,10 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
     today = datetime.combine(datetime.now(timezone.utc).date(), time(), timezone.utc)
     raceEnd = today + timedelta(days=days, hours=hours, minutes=minutes, weeks=weeks)
     if raceEnd.month + months > 12:
-        raceEnd.replace(year=raceEnd.year + 1)
+        raceEnd = raceEnd.replace(year=raceEnd.year + 1)
     
     newMonth = (raceEnd.month + months) % 12
-    raceEnd.replace(month=newMonth or 1)
+    raceEnd = raceEnd.replace(month=newMonth or 1)
 
     raceStart = today + timedelta(days=startInDays)
 
