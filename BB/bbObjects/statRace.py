@@ -159,6 +159,10 @@ class StatRace(bbSerializable):
             return "credits balance"
         elif self.statName == "systemsChecked":
             return "number of systems checked"
+        elif self.statName == "incorrectChecks":
+            return "number of incorrect systems checked"
+        elif self.statName == "checkAccuracy":
+            return "Ratio of correct to incorrect system `" + bbConfig.commandPrefix + "check`s: `(correct " + bbConfig.commandPrefix + "checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
         elif self.statName == "bountyWins":
             return "number of bounties won"
         elif self.statName == "lifetimeCredits":
@@ -193,6 +197,16 @@ class StatRace(bbSerializable):
             boardUnit = "System"
             boardUnits = "Systems"
             boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed"
+        elif self.statName == "incorrectChecks":
+            boardTitle = "Incorrect $checks"
+            boardUnit = "System"
+            boardUnits = "Systems"
+            boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed that were on a route, but not the answer"
+        elif self.statName == "checkAccuracy":
+            boardTitle = "Check Accuracy"
+            boardUnit = "%"
+            boardUnits = "%"
+            boardDesc = "Ratio of correct to incorrect system `" + bbConfig.commandPrefix + "check`s: `(correct " + bbConfig.commandPrefix + "checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
         elif self.statName == "bountyWins":
             boardTitle = "Bounties Won"
             boardUnit = "Bounty"
