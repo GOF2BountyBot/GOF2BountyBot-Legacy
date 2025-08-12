@@ -248,7 +248,7 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     if args != "":
         args = [a.strip("-").strip() for a in args.lower().split(" ")]
         for arg in args:
-            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt"):
+            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt", "is", "a"):
                 await message.channel.send(":x: Unknown argument: '**" + arg + "**'. Please refer to `" + bbConfig.commandPrefix + "help leaderboard`")
                 return
             if arg == "c":
@@ -346,7 +346,7 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
                 boardTitle = "Check accuracy"
                 boardUnit = "%"
                 boardUnits = "%"
-                boardDesc = "Ratio of correct to incorrect system `" + bbConfig.commandPrefix + "check`s: `(correct " + bbConfig.commandPrefix + "checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
+                boardDesc = f"Ratio of correct to incorrect system `{bbConfig.commandPrefix}check`s: `(correct {bbConfig.commandPrefix}checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
             if arg == "g":
                 globalBoard = True
                 boardScope = "Global Leaderboard"
@@ -389,21 +389,24 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     await message.channel.send(embed=leaderboardEmbed)
 
 bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[-g|-c|-s|-w|-dps|-hp|-cargo|-handling|-items|-equips|-dw|-dl|-dcw|-dcl|-wt]*", 
-                    longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n"
-                    "> Give `-c` for the current credits balance leaderboard.\n"
-                    "> Give `-s` for the 'systems checked' leaderboard.\n"
-                    "> Give `-w` for the 'bounties won' leaderboard.\n" \
-                    "> Give `-dps` for the 'loadout dps' leaderboard.\n" \
-                    "> Give `-hp` for the 'loadout total hp' leaderboard.\n" \
-                    "> Give `-cargo` for the 'loadout cargo capacity' leaderboard.\n" \
-                    "> Give `-handling` for the 'loadout handling' leaderboard.\n" \
-                    "> Give `-items` for the 'owned items count' leaderboard.\n" \
-                    "> Give `-equips` for the 'equipped items count' leaderboard.\n" \
-                    "> Give `-dw` for the 'duels won' leaderboard.\n" \
-                    "> Give `-dl` for the 'duels lost' leaderboard.\n" \
-                    "> Give `-dcw` for the 'credits won in duels' leaderboard.\n" \
-                    "> Give `-dcl` for the 'credits lost in duels' leaderboard.\n" \
-                    "> Give `-wt` for the 'bounty wins today' leaderboard.\n" \
+                    longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n" \
+                    "Give any one of the following to change the stat displayed:\n"
+                    "> `-c` => current credits balancd.\n"
+                    "> `-s` => systems checkedd.\n"
+                    "> `-w` => bounties won\n" \
+                    "> `-dps` => loadout dps\n" \
+                    "> `-hp` => loadout total hp\n" \
+                    "> `-cargo` => loadout cargo capacity\n" \
+                    "> `-handling` => loadout handling\n" \
+                    "> `-items` => owned items count\n" \
+                    "> `-equips` => equipped items count\n" \
+                    "> `-dw` => duels won\n" \
+                    "> `-dl` => duels lost\n" \
+                    "> `-dcw` => credits won in duels\n" \
+                    "> `-dcl` => credits lost in duels\n" \
+                    "> `-is` => incorrect system checks\n" \
+                    "> `-a` => check accuracy\n" \
+                    "> `-wt` => bounty wins today\n" \
                     "E.g: `$COMMANDPREFIX$leaderboard -gs`")
 
 
