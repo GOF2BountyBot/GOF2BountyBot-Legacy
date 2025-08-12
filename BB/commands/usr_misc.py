@@ -397,8 +397,8 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     await message.channel.send(embed=leaderboardEmbed)
 
 bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[g]* *[asc]* *[stat]*", 
-                    longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n" \
-                        + "Give `-asc` for the *lowest* scores, instead of highest.\n" \
+                    longHelp="Show the leaderboard for total player value. Give `g` for the global leaderboard, not just this server.\n" \
+                        + "Give `asc` for the *lowest* scores, instead of highest.\n" \
                         + "Give any one of the following to change the stat displayed:\n" \
                         + "> `c` => current credits balancd.\n" \
                         + "> `s` => systems checkedd.\n" \
@@ -416,7 +416,7 @@ bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureS
                         + "> `is` => incorrect system checks\n" \
                         + "> `a` => check accuracy\n" \
                         + "> `wt` => bounty wins today\n" \
-                        + "E.g: `$COMMANDPREFIX$leaderboard -gs`")
+                        + "E.g: `$COMMANDPREFIX$leaderboard g s`")
 
 
 async def cmd_notify(message : discord.Message, args : str, isDM : bool):
