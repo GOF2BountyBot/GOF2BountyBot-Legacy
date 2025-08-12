@@ -521,7 +521,7 @@ class bbUser(bbSerializable.bbSerializable):
             return self.activeShip.getHandling()
         elif stat == "ownedItemsCount":
             return (1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
-                + len(self.inactiveShips) + len(self.inactiveModules) + len(self.inactiveWeapons) + len(self.inactiveTurrets) + len(self.inactiveTools))
+                + self.inactiveShips.totalItems + self.inactiveModules.totalItems + self.inactiveWeapons.totalItems + self.inactiveTurrets.totalItems + self.inactiveTools.totalItems)
         elif stat == "equippedItemsCount":
             return 1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
         elif stat == "duelWins":
@@ -620,7 +620,7 @@ class bbUser(bbSerializable.bbSerializable):
             return self.activeShip.getHandling() - reference.getStatByName("loadoutTotalHandling")
         elif stat == "ownedItemsCount":
             return (1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
-                + len(self.inactiveShips) + len(self.inactiveModules) + len(self.inactiveWeapons) + len(self.inactiveTurrets) + len(self.inactiveTools)) - reference.getStatByName("ownedItemsCount")
+                + self.inactiveShips.totalItems + self.inactiveModules.totalItems + self.inactiveWeapons.totalItems + self.inactiveTurrets.totalItems + self.inactiveTool.totalItemss) - reference.getStatByName("ownedItemsCount")
         elif stat == "equippedItemsCount":
             return 1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets) - reference.getStatByName("equippedItemsCount")
         elif stat == "duelWins":
