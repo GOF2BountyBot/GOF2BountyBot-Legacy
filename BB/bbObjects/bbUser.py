@@ -511,6 +511,33 @@ class bbUser(bbSerializable.bbSerializable):
             return 0 if self.systemsChecked == 0 or self.bountyWins == 0 else bbConfig.truncToRes(self.bountyWins / self.systemsChecked * 100)
         elif stat == "bountyWins":
             return self.bountyWins
+        elif stat == "loadoutTotalDps":
+            return self.activeShip.getDPS()
+        elif stat == "loadoutTotalHp":
+            return self.activeShip.getDPS()
+        elif stat == "loadoutTotalCargo":
+            return self.activeShip.getCargo()
+        elif stat == "loadoutTotalHandling":
+            return self.activeShip.getHandling()
+        elif stat == "ownedItemsCount":
+            return (1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
+                + len(self.inactiveShips) + len(self.inactiveModules) + len(self.inactiveWeapons) + len(self.inactiveTurrets) + len(self.inactiveTools))
+        elif stat == "equippedItemsCount":
+            return 1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
+        elif stat == "duelWins":
+            return self.duelWins
+        elif stat == "duelLosses":
+            return self.duelLosses
+        elif stat == "duelCreditsWins":
+            return self.duelCreditsWins
+        elif stat == "duelLosses":
+            return self.duelLosses
+        elif stat == "bountyWinsToday":
+            return self.bountyWinsToday
+        elif stat == "incorrectChecks":
+            return self.systemsChecked - self.bountyWins
+        elif stat == "checkAccuracy":
+            return self.bountyWins / self.systemsChecked
         elif stat == "value":
             modulesValue = 0
             for module in self.inactiveModules.keys:
@@ -583,6 +610,29 @@ class bbUser(bbSerializable.bbSerializable):
             return bbConfig.truncToRes((self.bountyWins - reference.bountyWins) / (self.systemsChecked - reference.systemsChecked) * 100)
         elif stat == "bountyWins":
             return self.bountyWins - reference.getStatByName("bountyWins")
+        elif stat == "loadoutTotalDps":
+            return self.activeShip.getDPS() - reference.getStatByName("loadoutTotalDps")
+        elif stat == "loadoutTotalHp":
+            return self.activeShip.getDPS() - reference.getStatByName("loadoutTotalHp")
+        elif stat == "loadoutTotalCargo":
+            return self.activeShip.getCargo() - reference.getStatByName("loadoutTotalCargo")
+        elif stat == "loadoutTotalHandling":
+            return self.activeShip.getHandling() - reference.getStatByName("loadoutTotalHandling")
+        elif stat == "ownedItemsCount":
+            return (1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets)
+                + len(self.inactiveShips) + len(self.inactiveModules) + len(self.inactiveWeapons) + len(self.inactiveTurrets) + len(self.inactiveTools)) - reference.getStatByName("ownedItemsCount")
+        elif stat == "equippedItemsCount":
+            return 1 + len(self.activeShip.weapons) + len(self.activeShip.modules) + len(self.activeShip.turrets) - reference.getStatByName("equippedItemsCount")
+        elif stat == "duelWins":
+            return self.duelWins - reference.getStatByName("duelWins")
+        elif stat == "duelLosses":
+            return self.duelLosses - reference.getStatByName("duelLosses")
+        elif stat == "duelCreditsWins":
+            return self.duelCreditsWins - reference.getStatByName("duelCreditsWins")
+        elif stat == "duelLosses":
+            return self.duelLosses - reference.getStatByName("duelLosses")
+        elif stat == "bountyWinsToday":
+            return self.bountyWinsToday - reference.getStatByName("bountyWinsToday")
         elif stat == "value":
             modulesValue = 0
             for module in self.inactiveModules.keys:

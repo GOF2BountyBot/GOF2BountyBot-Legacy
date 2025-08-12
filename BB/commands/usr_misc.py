@@ -246,40 +246,111 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
 
     # change leaderboard arguments based on the what is provided in args
     if args != "":
-        args = args.lower()
-        if not args.startswith("-"):
-            await message.channel.send(":x: Please prefix your arguments with a dash! E.g: `" + bbConfig.commandPrefix + "leaderboard -gc`")
-            return
-        args = args[1:]
-        if ("g" not in args and len(args) > 2) or ("g" in args and len(args) > 3):
-            await message.channel.send(":x: Too many arguments! Please only specify one leaderboard. E.g: `" + bbConfig.commandPrefix + "leaderboard -gc`")
-            return
+        args = [a.strip("-").strip() for a in args.lower().split(" ")]
         for arg in args:
-            if arg not in "gcsw":
+            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt"):
                 await message.channel.send(":x: Unknown argument: '**" + arg + "**'. Please refer to `" + bbConfig.commandPrefix + "help leaderboard`")
                 return
-        if "c" in args:
-            stat = "credits"
-            boardTitle = "Current Balance"
-            boardUnit = "Credit"
-            boardUnits = "Credits"
-            boardDesc = "*Current player credits balance"
-        elif "s" in args:
-            stat = "systemsChecked"
-            boardTitle = "Systems Checked"
-            boardUnit = "System"
-            boardUnits = "Systems"
-            boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed"
-        elif "w" in args:
-            stat = "bountyWins"
-            boardTitle = "Bounties Won"
-            boardUnit = "Bounty"
-            boardUnits = "Bounties"
-            boardDesc = "*Total number of bounties won"
-        if "g" in args:
-            globalBoard = True
-            boardScope = "Global Leaderboard"
-            boardDesc += " across all servers"
+            if arg == "c":
+                stat = "credits"
+                boardTitle = "Current Balance"
+                boardUnit = "Credit"
+                boardUnits = "Credits"
+                boardDesc = "*Current player credits balance"
+            elif arg == "s":
+                stat = "systemsChecked"
+                boardTitle = "Systems Checked"
+                boardUnit = "System"
+                boardUnits = "Systems"
+                boardDesc = "*Total number of systems `" + bbConfig.commandPrefix + "check`ed"
+            elif arg == "w":
+                stat = "bountyWins"
+                boardTitle = "Bounties Won"
+                boardUnit = "Bounty"
+                boardUnits = "Bounties"
+                boardDesc = "*Total number of bounties won"
+            elif arg == "dps":
+                stat = "loadoutTotalDps"
+                boardTitle = "Loadout DPS"
+                boardUnit = "dps"
+                boardUnits = "dps"
+                boardDesc = "*Total DPS of your equipped items"
+            elif arg == "hp":
+                stat = "loadoutTotalHp"
+                boardTitle = "Loadout Total HP"
+                boardUnit = "Hp"
+                boardUnits = "Hp"
+                boardDesc = "*Total HP of your equipped items, for example your hull, armour, and shield"
+            elif arg == "cargo":
+                stat = "loadoutTotalCargo"
+                boardTitle = "Loadout Cargo Capacity"
+                boardUnit = "Tonne"
+                boardUnits = "Tonnes"
+                boardDesc = "*Total loadout cargo capacity"
+            elif arg == "handling":
+                stat = "loadoutTotalHandling"
+                boardTitle = "Loadout Handling"
+                boardUnit = "%"
+                boardUnits = "%"
+                boardDesc = "*Total loadout handling"
+            elif arg == "items":
+                stat = "ownedItemsCount"
+                boardTitle = "Owned Items Count"
+                boardUnit = "Item"
+                boardUnits = "Items"
+                boardDesc = "*Total number of owned items, including hangar and loadout"
+            elif arg == "equips":
+                stat = "equippedItemsCount"
+                boardTitle = "Equipped Items Count"
+                boardUnit = "Item"
+                boardUnits = "Items"
+                boardDesc = "*Total number of equipped items"
+            elif arg == "dw":
+                stat = "duelWins"
+                boardTitle = "Duels Won"
+                boardUnit = "Duel"
+                boardUnits = "Duels"
+                boardDesc = "*Total number of duels won"
+            elif arg == "dl":
+                stat = "duelLosses"
+                boardTitle = "Duels Lost"
+                boardUnit = "Duel"
+                boardUnits = "Duels"
+                boardDesc = "*Total number of duels lost"
+            elif arg == "dcw":
+                stat = "duelCreditsWins"
+                boardTitle = "Credits Won In Duels"
+                boardUnit = "Credit"
+                boardUnits = "Credits"
+                boardDesc = "*Total amount of credits won in duels"
+            elif arg == "dcl":
+                stat = "duelLosses"
+                boardTitle = "Credits Lost In Duels"
+                boardUnit = "Credit"
+                boardUnits = "Credits"
+                boardDesc = "*Total amount of credits lost in duels"
+            elif arg == "wt":
+                stat = "bountyWinsToday"
+                boardTitle = "Bounty Wins Today"
+                boardUnit = "Bounty"
+                boardUnits = "Bounties"
+                boardDesc = "*Total number of bounties won, today only"
+            elif arg == "is":
+                stat = "incorrectChecks"
+                boardTitle = "Incorrect System Checks"
+                boardUnit = "System"
+                boardUnits = "Systems"
+                boardDesc = f"*Number of systems `{bbConfig.commandPrefix}check`ed that were in a bounty route, but were not the answer"
+            elif arg == "a":
+                stat = "checkAccuracy"
+                boardTitle = "Check accuracy"
+                boardUnit = "%"
+                boardUnits = "%"
+                boardDesc = "Ratio of correct to incorrect system `" + bbConfig.commandPrefix + "check`s: `(correct " + bbConfig.commandPrefix + "checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
+            if arg == "g":
+                globalBoard = True
+                boardScope = "Global Leaderboard"
+                boardDesc += " across all servers"
 
     boardDesc += ".*"
 
@@ -317,7 +388,23 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     # send the embed
     await message.channel.send(embed=leaderboardEmbed)
 
-bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[-g|-c|-s|-w]*", longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n> Give `-c` for the current credits balance leaderboard.\n> Give `-s` for the 'systems checked' leaderboard.\n> Give `-w` for the 'bounties won' leaderboard.\nE.g: `$COMMANDPREFIX$leaderboard -gs`")
+bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[-g|-c|-s|-w|-dps|-hp|-cargo|-handling|-items|-equips|-dw|-dl|-dcw|-dcl|-wt]*", 
+                    longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n"
+                    "> Give `-c` for the current credits balance leaderboard.\n"
+                    "> Give `-s` for the 'systems checked' leaderboard.\n"
+                    "> Give `-w` for the 'bounties won' leaderboard.\n" \
+                    "> Give `-dps` for the 'loadout dps' leaderboard.\n" \
+                    "> Give `-hp` for the 'loadout total hp' leaderboard.\n" \
+                    "> Give `-cargo` for the 'loadout cargo capacity' leaderboard.\n" \
+                    "> Give `-handling` for the 'loadout handling' leaderboard.\n" \
+                    "> Give `-items` for the 'owned items count' leaderboard.\n" \
+                    "> Give `-equips` for the 'equipped items count' leaderboard.\n" \
+                    "> Give `-dw` for the 'duels won' leaderboard.\n" \
+                    "> Give `-dl` for the 'duels lost' leaderboard.\n" \
+                    "> Give `-dcw` for the 'credits won in duels' leaderboard.\n" \
+                    "> Give `-dcl` for the 'credits lost in duels' leaderboard.\n" \
+                    "> Give `-wt` for the 'bounty wins today' leaderboard.\n" \
+                    "E.g: `$COMMANDPREFIX$leaderboard -gs`")
 
 
 async def cmd_notify(message : discord.Message, args : str, isDM : bool):

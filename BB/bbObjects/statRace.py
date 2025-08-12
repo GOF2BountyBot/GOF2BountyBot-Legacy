@@ -162,11 +162,33 @@ class StatRace(bbSerializable):
         elif self.statName == "incorrectChecks":
             return "number of incorrect systems checked"
         elif self.statName == "checkAccuracy":
-            return "Ratio of correct to incorrect system `" + bbConfig.commandPrefix + "check`s: `(correct " + bbConfig.commandPrefix + "checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
+            return f"Ratio of correct to incorrect system `{bbConfig.commandPrefix}check`s: `(correct {bbConfig.commandPrefix}checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
         elif self.statName == "bountyWins":
             return "number of bounties won"
         elif self.statName == "lifetimeCredits":
             return "lifetime credits earned"
+        elif self.statName == "loadoutTotalDps":
+            return "loadout DPS"
+        elif self.statName == "loadoutTotalHp":
+            return "loadout total HP"
+        elif self.statName == "loadoutTotalCargo":
+            return "loadout cargo capacity"
+        elif self.statName == "loadoutTotalHandling":
+            return "loadout handling"
+        elif self.statName == "ownedItemsCount":
+            return "number of owned items"
+        elif self.statName == "equippedItemsCount":
+            return "number of equipped items"
+        elif self.statName == "duelWins":
+            return "number of duels won"
+        elif self.statName == "duelLosses":
+            return "number of duels lost"
+        elif self.statName == "duelCreditsWins":
+            return "credits won from duels"
+        elif self.statName == "duelLosses":
+            return "credits lost in duels"
+        elif self.statName == "bountyWinsToday":
+            return "number of bounties won today"
         elif self.statName == "value":
             return "total value"
         else:
@@ -217,6 +239,61 @@ class StatRace(bbSerializable):
             boardUnit = "Credit"
             boardUnits = "Credits"
             boardDesc = "*Total credits earned from bounties"
+        elif self.statName == "loadoutTotalDps":
+            boardTitle = "Loadout DPS"
+            boardUnit = "dps"
+            boardUnits = "dps"
+            boardDesc = "*Total DPS of your equipped items"
+        elif self.statName == "loadoutTotalHp":
+            boardTitle = "Loadout Total HP"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total HP of your equipped items, for example your hull, armour, and shield"
+        elif self.statName == "loadoutTotalCargo":
+            boardTitle = "Loadout Cargo Capacity"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total loadout cargo capacity"
+        elif self.statName == "loadoutTotalHandling":
+            boardTitle = "Loadout Handling"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total loadout handling"
+        elif self.statName == "ownedItemsCount":
+            boardTitle = "Owned Items Count"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total number of owned items, including hangar and loadout"
+        elif self.statName == "equippedItemsCount":
+            boardTitle = "Equipped Items Count"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total number of equipped items"
+        elif self.statName == "duelWins":
+            boardTitle = "Duels Won"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total number of duels won"
+        elif self.statName == "duelLosses":
+            boardTitle = "Duels Lost"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total number of duels lost"
+        elif self.statName == "duelCreditsWins":
+            boardTitle = "Credits Won In Duels"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total amount of credits won in duels"
+        elif self.statName == "duelLosses":
+            boardTitle = "Credits Lost In Duels"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total amount of credits lost in duels"
+        elif self.statName == "bountyWinsToday":
+            boardTitle = "Bounty Wins Today"
+            boardUnit = "Bounty"
+            boardUnits = "Bounties"
+            boardDesc = "*Total number of bounties won, today only"
         elif self.statName == "value":
             boardTitle = "Total Value"
             boardUnit = "Credit"
