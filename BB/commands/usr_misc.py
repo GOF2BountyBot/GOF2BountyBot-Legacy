@@ -243,6 +243,7 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     boardUnit = "Credit"
     boardUnits = "Credits"
     boardDesc = "*The total value of player inventory, loadout and credits balance"
+    asc = False
 
     # change leaderboard arguments based on the what is provided in args
     if args != "":
@@ -351,6 +352,10 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
                 globalBoard = True
                 boardScope = "Global Leaderboard"
                 boardDesc += " across all servers"
+            if arg == "asc":
+                asc = True
+                boardTitle = f"Lowest {boardTitle}"
+                boardDesc = f"Lowest {boardDesc[0].lower()}{boardDesc[1:]}"
 
     boardDesc += ".*"
 
@@ -359,7 +364,7 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     for user in bbGlobals.usersDB.getUsers():
         if (globalBoard and bbGlobals.client.get_user(user.id) is not None) or (not globalBoard and message.guild.get_member(user.id) is not None):
             inputDict[user.id] = user.getStatByName(stat)
-    sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1))[::-1]
+    sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not asc)
 
     # build the leaderboard embed
     leaderboardEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, authorName=boardScope,
@@ -372,13 +377,13 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
         # handling for global leaderboards and users not in the local guild
         if globalBoard and message.guild.get_member(sortedUsers[place][0]) is None:
             leaderboardEmbed.add_field(value="*" + str(place + 1) + ". " + str(bbGlobals.client.get_user(sortedUsers[place][0])), name=(
-                "⭐ " if first else "") + str(sortedUsers[place][1]) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
+                "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             externalUser = True
             if first:
                 first = False
         else:
             leaderboardEmbed.add_field(value=str(place + 1) + ". " + message.guild.get_member(sortedUsers[place][0]).mention, name=(
-                "⭐ " if first else "") + str(sortedUsers[place][1]) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
+                "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             if first:
                 first = False
     # If at least one external use is on the leaderboard, give a key
@@ -390,24 +395,25 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
 
 bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[-g|-c|-s|-w|-dps|-hp|-cargo|-handling|-items|-equips|-dw|-dl|-dcw|-dcl|-wt]*", 
                     longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n" \
-                    "Give any one of the following to change the stat displayed:\n"
-                    "> `-c` => current credits balancd.\n"
-                    "> `-s` => systems checkedd.\n"
-                    "> `-w` => bounties won\n" \
-                    "> `-dps` => loadout dps\n" \
-                    "> `-hp` => loadout total hp\n" \
-                    "> `-cargo` => loadout cargo capacity\n" \
-                    "> `-handling` => loadout handling\n" \
-                    "> `-items` => owned items count\n" \
-                    "> `-equips` => equipped items count\n" \
-                    "> `-dw` => duels won\n" \
-                    "> `-dl` => duels lost\n" \
-                    "> `-dcw` => credits won in duels\n" \
-                    "> `-dcl` => credits lost in duels\n" \
-                    "> `-is` => incorrect system checks\n" \
-                    "> `-a` => check accuracy\n" \
-                    "> `-wt` => bounty wins today\n" \
-                    "E.g: `$COMMANDPREFIX$leaderboard -gs`")
+                        + "Give `-asc` for the *lowest* scores, instead of highest.\n" \
+                        + "Give any one of the following to change the stat displayed:\n" \
+                        + "> `-c` => current credits balancd.\n" \
+                        + "> `-s` => systems checkedd.\n" \
+                        + "> `-w` => bounties won\n" \
+                        + "> `-dps` => loadout dps\n" \
+                        + "> `-hp` => loadout total hp\n" \
+                        + "> `-cargo` => loadout cargo capacity\n" \
+                        + "> `-handling` => loadout handling\n" \
+                        + "> `-items` => owned items count\n" \
+                        + "> `-equips` => equipped items count\n" \
+                        + "> `-dw` => duels won\n" \
+                        + "> `-dl` => duels lost\n" \
+                        + "> `-dcw` => credits won in duels\n" \
+                        + "> `-dcl` => credits lost in duels\n" \
+                        + "> `-is` => incorrect system checks\n" \
+                        + "> `-a` => check accuracy\n" \
+                        + "> `-wt` => bounty wins today\n" \
+                        + "E.g: `$COMMANDPREFIX$leaderboard -gs`")
 
 
 async def cmd_notify(message : discord.Message, args : str, isDM : bool):
