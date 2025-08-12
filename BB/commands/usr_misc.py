@@ -249,7 +249,7 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     if args != "":
         args = [a.strip("-").strip() for a in args.lower().split(" ")]
         for arg in args:
-            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt", "is", "a"):
+            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt", "is", "a", "asc"):
                 await message.channel.send(":x: Unknown argument: '**" + arg + "**'. Please refer to `" + bbConfig.commandPrefix + "help leaderboard`")
                 return
             if arg == "c":
@@ -350,12 +350,15 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
                 boardDesc = f"Ratio of correct to incorrect system `{bbConfig.commandPrefix}check`s: `(correct {bbConfig.commandPrefix}checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
             if arg == "g":
                 globalBoard = True
-                boardScope = "Global Leaderboard"
-                boardDesc += " across all servers"
             if arg == "asc":
                 asc = True
-                boardTitle = f"Lowest {boardTitle}"
-                boardDesc = f"Lowest {boardDesc[0].lower()}{boardDesc[1:]}"
+
+    if globalBoard:
+        boardScope = "Global Leaderboard"
+        boardDesc += " across all servers"
+    if asc:
+        boardTitle = f"Lowest {boardTitle}"
+        boardDesc = f"Lowest {boardDesc[0].lower()}{boardDesc[1:]}"
 
     boardDesc += ".*"
 
@@ -393,26 +396,26 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     # send the embed
     await message.channel.send(embed=leaderboardEmbed)
 
-bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[-g|-c|-s|-w|-dps|-hp|-cargo|-handling|-items|-equips|-dw|-dl|-dcw|-dcl|-wt]*", 
+bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[g]* *[asc]* *[stat]*", 
                     longHelp="Show the leaderboard for total player value. Give `-g` for the global leaderboard, not just this server.\n" \
                         + "Give `-asc` for the *lowest* scores, instead of highest.\n" \
                         + "Give any one of the following to change the stat displayed:\n" \
-                        + "> `-c` => current credits balancd.\n" \
-                        + "> `-s` => systems checkedd.\n" \
-                        + "> `-w` => bounties won\n" \
-                        + "> `-dps` => loadout dps\n" \
-                        + "> `-hp` => loadout total hp\n" \
-                        + "> `-cargo` => loadout cargo capacity\n" \
-                        + "> `-handling` => loadout handling\n" \
-                        + "> `-items` => owned items count\n" \
-                        + "> `-equips` => equipped items count\n" \
-                        + "> `-dw` => duels won\n" \
-                        + "> `-dl` => duels lost\n" \
-                        + "> `-dcw` => credits won in duels\n" \
-                        + "> `-dcl` => credits lost in duels\n" \
-                        + "> `-is` => incorrect system checks\n" \
-                        + "> `-a` => check accuracy\n" \
-                        + "> `-wt` => bounty wins today\n" \
+                        + "> `c` => current credits balancd.\n" \
+                        + "> `s` => systems checkedd.\n" \
+                        + "> `w` => bounties won\n" \
+                        + "> `dps` => loadout dps\n" \
+                        + "> `hp` => loadout total hp\n" \
+                        + "> `cargo` => loadout cargo capacity\n" \
+                        + "> `handling` => loadout handling\n" \
+                        + "> `items` => owned items count\n" \
+                        + "> `equips` => equipped items count\n" \
+                        + "> `dw` => duels won\n" \
+                        + "> `dl` => duels lost\n" \
+                        + "> `dcw` => credits won in duels\n" \
+                        + "> `dcl` => credits lost in duels\n" \
+                        + "> `is` => incorrect system checks\n" \
+                        + "> `a` => check accuracy\n" \
+                        + "> `wt` => bounty wins today\n" \
                         + "E.g: `$COMMANDPREFIX$leaderboard -gs`")
 
 
