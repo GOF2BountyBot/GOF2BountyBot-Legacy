@@ -514,7 +514,7 @@ class bbUser(bbSerializable.bbSerializable):
         elif stat == "loadoutTotalDps":
             return self.activeShip.getDPS()
         elif stat == "loadoutTotalHp":
-            return self.activeShip.getDPS()
+            return self.activeShip.getShield() + self.activeShip.getArmour()
         elif stat == "loadoutTotalCargo":
             return self.activeShip.getCargo()
         elif stat == "loadoutTotalHandling":
@@ -613,7 +613,7 @@ class bbUser(bbSerializable.bbSerializable):
         elif stat == "loadoutTotalDps":
             return self.activeShip.getDPS() - reference.getStatByName("loadoutTotalDps")
         elif stat == "loadoutTotalHp":
-            return self.activeShip.getDPS() - reference.getStatByName("loadoutTotalHp")
+            return self.activeShip.getShield() + self.activeShip.getArmour() - reference.getStatByName("loadoutTotalHp")
         elif stat == "loadoutTotalCargo":
             return self.activeShip.getCargo() - reference.getStatByName("loadoutTotalCargo")
         elif stat == "loadoutTotalHandling":
