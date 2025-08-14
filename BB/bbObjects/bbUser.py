@@ -522,6 +522,8 @@ class bbUser(bbSerializable.bbSerializable):
                 checkAccuracy = currentUser.bountyWins / currentUser.systemsChecked
             else:
                 referenceUser = referenceData.getUser(self.id)
+                if referenceUser.systemsChecked == currentUser.systemsChecked:
+                    return 0
                 checkAccuracy = (currentUser.bountyWins - referenceUser.bountyWins) / (currentUser.systemsChecked - referenceUser.systemsChecked)
 
             if len(referenceData.users) <= 1:
