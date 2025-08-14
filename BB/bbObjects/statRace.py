@@ -98,6 +98,7 @@ class StatRace(bbSerializable):
         # when orderAsc is false, the timestamp is negative
         inputDict: Dict[int, Tuple[Union[int, float], float]] = {}
         user: bbUser.bbUser
+          
         average = 0.0
         users = endSaveData.getUsers()
 
@@ -202,14 +203,16 @@ class StatRace(bbSerializable):
             return "number of bounties won today"
         elif self.statName == "value":
             return "total value"
+        elif self.statName == "averageCheckCountWeightedCheckAccuracy":
+            return "check accuracy (weighted by the global average checks)"
         else:
             raise ValueError(f"unrecognised stat: {self.statName}") 
         
 
     def getFormattedScoreModeExt(self) -> str:
-        if self.scoreMode == "increase":
+        if self.scoreMode == "delta":
             return "increase"
-        if self.scoreMode == "periodonly":
+        if self.scoreMode == "periodonly" or self.scoreMode == "relativeperiodonly":
             return "during the race"
         return ""
     
@@ -310,6 +313,11 @@ class StatRace(bbSerializable):
             boardUnit = "Credit"
             boardUnits = "Credits"
             boardDesc = "*The total value of player inventory, loadout and credits balance"
+        elif self.statName == "averageCheckCountWeightedCheckAccuracy":
+            boardTitle = "Check Accuracy (Weighted by Global Average Checks)"
+            boardUnit = "%"
+            boardUnits = "%"
+            boardDesc = f"Ratio of correct to incorrect system `{bbConfig.commandPrefix}check`s, relative to the global average number of system checks: `(correct {bbConfig.commandPrefix}checks / total {bbConfig.commandPrefix}checks) / (sqrt(total {bbConfig.commandPrefix}checks) / sqrt(global average {bbConfig.commandPrefix}checks))`"
         else:
             err = f"unrecognised stat: {self.statName}"
             logging.bbLogger.log(StatRace.__name__, StatRace.makeLeaderboardEmbed.__name__, err)
@@ -320,7 +328,7 @@ class StatRace(bbSerializable):
             boardTitle = f"Lowest {boardTitle}"
         if self.scoreMode == "delta":
             boardTitle = f"{boardTitle} Delta"
-        elif self.scoreMode == "periodonly":
+        elif self.scoreMode == "periodonly" or self.scoreMode == "periodonlyrelative":
             boardTitle = f"{boardTitle} During the Race"
 
         boardTitle = f"{self.startDate.strftime('%d/%m/%Y')} {lib.timeUtil.td_format(self.startDate, self.endDate).title()} Stat Race: {boardTitle}"
