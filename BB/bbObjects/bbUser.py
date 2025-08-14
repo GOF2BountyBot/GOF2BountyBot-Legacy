@@ -19,9 +19,6 @@ from ..baseClasses import bbSerializable
 from ..bbDatabases import bbUserDB
 import math
 
-import math
-
-
 # Dictionary-serialized bbShip to give to new players
 defaultShipLoadoutDict = {"name": "Betty", "builtIn":True,
                         "weapons":[{"name": "Micro Gun MK I", "builtIn": True}],
