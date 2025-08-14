@@ -575,7 +575,7 @@ async def dev_cmd_startStatRace(message : discord.Message, args : str, isDM : bo
 
     scoreModeMatch = re.match(".*scoremode=(\\[a-z]+)", args, re.IGNORECASE)
     scoreMode = scoreModeMatch.group(1).lower() if scoreModeMatch else "lifetime"
-    if scoreMode not in ("lifetime", "delta", "periodonly"):
+    if scoreMode not in ("lifetime", "delta", "periodonly", "relativeperiodonly", "relativelifetime"):
         await message.channel.send(":x: invalid score mode")
         return
 
@@ -695,7 +695,7 @@ bbCommands.register("make-stat-race", dev_cmd_startStatRace, 2, allowDM=True, he
                         + "kwargs:\n"
                         + "- `guildId` (int)\n"
                         + "- `statname` (str, currently credits, lifetimeCredits, systemsChecked, bountyWins, value, incorrectChecks, checkAccuracy)\n"
-                        + "- `scoreMode` (str, `lifetime`, `delta`, or `periodOnly`, default `lifetime`)\n"
+                        + "- `scoreMode` (str, `lifetime`, `delta`, `periodOnly`, `lifetimeRelative`, or `periodOnlyRelative`, default `lifetime`)\n"
                         + "- `orderAsc` (bool, default false)\n"
                         + "- `startInDays` (int, default 1)\n"
                         + "- `months` (int)\n"

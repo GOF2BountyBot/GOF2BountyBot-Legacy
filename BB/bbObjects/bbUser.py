@@ -16,6 +16,8 @@ from . import bbGuild
 from ..logging import bbLogger
 from .. import lib
 from ..baseClasses import bbSerializable
+from ..bbDatabases import bbUserDB
+import math
 
 
 # Dictionary-serialized bbShip to give to new players
@@ -485,6 +487,56 @@ class bbUser(bbSerializable.bbSerializable):
         for att in [self.credits, self.lifetimeCredits, self.bountyCooldownEnd, self.systemsChecked, self.bountyWins]:
             data += str(att) + "/"
         return data[:-1]
+
+
+    def getRelativeStatByName(self, stat : str, userDb: "bbUserDB.bbUserDB") -> Union[int, float]:
+        if stat == "averageCheckCountWeightedCheckAccuracy":
+            if self.systemsChecked == 0:
+                return 0
+            
+            checkAccuracy = self.bountyWins / self.systemsChecked
+
+            if len(userDb.users) <= 1:
+                averageCheckCount = 1
+            else:
+                averageCheckCount = sum(u.systemsChecked for u in userDb.users.values()) / len(userDb.users)
+
+            return checkAccuracy / (math.sqrt(self.systemsChecked) / math.sqrt(averageCheckCount))
+
+        raise ValueError("Unknown relative stat name: " + str(stat))
+
+
+    def getPeriodOnlyRelativeStatByName(self, stat : str, currentData: "bbUserDB.bbUserDB", referenceData: "bbUserDB.bbUserDB") -> Union[int, float]:
+        if stat == "averageCheckCountWeightedCheckAccuracy":
+            if not currentData.userIDExists(self.id):
+                return 0
+            
+            currentUser = currentData.getUser(self.id)
+
+            if currentUser.systemsChecked == 0:
+                return 0
+            
+            if not referenceData.userIDExists(self.id):
+                checkAccuracy = currentUser.bountyWins / currentUser.systemsChecked
+            else:
+                referenceUser = referenceData.getUser(self.id)
+                checkAccuracy = (currentUser.bountyWins - referenceUser.bountyWins) / (currentUser.systemsChecked - referenceUser.systemsChecked)
+
+            if len(referenceData.users) <= 1:
+                averageCheckCount = 1
+            else:
+                def getPeriodSystemChecks(currentUser: "bbUser") -> float:
+                    if not referenceData.userIDExists(currentUser.id):
+                        return currentUser.systemsChecked
+                    
+                    referenceUser = referenceData.getUser(currentUser.id)
+                    return currentUser.systemsChecked - referenceUser.systemsChecked
+                
+                averageCheckCount = sum(getPeriodSystemChecks(u) for u in referenceData.users.values()) / len(referenceData.users)
+
+            return checkAccuracy / (math.sqrt(self.systemsChecked) / math.sqrt(averageCheckCount))
+
+        raise ValueError("Unknown relative stat name: " + str(stat))
 
 
     def getStatByName(self, stat : str) -> Union[int, float]:
