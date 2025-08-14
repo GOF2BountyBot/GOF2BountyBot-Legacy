@@ -100,7 +100,6 @@ class StatRace(bbSerializable):
         user: bbUser.bbUser
         for user in endSaveData.getUsers():
             if self.scoreMode == "periodonlyrelative":
-                reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
                 lastUpdated = user.getStatUpdatedTime(self.statName)
                 lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
                 inputDict[user.id] = (user.getPeriodOnlyRelativeStatByName(self.statName, endSaveData, startSaveData), (1 if self.orderAsc else -1) * lastUpdatedStamp)

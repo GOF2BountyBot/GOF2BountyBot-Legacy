@@ -531,7 +531,7 @@ class bbUser(bbSerializable.bbSerializable):
                     referenceUser = referenceData.getUser(currentUser.id)
                     return currentUser.systemsChecked - referenceUser.systemsChecked
                 
-                averageCheckCount = sum(getPeriodSystemChecks(u) for u in referenceData.users.values()) / len(referenceData.users)
+                averageCheckCount = sum(getPeriodSystemChecks(u) for u in currentData.users.values()) / len(referenceData.users)
             
             averageCheckCount = averageCheckCount or 1
             
