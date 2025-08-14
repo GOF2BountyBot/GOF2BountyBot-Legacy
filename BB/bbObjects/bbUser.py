@@ -500,6 +500,8 @@ class bbUser(bbSerializable.bbSerializable):
                 averageCheckCount = 1
             else:
                 averageCheckCount = sum(u.systemsChecked for u in userDb.users.values()) / len(userDb.users)
+            
+            averageCheckCount = averageCheckCount or 1
 
             return checkAccuracy / (math.sqrt(self.systemsChecked) / math.sqrt(averageCheckCount))
 
@@ -533,7 +535,9 @@ class bbUser(bbSerializable.bbSerializable):
                     return currentUser.systemsChecked - referenceUser.systemsChecked
                 
                 averageCheckCount = sum(getPeriodSystemChecks(u) for u in referenceData.users.values()) / len(referenceData.users)
-
+            
+            averageCheckCount = averageCheckCount or 1
+            
             return checkAccuracy / (math.sqrt(self.systemsChecked) / math.sqrt(averageCheckCount))
 
         raise ValueError("Unknown relative stat name: " + str(stat))
