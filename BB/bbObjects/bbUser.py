@@ -510,21 +510,16 @@ class bbUser(bbSerializable.bbSerializable):
 
     def getPeriodOnlyRelativeStatByName(self, stat : str, currentData: "bbUserDB.bbUserDB", referenceData: "bbUserDB.bbUserDB") -> Union[int, float]:
         if stat == "averageCheckCountWeightedCheckAccuracy":
-            if not currentData.userIDExists(self.id):
-                return 0
-            
-            currentUser = currentData.getUser(self.id)
-
-            if currentUser.systemsChecked == 0:
+            if self.systemsChecked == 0:
                 return 0
             
             if not referenceData.userIDExists(self.id):
-                checkAccuracy = currentUser.bountyWins / currentUser.systemsChecked
+                checkAccuracy = self.bountyWins / self.systemsChecked
             else:
                 referenceUser = referenceData.getUser(self.id)
-                if referenceUser.systemsChecked == currentUser.systemsChecked:
+                if referenceUser.systemsChecked == self.systemsChecked:
                     return 0
-                checkAccuracy = (currentUser.bountyWins - referenceUser.bountyWins) / (currentUser.systemsChecked - referenceUser.systemsChecked)
+                checkAccuracy = (self.bountyWins - referenceUser.bountyWins) / (self.systemsChecked - referenceUser.systemsChecked)
 
             if len(referenceData.users) <= 1:
                 averageCheckCount = 1
