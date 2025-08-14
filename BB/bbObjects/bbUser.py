@@ -521,17 +521,14 @@ class bbUser(bbSerializable.bbSerializable):
                     return 0
                 checkAccuracy = (self.bountyWins - referenceUser.bountyWins) / (self.systemsChecked - referenceUser.systemsChecked)
 
-            if len(referenceData.users) <= 1:
-                averageCheckCount = 1
-            else:
-                def getPeriodSystemChecks(currentUser: "bbUser") -> float:
-                    if not referenceData.userIDExists(currentUser.id):
-                        return currentUser.systemsChecked
-                    
-                    referenceUser = referenceData.getUser(currentUser.id)
-                    return currentUser.systemsChecked - referenceUser.systemsChecked
+            def getPeriodSystemChecks(currentUser: "bbUser") -> float:
+                if not referenceData.userIDExists(currentUser.id):
+                    return currentUser.systemsChecked
                 
-                averageCheckCount = sum(getPeriodSystemChecks(u) for u in currentData.users.values()) / len(referenceData.users)
+                referenceUser = referenceData.getUser(currentUser.id)
+                return currentUser.systemsChecked - referenceUser.systemsChecked
+            
+            averageCheckCount = sum(getPeriodSystemChecks(u) for u in currentData.users.values()) / len(currentData.users)
             
             averageCheckCount = averageCheckCount or 1
             
