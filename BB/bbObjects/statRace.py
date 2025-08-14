@@ -104,11 +104,11 @@ class StatRace(bbSerializable):
                 lastUpdated = user.getStatUpdatedTime(self.statName)
                 lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
                 inputDict[user.id] = (user.getPeriodOnlyRelativeStatByName(self.statName, endSaveData, startSaveData), (1 if self.orderAsc else -1) * lastUpdatedStamp)
-            if self.scoreMode == "lifetimerelative":
+            elif self.scoreMode == "lifetimerelative":
                 lastUpdated = user.getStatUpdatedTime(self.statName)
                 lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
                 inputDict[user.id] = (user.getRelativeStatByName(self.statName, endSaveData), (1 if self.orderAsc else -1) * lastUpdatedStamp)
-            if self.scoreMode == "periodonly":
+            elif self.scoreMode == "periodonly":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
                 lastUpdated = user.getStatUpdatedTime(self.statName)
                 lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
