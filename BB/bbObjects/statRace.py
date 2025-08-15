@@ -103,6 +103,7 @@ class StatRace(bbSerializable):
         users = endSaveData.getUsers()
 
         if self.statName == "checkAccuracy" and self.scoreMode == "periodonly":
+            reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
             total = sum(
                 user.getPeriodOnlyStatByName("systemsChecked", reference)
                 for user in users
