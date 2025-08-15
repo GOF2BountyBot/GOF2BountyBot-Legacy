@@ -106,7 +106,7 @@ class StatRace(bbSerializable):
             def getReferenceUser(userId: int):
                 return startSaveData.getUser(userId) if startSaveData.userIDExists(userId) else defaultUser
             total = sum(
-                user.getPeriodOnlyStatByName("systemsChecked", getReferenceUser(user.id))
+                user.getPeriodOnlyStatByName("systemsChecked", getReferenceUser(user.id), average=0)
                 for user in users
             )
             count = len(users)
