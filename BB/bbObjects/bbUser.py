@@ -19,7 +19,6 @@ from ..baseClasses import bbSerializable
 from ..bbDatabases import bbUserDB
 import math
 
-
 # Dictionary-serialized bbShip to give to new players
 defaultShipLoadoutDict = {"name": "Betty", "builtIn":True,
                         "weapons":[{"name": "Micro Gun MK I", "builtIn": True}],
@@ -641,7 +640,7 @@ class bbUser(bbSerializable.bbSerializable):
         self.statChangeTimes[stat] = ts
 
 
-    def getPeriodOnlyStatByName(self, stat: str, reference: "bbUser") -> Union[int, float]:
+    def getPeriodOnlyStatByName(self, stat: str, reference: "bbUser", average: float) -> Union[int, float]:
         if stat == "id":
             return self.id
         elif stat == "credits":
@@ -657,7 +656,12 @@ class bbUser(bbSerializable.bbSerializable):
         elif stat == "checkAccuracy":
             if self.bountyWins <= reference.bountyWins or self.systemsChecked <= reference.systemsChecked:
                 return 0
-            return bbConfig.truncToRes((self.bountyWins - reference.bountyWins) / (self.systemsChecked - reference.systemsChecked) * 100)
+            
+            checks = (self.systemsChecked - reference.systemsChecked)
+            basePercentage = (self.bountyWins - reference.bountyWins) / checks
+            checkMultiplier = math.sqrt(checks) / math.sqrt(average)
+
+            return bbConfig.truncToRes(basePercentage * checkMultiplier)
         elif stat == "bountyWins":
             return self.bountyWins - reference.getStatByName("bountyWins")
         elif stat == "loadoutTotalDps":
