@@ -98,20 +98,26 @@ class StatRace(bbSerializable):
         # when orderAsc is false, the timestamp is negative
         inputDict: Dict[int, Tuple[Union[int, float], float]] = {}
         user: bbUser.bbUser
-        for user in endSaveData.getUsers():
-            if self.scoreMode == "periodonlyrelative":
-                lastUpdated = user.getStatUpdatedTime(self.statName)
-                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
-                inputDict[user.id] = (user.getPeriodOnlyRelativeStatByName(self.statName, endSaveData, startSaveData), (1 if self.orderAsc else -1) * lastUpdatedStamp)
-            elif self.scoreMode == "lifetimerelative":
-                lastUpdated = user.getStatUpdatedTime(self.statName)
-                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
-                inputDict[user.id] = (user.getRelativeStatByName(self.statName, endSaveData), (1 if self.orderAsc else -1) * lastUpdatedStamp)
-            elif self.scoreMode == "periodonly":
+          
+        average = 0.0
+        users = endSaveData.getUsers()
+
+        if self.statName == "checkAccuracy" and self.scoreMode == "periodonly":
+            def getReferenceUser(userId: int):
+                return startSaveData.getUser(userId) if startSaveData.userIDExists(userId) else defaultUser
+            total = sum(
+                user.getPeriodOnlyStatByName("systemsChecked", getReferenceUser(user.id), average=0)
+                for user in users
+            )
+            count = len(users)
+            average = total / count if count else 0.0
+
+        for user in users:
+            if self.scoreMode == "periodonly":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
                 lastUpdated = user.getStatUpdatedTime(self.statName)
-                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()
-                inputDict[user.id] = (user.getPeriodOnlyStatByName(self.statName, reference), (1 if self.orderAsc else -1) * lastUpdatedStamp)
+                lastUpdatedStamp = 0 if lastUpdated == datetime.min else lastUpdated.timestamp()      
+                inputDict[user.id] = (user.getPeriodOnlyStatByName(self.statName, reference, average), (1 if self.orderAsc else -1) * lastUpdatedStamp)
             elif self.scoreMode == "delta":
                 reference = startSaveData.getUser(user.id) if startSaveData.userIDExists(user.id) else defaultUser
                 lastUpdated = user.getStatUpdatedTime(self.statName)
