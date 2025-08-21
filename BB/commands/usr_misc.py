@@ -431,13 +431,13 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
         # handling for global leaderboards and users not in the local guild
         if globalBoard and message.guild.get_member(sortedUsers[place][0]) is None:
             leaderboardEmbed.add_field(value="*" + str(place + skip + 1) + ". " + str(bbGlobals.client.get_user(sortedUsers[place][0])), name=(
-                "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
+                "⭐ " if first and not skip else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             externalUser = True
             if first:
                 first = False
         else:
             leaderboardEmbed.add_field(value=str(place + skip + 1) + ". " + message.guild.get_member(sortedUsers[place][0]).mention, name=(
-                "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
+                "⭐ " if first and not skip else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             if first:
                 first = False
 
