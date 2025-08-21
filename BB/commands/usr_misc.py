@@ -244,15 +244,45 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     boardUnits = "Credits"
     boardDesc = "*The total value of player inventory, loadout and credits balance"
     asc = False
+    skip = 0
+    findMe = False
+    excludeDefaultValue = False
 
     # change leaderboard arguments based on the what is provided in args
+    args = args.lower().replace("-", "")
     if args != "":
         args = [a.strip("-").strip() for a in args.lower().split(" ")]
-        for arg in args:
-            if arg not in "gcsw" and arg not in ("dps", "hp", "cargo", "handling", "items", "equips", "dw", "dl", "dcw", "dcl", "wt", "is", "a", "asc"):
-                await message.channel.send(":x: Unknown argument: '**" + arg + "**'. Please refer to `" + bbConfig.commandPrefix + "help leaderboard`")
-                return
-            if arg == "c":
+        skipIteration = False
+        for i, arg in enumerate(args):
+            if skipIteration:
+                skipIteration = False
+                continue
+
+            if arg == "nonewbies":
+                excludeDefaultValue = True
+
+            elif arg == "skip":
+                if findMe:
+                    await message.channel.send(":x: `skip` cannot be used with `me`!")
+                    return
+                
+                if i == len(args) - 1 or not lib.stringTyping.isInt(args[i+1]):
+                    await message.channel.send(":x: Give the number of places to skip after `skip`! E.g `skip 10`")
+                    return
+
+                skip = int(args[i+1])
+                if skip < 1:
+                    await message.channel.send(":x: `skip` must be at least 1.")
+                    return
+                
+                skipIteration = True
+
+            elif arg == "me":
+                if skip != 0:
+                    await message.channel.send(":x: `skip` cannot be used with `me`!")
+                    return
+                findMe = True
+            elif arg == "c":
                 stat = "credits"
                 boardTitle = "Current Balance"
                 boardUnit = "Credit"
@@ -348,10 +378,13 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
                 boardUnit = "%"
                 boardUnits = "%"
                 boardDesc = f"Ratio of correct to incorrect system `{bbConfig.commandPrefix}check`s: `(correct {bbConfig.commandPrefix}checks / incorrect " + bbConfig.commandPrefix + "checks) * 100`"
-            if arg == "g":
+            elif arg == "g":
                 globalBoard = True
-            if arg == "asc":
+            elif arg == "asc":
                 asc = True
+            else:
+                await message.channel.send(":x: Unknown argument: '**" + arg + "**'. Please refer to `" + bbConfig.commandPrefix + "help leaderboard`")
+                return
 
     if globalBoard:
         boardScope = "Global Leaderboard"
@@ -361,13 +394,31 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
         boardDesc = f"Lowest {boardDesc[0].lower()}{boardDesc[1:]}"
 
     boardDesc += ".*"
+    defaultUser = bbUser.bbUser.fromDict(bbUser.defaultUserDict, id=0)
 
     # get the requested stats and sort users by the stat
     inputDict = {}
     for user in bbGlobals.usersDB.getUsers():
         if (globalBoard and bbGlobals.client.get_user(user.id) is not None) or (not globalBoard and message.guild.get_member(user.id) is not None):
-            inputDict[user.id] = user.getStatByName(stat)
+            userStat = user.getStatByName(stat)
+            if not excludeDefaultValue or userStat != defaultUser.getStatByName(stat):
+                inputDict[user.id] = userStat
+    
     sortedUsers = sorted(inputDict.items(), key=operator.itemgetter(1), reverse=not asc)
+    userNotFound = False
+
+    if findMe:
+        try:
+            userIndex = next(i for i, (uId, s) in enumerate(sortedUsers) if uId == message.author.id)
+        except StopIteration:
+            userIndex = -1
+            userNotFound = True
+        
+        if userIndex != -1:
+            skip = max(0, min(userIndex, len(sortedUsers)) - 5)
+
+    if skip != 0:
+        sortedUsers = sortedUsers[skip:]
 
     # build the leaderboard embed
     leaderboardEmbed = lib.discordUtil.makeEmbed(titleTxt=boardTitle, authorName=boardScope,
@@ -379,26 +430,31 @@ async def cmd_leaderboard(message : discord.Message, args : str, isDM : bool):
     for place in range(min(len(sortedUsers), 10)):
         # handling for global leaderboards and users not in the local guild
         if globalBoard and message.guild.get_member(sortedUsers[place][0]) is None:
-            leaderboardEmbed.add_field(value="*" + str(place + 1) + ". " + str(bbGlobals.client.get_user(sortedUsers[place][0])), name=(
+            leaderboardEmbed.add_field(value="*" + str(place + skip + 1) + ". " + str(bbGlobals.client.get_user(sortedUsers[place][0])), name=(
                 "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             externalUser = True
             if first:
                 first = False
         else:
-            leaderboardEmbed.add_field(value=str(place + 1) + ". " + message.guild.get_member(sortedUsers[place][0]).mention, name=(
+            leaderboardEmbed.add_field(value=str(place + skip + 1) + ". " + message.guild.get_member(sortedUsers[place][0]).mention, name=(
                 "⭐ " if first else "") + str(round(sortedUsers[place][1], 2)) + " " + (boardUnit if sortedUsers[place][1] == 1 else boardUnits), inline=False)
             if first:
                 first = False
+
     # If at least one external use is on the leaderboard, give a key
     if externalUser:
         leaderboardEmbed.set_footer(
             text="An `*` indicates a user that is from another server.")
+        
     # send the embed
-    await message.channel.send(embed=leaderboardEmbed)
+    await message.channel.send("You are not on this leaderboard!" if userNotFound else "", embed=leaderboardEmbed)
 
-bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[g]* *[asc]* *[stat]*", 
+bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureStr="**leaderboard** *[g]* *[asc]* *[me|skip **<places>**]* *[noNewbies]* *[stat]*", 
                     longHelp="Show the leaderboard for total player value. Give `g` for the global leaderboard, not just this server.\n" \
                         + "Give `asc` for the *lowest* scores, instead of highest.\n" \
+                        + "Give `me` to find yourself in the leaderboard.\n"
+                        + "Give `skip <places>` to skip the top `places` players in the leaderboard.\n"
+                        + "Give `noNewbies` to omit players with the same stat value as a new player.\n" 
                         + "Give any one of the following to change the stat displayed:\n" \
                         + "> `c` => current credits balancd.\n" \
                         + "> `s` => systems checkedd.\n" \
@@ -415,8 +471,7 @@ bbCommands.register("leaderboard", cmd_leaderboard, 0, allowDM=False, signatureS
                         + "> `dcl` => credits lost in duels\n" \
                         + "> `is` => incorrect system checks\n" \
                         + "> `a` => check accuracy\n" \
-                        + "> `wt` => bounty wins today\n" \
-                        + "E.g: `$COMMANDPREFIX$leaderboard g s`")
+                        + "> `wt` => bounty wins today")
 
 
 async def cmd_notify(message : discord.Message, args : str, isDM : bool):
