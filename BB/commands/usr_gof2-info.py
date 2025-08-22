@@ -1017,6 +1017,7 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
             aei = AEPi.AEI(im, format=AEPi.CompressionFormat.DXT5)
             aei.write(aeiBytes)
 
+            aeiBytes.seek(0)
             aeiFile = discord.File(aeiBytes, filename=fName + ".aei")
             await message.reply("Autoskin complete!",
                                 file=aeiFile, mention_author=True)
@@ -1031,6 +1032,7 @@ async def cmd_texture(message : discord.Message, args : str, isDM : bool):
             with AEPi.AEI(im, format=AEPi.CompressionFormat.ETC1) as aei:
                 aei.write(aeiBytes)
 
+            aeiBytes.seek(0)
             aeiFile = discord.File(aeiBytes, filename=fName + ".aei")
             await message.reply("Autoskin complete!",
                                 file=aeiFile, mention_author=True)
