@@ -457,3 +457,10 @@ homeGuildTransferConfirmTimeoutSeconds = 60
 ##### SKINS #####
 
 defaultSkinCrateEmoji = UninitializedDumbEmoji(723709178736017419)
+
+
+##### SEASONAL EVENTS #####
+
+## Halloween ##
+
+monsterSpawnChance = 0.1

@@ -3,8 +3,9 @@
 from __future__ import annotations
 from ..bbObjects.bounties import bbSystem
 import math
+from random import randint
 from ..bbConfig import bbData
-from typing import Dict, List
+from typing import Dict, List, Optional, cast, Tuple
 
 class AStarNode(bbSystem.System):
     """A node for use in a* pathfinding.
@@ -48,7 +49,7 @@ def heuristic(start : bbSystem.System, end : bbSystem.System) -> float:
                     (end.coordinates[0] - start.coordinates[0]) ** 2)
 
 
-def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bbSystem.System]) -> List[str]:
+def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bbSystem.System], excludeSystems: Optional[List[str]] = None) -> List[str]:
     """Find the shortest path from the given start bbSystem to the end bbSystem, using the given graph for edges.
     If no route can be found, the string "! " + start + " -> " + end is returned.
     If the max route length (50) is reached, "#" is returned.
@@ -59,9 +60,12 @@ def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bb
     :return: A list containing string system names representing the shortest route from start (the first element) to end (the last element)
     :rtype: list
     """
+    if excludeSystems and (start.name in excludeSystems or end.name in excludeSystems):
+        return "! " + start + " -> " + end
 
     if start == end:
         return [start]
+    
     open = [AStarNode(graph[start], None, h=heuristic(graph[start], graph[end]))]
     closed = []
     count = 0
@@ -73,6 +77,9 @@ def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bb
         if count == 50:
             return "#"
         for succName in q.syst.getNeighbours():
+            if excludeSystems and succName in excludeSystems:
+                continue
+
             if succName == end:
                 closed.append(AStarNode(graph[succName], q))
                 route = []
@@ -116,3 +123,90 @@ def makeRoute(start : str, end : str) -> List[str]:
     :rtype: list[str]
     """
     return bbAStar(start, end, bbData.builtInSystemObjs)
+
+
+def _tryFindColourfulPath(
+    curr: bbSystem.System,
+    start: bbSystem.System,
+    end: bbSystem.System,
+    coloured: Dict[str, Tuple[int, bbSystem.System]],
+    route: Dict[int, Tuple[int, bbSystem.System]],
+    desiredLength: int
+) -> Tuple[bool, List[bbSystem.System]]:
+    """Try to find a partial, non-cyclical path, of length `desiredLength`, 
+    from `start` to `end`, with the partial path beginning at `curr`.
+
+    :param curr: The current node
+    :type curr: bbSystem.System
+    :param start: The route start
+    :type start: bbSystem.System
+    :param end: The route end
+    :type end: bbSystem.System
+    :param coloured: The coloured graph
+    :type coloured: Dict[str, Tuple[int, bbSystem.System]]
+    :param route: The route so far, from `start` to `curr`
+    :type route: Dict[int, Tuple[int, bbSystem.System]]
+    :param desiredLength: The desired route length
+    :type desiredLength: int
+    :return: A bool indicating whether a route was found, alongside the successful route (if found)
+    :rtype: Tuple[bool, List[bbSystem.System]]
+    """
+    if len(route) + 2 == desiredLength:
+        if end.name not in curr.neighbours:
+            return (False, [])
+        
+        intermediaryRoute = [s[1] for s in sorted(route.values(), key=lambda pair: pair[0])]
+        return (
+            True, # answer was found
+            [start] + intermediaryRoute + [end] # the final route
+        )
+    
+    for neighbourName in curr.neighbours:
+        neighbour = coloured[neighbourName]
+        if neighbour[0] not in route and neighbour[1] is not start and neighbour[1] is not end:
+            routeCopy = {k: (v[0], v[1]) for k, v in route.items()}
+            routeCopy[neighbour[0]] = (len(route), neighbour[1])
+            neighbourResult = _tryFindColourfulPath(neighbour[1], start, end, coloured, routeCopy, desiredLength)
+            if neighbourResult[0]:
+                return neighbourResult
+
+    return (False, [])
+
+
+def pathOfLength(
+    graph: Dict[str, bbSystem.System], 
+    startName: str, 
+    endName: str, 
+    length: int, 
+    maxIterations: Optional[int] = None,
+    excludeSystems: Optional[List[str]] = None
+) -> Optional[Tuple[int, List[bbSystem.System]]]:
+    """Try to find a non-cyclical path of length `length` through `graph`, from `startName` to `endName`.
+
+    :param graph: The graph to navigate through
+    :type graph: Dict[str, bbSystem.System]
+    :param startName: The starting node
+    :type startName: str
+    :param endName: The ending node
+    :type endName: str
+    :param length: The route length to find
+    :type length: int
+    :param maxIterations: An optional limit to the number of graph colourings to attempt, defaults to `length * 40`
+    :type maxIterations: Optional[int], optional
+    :return: The successful route alongside the number of graph colourations attempted, if a successful route could be found
+    :rtype: Optional[Tuple[int, List[bbSystem.System]]]
+    """
+    if excludeSystems and (startName in excludeSystems or endName in excludeSystems):
+        return None
+
+    start = graph[startName]
+    end = graph[endName]
+    for attemptNumber in range(maxIterations or length * 40):
+        # colour nodes
+        coloured = {k: (randint(1, length), v) for k, v in graph.items() if not excludeSystems or k not in excludeSystems}
+        # traverse
+        attempt = _tryFindColourfulPath(start, start, end, coloured, {}, length)
+        if attempt[0]:
+            return (attemptNumber, attempt[1])
+        
+    return None

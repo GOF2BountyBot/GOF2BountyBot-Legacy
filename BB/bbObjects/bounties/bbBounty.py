@@ -31,7 +31,7 @@ class Bounty(bbSerializable.bbSerializable):
     :vartype answer: str
     """
 
-    def __init__(self, criminalObj : bbCriminal = None, config : bbBountyConfig = None, bountyDB : bbBountyDB.bbBountyDB = None, dbReload : bool = False, doDailyWinsLimit : bool = True):
+    def __init__(self, criminalObj : bbCriminal.Criminal = None, config : bbBountyConfig.BountyConfig = None, bountyDB : bbBountyDB.bbBountyDB = None, dbReload : bool = False, doDailyWinsLimit : bool = True):
         """
         :param criminalObj: The criminal to be wanted. Give None to randomly generate a criminal. (Default None)
         :type criminalObj: bbCriminal or None
