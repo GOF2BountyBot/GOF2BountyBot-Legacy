@@ -169,7 +169,9 @@ class PathOfLengthRouteConfig(BountyRouteConfig):
         for segment in segmentsWithSystems:
             nextSegmentEnd, nextSegmentLength = segment
             nextRouteSegment = lib.pathfinding.pathOfLength(graph, previousNode.name, nextSegmentEnd.name, nextSegmentLength, excludeSystems=route[1:])
-            route += nextRouteSegment
+            if nextRouteSegment is None:
+                return f"Could not find path of length {nextSegmentLength} from {previousNode} to {nextSegmentEnd}"
+            route += nextRouteSegment[0]
             previousNode = segment[0]
 
         return (route, self.answerConfig.generate(route))
