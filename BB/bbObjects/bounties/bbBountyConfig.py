@@ -1,131 +1,16 @@
 # Typing imports
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, List, Dict, Optional
 if TYPE_CHECKING:
     from ...bbDatabases import bbBountyDB
     from ..items import bbShip
-    from . import bbSystem
 
 import random
-from enum import Enum
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from ...bbConfig import bbData, bbConfig
 from ... import lib
-
-
-class BountyRouteType(Enum):
-    Explicit = "Explicit"
-    ShortestPath = "ShortestPath"
-    PathOfLength = "PathOfLength"
-
-
-class BountyAnswerConfig(ABC):
-    @abstractmethod
-    def generate(self, route: List[str]) -> str:
-        raise NotImplementedError()
-    
-
-class UniformRandomBountyAnswerConfig(BountyAnswerConfig):
-    def generate(self, route: List[str]) -> str:
-        return random.choice(route)
-    
-
-class ExplicitBountyAnswerConfig(BountyAnswerConfig):
-    def __init__(self, answer: str) -> None:
-        self.answer = answer
-
-    def generate(self, route: List[str]) -> str:
-        return self.answer
-
-
-class BountyRouteConfig(ABC):
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]]) -> None:
-        if isinstance(answer, BountyAnswerConfig):
-            self.answerConfig = answer
-        elif isinstance(answer, str):
-            self.answerConfig = ExplicitBountyAnswerConfig(answer)
-        else:
-            self.answerConfig = UniformRandomBountyAnswerConfig()
-
-    @abstractmethod
-    def generate(self) -> Tuple[List[str], str]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def validate(self) -> List[str]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _generateAnswer(self, route: List[str]) -> str:
-        return self.answerConfig.generate(route)
-
-
-class ExplicitRouteConfig(BountyRouteConfig):
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], route: List[str]):
-        super().__init__(answer)
-        self.route = route
-
-    def generate(self) -> Tuple[List[str], str]:
-        return (self.route, self.answer or random.choice(self.route))
-    
-    def validate(self) -> List[str]:
-        return (([f"Answer '{self.answer}' not in route"] if self.answer and self.answer not in self.route else [])
-            + (["Empty route given"] if not self.route else [])
-            + [f"Unknown system in route: '{n}'" for n in self.route if n not in bbData.builtInSystemObjs])
-
-
-class ShortestPathRouteConfig(BountyRouteConfig):
-    def __init__(self, answer: Optional[str], startNode: str, node2: str, *nodes: str):
-        super().__init__(answer)
-        self.nodes = [startNode, node2] + list(nodes)
-
-    def generate(self) -> Tuple[List[str], str]:
-        graph = cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs)
-        systems = [graph[n] for n in self.nodes]
-        previousNode = systems[0]
-        route = [systems[0].name]
-
-        for nextNode in systems[1:]:
-            nextSegment = lib.pathfinding.bbAStar(previousNode, nextNode, graph, excludeSystems=route[1:])
-            route += nextSegment
-            previousNode = nextNode
-
-        return (route, self.answer or random.choice(route))
-    
-    def validate(self) -> List[str]:
-        return [f"Unknown system in route: '{n}'" for n in self.nodes if n not in bbData.builtInSystemObjs]
-    
-
-@dataclass
-class PathOfLengthRouteSegment:
-    nextNode: str
-    segmentLength: int
-
-
-class PathOfLengthRouteConfig(BountyRouteConfig):
-    def __init__(self, answer: Optional[str], startNode: str, firstSegment: PathOfLengthRouteSegment, *segments: PathOfLengthRouteSegment):
-        super().__init__(answer)
-        self.startNode = startNode
-        self.segments = [firstSegment] + list(segments)
-
-    def generate(self) -> Tuple[List[str], str]:
-        graph = cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs)
-        systems = [graph[n] for n in self.nodes]
-        previousNode = systems[0]
-        route = [systems[0].name]
-
-        for nextNode in systems[1:]:
-            nextSegment = lib.pathfinding.pathOfLength(graph, previousNode, nextNode, excludeSystems=route[1:])
-            route += nextSegment
-            previousNode = nextNode
-
-        return route
-    
-    def validate(self) -> List[str]:
-        return [f"Unknown system in route: '{n}'" for n in ([self.startNode] + [s.nextNode for s in self.segments]) if n not in bbData.builtInSystemObjs]
+from .bountyRoutes.bountyRouteConfig import BountyRouteConfig, ShortestPathRouteConfig, ExplicitRouteConfig
 
 
 class BountyConfig:
@@ -138,8 +23,14 @@ class BountyConfig:
     :vartype name: str
     :var isPlayer: Whether or not the target criminal is a player or an npc
     :vartype isPlayer: bool
+    :var start: The start system, if route is None
+    :vartype start: str
+    :var end: The end system, if route is None
+    :vartype end: str
+    :var answer: The answer system, if route is None
+    :vartype answer: str
     :var route: the route
-    :vartype route: BountyRouteConfig
+    :vartype route: Optional[BountyRouteConfig]
     :var checked: Dictionary of system names to user IDs, where the id corresponds to the user who checked that system, or -1 if the system is unchecked.
     :vartype checked: dict[str, int]
     :var reward: Prize pool of credits to award to contributing users
@@ -162,10 +53,11 @@ class BountyConfig:
     :vartype ship: bbShip
     """
 
-    def __init__(self, faction : str = "", name : str = "", isPlayer : bool = None,
+    def __init__(self, faction : str = "", name : str = "", isPlayer : Optional[bool] = None,
+                    start : str = "", end : str = "", answer : str = "",
                     route : Optional[BountyRouteConfig] = None, checked : Dict[str, int] = {}, reward : int = -1,
                     issueTime : float = -1.0, endTime : float = -1.0, icon : str = "",
-                    aliases : List[str] = [], wiki : str = "", ship : bbShip.bbShip = None):
+                    aliases : List[str] = [], wiki : str = "", ship : Optional[bbShip.bbShip] = None):
         """All parameters are optional. If a parameter is not given, it will be randomly generated.
 
         :param faction: The faction owning this bounty
@@ -174,14 +66,11 @@ class BountyConfig:
         :type name: str
         :param isPlayer: Whether or not the target criminal is a player or an npc
         :type isPlayer: bool
-        :param route: the names of systems in this bounty's route
-        :type route: list[str]
-        :param start: The name of the system at the start of the route
-        :type start: str
-        :param end: The name of the system at the end of the route
-        :type end: str
-        :param answer: The name of the system where the criminal is located
-        :type answer: str
+        :param str start: The start system, if route is None
+        :param str end: The end system, if route is None
+        :param str answer: The answer system, if route is None
+        :var route: the route
+        :vartype route: BountyRouteConfig
         :param checked: Dictionary of system names to user IDs, where the id corresponds to the user who checked that system, or -1 if the system is unchecked.
         :type checked: dict[str, int]
         :param reward: Prize pool of credits to award to contributing users
@@ -202,10 +91,7 @@ class BountyConfig:
         self.faction = faction.lower()
         self.name = name.title()
         self.isPlayer = False if isPlayer is None else isPlayer
-        self.route = []
-        for system in route:
-            self.route.append(system.title())
-
+        self.route = route
         self.start = start.title()
         self.end = end.title()
         self.answer = answer.title()
@@ -249,8 +135,6 @@ class BountyConfig:
                         raise OverflowError("BOUCONF_CONS_DBFULL: Attempted to generate new bounty config when no slots are available in the guild")
                     else:
                         self.faction = random.choice(bbData.bountyFactions)
-                    
-
                 else:
                     if self.faction not in bbData.bountyFactions:
                         raise ValueError("BOUCONF_CONS_INVFAC: Invalid faction requested '" + self.faction + "'")
@@ -278,7 +162,7 @@ class BountyConfig:
             if doDBCheck and not bountyDB.factionCanMakeBounty(self.faction):
                 raise IndexError("BOUCONF_CONS_FACDBFULL: Attempted to generate new bounty config when no slots are available for faction: '" + self.faction + "'")
         
-        if self.route == []:
+        if self.route is None:
             if self.start == "":
                 possibleStarts = [s.name for s in bbData.builtInSystemObjs.values() if s.name != self.end and s.hasJumpGate()]
                 if possibleStarts:
@@ -300,28 +184,31 @@ class BountyConfig:
             elif self.end not in bbData.builtInSystemObjs:
                 raise KeyError("BountyConfig: Invalid end system requested '" + self.end + "'")
             # self.route = makeRoute(self.start, self.end)
-            self.route = lib.pathfinding.bbAStar(self.start, self.end, bbData.builtInSystemObjs)
-        else:
-            for system in self.route:
-                if system not in bbData.builtInSystemObjs:
-                    raise KeyError("BountyConfig: Invalid system in route '" + system + "'")
-        if self.answer == "":
-            self.answer = random.choice(self.route)
-        elif self.answer not in bbData.builtInSystemObjs:
-            raise KeyError("Bounty constructor: Invalid answer requested '" + self.answer + "'")
+            self.route = ShortestPathRouteConfig(self.answer or None, self.start, self.end)
+        
+        routeValidationErrors = self.route.validate()
+        if routeValidationErrors:
+            raise ValueError("Route configuration contained validation error(s): " + ', '.join(f"\"{e}\"") for e in routeValidationErrors)
+        
+        routeGenerationResult = self.route.generate()
+        if isinstance(routeGenerationResult, str):
+            raise ValueError(f"An error occurred when generating route: {routeGenerationResult}")
+        
+        generatedRoute, generatedAnswer = routeGenerationResult
+        self.route = ExplicitRouteConfig(generatedAnswer, generatedRoute)
         
         if self.reward == -1:
-            self.reward = int(len(self.route) * bbConfig.bPointsToCreditsRatio)
+            self.reward = int(len(generatedRoute) * bbConfig.bPointsToCreditsRatio)
         elif self.reward < 0:
             raise ValueError("Bounty constructor: Invalid reward requested '" + str(self.reward) + "'")
         if self.issueTime == -1.0:
             self.issueTime = datetime.now(timezone.utc).replace(second=0).timestamp()
         if self.endTime == -1.0:
-            self.endTime = (datetime.fromtimestamp(self.issueTime, timezone.utc) + timedelta(days=len(self.route))).timestamp()
+            self.endTime = (datetime.fromtimestamp(self.issueTime, timezone.utc) + timedelta(days=len(generatedRoute))).timestamp()
 
         if not forceKeepChecked:
             self.checked = {}
-        for station in self.route:
+        for station in generatedRoute:
             if (not forceKeepChecked) or station not in self.checked or self.checked == {}:
                 self.checked[station] = -1
 

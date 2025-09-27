@@ -5,6 +5,8 @@ from . import commandsDB as bbCommands
 from .. import bbGlobals, lib
 from ..bbConfig import bbConfig, bbData
 from ..bbObjects.bounties import bbBounty, bbBountyConfig
+from ..bbObjects.bounties.bountyRoutes.bountyRouteConfig import ExplicitRouteConfig
+from ..bbObjects.bounties.bountyRoutes.bountyAnswerConfig import ExplicitBountyAnswerConfig
 
 
 bbCommands.addHelpSection(2, "bounties")
@@ -396,12 +398,13 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
                 return
 
         # parse the given route
-        newRoute = bData[3].rstrip(" ")
-        if newRoute == "auto":
-            newRoute = []
+        rawRoute = bData[3].rstrip(" ")
+        if rawRoute in ("auto", ""):
+            newRoute = None
         else:
-            newRoute = bData[3].split(",")
-            newRoute[-1] = newRoute[-1].rstrip(" ")
+            systemNames = bData[3].split(",")
+            systemNames[-1] = systemNames[-1].rstrip(" ")
+            newRoute = ExplicitRouteConfig(None, systemNames)
 
         # parse the given start system
         newStart = bData[4].rstrip(" ")
@@ -415,8 +418,10 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
 
         # parse the given answer system
         newAnswer = bData[6].rstrip(" ")
-        if newAnswer == "auto":
+        if newAnswer in ("auto", ""):
             newAnswer = ""
+        elif newRoute is not None:
+            newRoute.answerConfig = ExplicitBountyAnswerConfig(newAnswer)
 
         # parse the given reward amount
         newReward = bData[7].rstrip(" ")
@@ -443,6 +448,7 @@ async def dev_cmd_make_bounty(message : discord.Message, args : str, isDM : bool
             newDoDailyWinsLimit = False
         else:
             await message.channel.send(f"Unknown value for doDailyWinsLimit: {newDoDailyWinsLimit}")
+            return
 
         # special bounty generation for builtIn criminals
         if builtIn:
@@ -560,12 +566,13 @@ async def dev_cmd_make_player_bounty(message : discord.Message, args : str, isDM
             return
 
         # parse the requested route
-        newRoute = bData[2].rstrip(" ")
-        if newRoute == "auto":
-            newRoute = []
+        rawRoute = bData[2].rstrip(" ")
+        if rawRoute in ("auto", ""):
+            newRoute = None
         else:
-            newRoute = bData[2].split(",")
-            newRoute[-1] = newRoute[-1].rstrip(" ")
+            systemNames = bData[2].split(",")
+            systemNames[-1] = systemNames[-1].rstrip(" ")
+            newRoute = ExplicitRouteConfig(None, systemNames)
 
         # parse the requested start system
         newStart = bData[3].rstrip(" ")
@@ -579,8 +586,10 @@ async def dev_cmd_make_player_bounty(message : discord.Message, args : str, isDM
 
         # parse the requested answer system
         newAnswer = bData[5].rstrip(" ")
-        if newAnswer == "auto":
+        if newAnswer in ("auto", ""):
             newAnswer = ""
+        elif newRoute is not None:
+            newRoute.answerConfig = ExplicitBountyAnswerConfig(newAnswer)
 
         # parse the requested reward pool
         newReward = bData[6].rstrip(" ")
@@ -601,8 +610,20 @@ async def dev_cmd_make_player_bounty(message : discord.Message, args : str, isDM
                 int(newName.lstrip("<@!").rstrip(">"))).avatar_url_as(size=64))
 
         # create the bounty object
-        newBounty = bbBounty.Bounty(bountyDB=callingBBGuild.bountiesDB, config=bbBountyConfig.BountyConfig(faction=newFaction, name=newName, route=newRoute, start=newStart,
-                                                                                            end=newEnd, answer=newAnswer, reward=newReward, endTime=newEndTime, isPlayer=True, icon=newIcon, aliases=[lib.discordUtil.userTagOrDiscrim(newName)]))
+        newBounty = bbBounty.Bounty(
+            bountyDB=callingBBGuild.bountiesDB,
+            config=bbBountyConfig.BountyConfig(
+                faction=newFaction, 
+                name=newName, 
+                route=newRoute,
+                start=newStart,
+                end=newEnd, 
+                answer=newAnswer, 
+                reward=newReward, 
+                endTime=newEndTime, 
+                isPlayer=True, 
+                icon=newIcon, 
+                aliases=[lib.discordUtil.userTagOrDiscrim(newName)]))
 
     # print an error for incorrect syntax
     else:

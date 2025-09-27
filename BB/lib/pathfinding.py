@@ -23,7 +23,7 @@ class AStarNode(bbSystem.System):
     :vartype f: float
     """
     
-    def __init__(self, syst : bbSystem.System, parent : AStarNode, g : float = 0, h : float = 0):
+    def __init__(self, syst : bbSystem.System, parent : Optional[AStarNode], g : float = 0, h : float = 0):
         """
         :param bbSystem syst: this node's associated bbSystem object.
         :param AStarNode parent: The previous AStarNode in the generated path
@@ -49,19 +49,19 @@ def heuristic(start : bbSystem.System, end : bbSystem.System) -> float:
                     (end.coordinates[0] - start.coordinates[0]) ** 2)
 
 
-def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bbSystem.System], excludeSystems: Optional[List[str]] = None) -> List[str]:
+def bbAStar(start : str, end : str, graph : Dict[str, bbSystem.System], excludeSystems: Optional[List[str]] = None) -> List[str]:
     """Find the shortest path from the given start bbSystem to the end bbSystem, using the given graph for edges.
     If no route can be found, the string "! " + start + " -> " + end is returned.
     If the max route length (50) is reached, "#" is returned.
 
-    :param bbSystem start: The starting system for route generation
-    :param bbSystem end: The goal system where route generation terminates
+    :param str start: The starting system for route generation
+    :param str end: The goal system where route generation terminates
     :param dict[str, bbSystem] graph: A dictionary mapping system names to bbSystem objects
     :return: A list containing string system names representing the shortest route from start (the first element) to end (the last element)
     :rtype: list
     """
-    if excludeSystems and (start.name in excludeSystems or end.name in excludeSystems):
-        return "! " + start + " -> " + end
+    if excludeSystems and (start in excludeSystems or end in excludeSystems):
+        return ["! " + start + " -> " + end]
 
     if start == end:
         return [start]
@@ -75,7 +75,7 @@ def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bb
 
         count += 1
         if count == 50:
-            return "#"
+            return ["#"]
         for succName in q.syst.getNeighbours():
             if excludeSystems and succName in excludeSystems:
                 continue
@@ -111,7 +111,7 @@ def bbAStar(start : bbSystem.System, end : bbSystem.System, graph : Dict[str, bb
 
         closed.append(q)
 
-    return "! " + start + " -> " + end
+    return ["! " + start + " -> " + end]
 
 
 def makeRoute(start : str, end : str) -> List[str]:

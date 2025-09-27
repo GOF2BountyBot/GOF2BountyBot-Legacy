@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from ...bbDatabases import bbBountyDB
 
 from . import bbBountyConfig
+from .bountyRoutes.bountyRouteConfig import ExplicitRouteConfig
 from ...bbConfig import bbData
 from . import bbCriminal
 from ...baseClasses import bbSerializable
@@ -70,10 +71,20 @@ class Bounty(bbSerializable.bbSerializable):
         self.faction = self.criminal.faction
         self.issueTime = config.issueTime
         self.endTime = config.endTime
-        self.route = config.route
+        
+        if config.route is None:
+            raise RuntimeError("config generation did not produce route configuration")
+        
+        routeGenerationResult = config.route.generate()
+        if isinstance(routeGenerationResult, str):
+            raise RuntimeError(f"An error occurred during route generation: {routeGenerationResult}")
+
+        generatedRoute, generatedAnswer = routeGenerationResult
+
+        self.route = generatedRoute
         self.reward = config.reward
         self.checked = config.checked
-        self.answer = config.answer
+        self.answer = generatedAnswer
         self.doDailyWinsLimit = doDailyWinsLimit
 
         
@@ -154,7 +165,16 @@ class Bounty(bbSerializable.bbSerializable):
         :param bool dbReload: Give True if this bounty is being created during bot bootup, False otherwise. This currently toggles whether the passed bounty is checked for existence or not. (Default False)
         """
         dbReload = kwargs["dbReload"] if "dbReload" in kwargs else False
+
+        config = bbBountyConfig.BountyConfig(
+            faction=bounty["faction"], 
+            route=ExplicitRouteConfig(bounty["answer"], bounty["route"]), 
+            checked=bounty["checked"], 
+            reward=bounty["reward"], 
+            issueTime=bounty["issueTime"], 
+            endTime=bounty["endTime"],)
+        
         return Bounty(dbReload=dbReload,
-                        criminalObj=bbCriminal.Criminal.fromDict(bounty["criminal"]), 
-                        config=bbBountyConfig.BountyConfig(faction=bounty["faction"], route=bounty["route"], answer=bounty["answer"], checked=bounty["checked"], reward=bounty["reward"], issueTime=bounty["issueTime"], endTime=bounty["endTime"]),
-                        doDailyWinsLimit=bounty.get("doDailyWinsLimit", True))
+            criminalObj=bbCriminal.Criminal.fromDict(bounty["criminal"]), 
+            config=config,
+            doDailyWinsLimit=bounty.get("doDailyWinsLimit", True))

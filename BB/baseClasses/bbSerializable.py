@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractclassmethod
+from abc import ABC, abstractmethod
 
 
 class bbSerializable(ABC):
@@ -14,7 +14,8 @@ class bbSerializable(ABC):
         return {}
 
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def fromDict(cls, data : dict, **kwargs) -> bbSerializable:
         """Recreate a dictionary-serialized bbSerializable object 
         
