@@ -21,7 +21,7 @@ class bbBountyDB(bbSerializable.bbSerializable):
     :vartype latestBounty: bbObjects.bounties.bbBounty.Bounty
     """
 
-    def __init__(self, factions: str):
+    def __init__(self, factions: List[str]):
         """
         :param list factions: list of unique faction names useable in this db's bounties
         """
@@ -84,7 +84,7 @@ class bbBountyDB(bbSerializable.bbSerializable):
         self.latestBounty = None
 
     
-    def getFactions(self) -> List[bbBounty.Bounty]:
+    def getFactions(self) -> List[str]:
         """Get the list of useable faction names for this DB
 
         :return: A list containing this DB's useable faction names
@@ -158,7 +158,7 @@ class bbBountyDB(bbSerializable.bbSerializable):
         raise KeyError("Bounty not found: " + name)
 
 
-    def canMakeBounty(self) -> bbBounty.Bounty:
+    def canMakeBounty(self) -> bool:
         """Check whether this DB has space for more bounties
 
         :return: True if at least one faction is not at capacity, False if all factions' bounties are full
@@ -241,7 +241,7 @@ class bbBountyDB(bbSerializable.bbSerializable):
 
         # ensure the given bounty does not already exist
         if self.bountyNameExists(bounty.criminal.name):
-            raise ValueError("Attempted to add a bounty whose name already exists: " + bounty.name)
+            raise ValueError("Attempted to add a bounty whose name already exists: " + bounty.criminal.name)
 
         # Add the bounty to the database
         self.bounties[bounty.faction].append(bounty)

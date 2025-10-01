@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from .events.bountiesEventHub import BountiesEventHub
+
 class ShutDownState:
     restart = 0
     shutdown = 1
@@ -40,3 +42,6 @@ currentRenders = []
 
 shutdown = ShutDownState.restart
 lastSuccessfulSave = datetime.min
+
+# Events
+bountiesEventHub = BountiesEventHub()

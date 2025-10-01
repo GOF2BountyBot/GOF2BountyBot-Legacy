@@ -123,6 +123,7 @@ async def cmd_check(message : discord.Message, args : str, isDM : bool):
             # remove all completed bounties
             for bounty in toPop:
                 callingBBGuild.bountiesDB.removeBountyObj(bounty)
+                bbGlobals.bountiesEventHub.onBountyDefeated(bounty)
 
         sightedCriminalsStr = ""
         # Check if any bounties are close to the requested system in their route, defined by bbConfig.closeBountyThreshold
