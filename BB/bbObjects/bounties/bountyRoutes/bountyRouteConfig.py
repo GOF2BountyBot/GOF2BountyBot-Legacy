@@ -95,7 +95,7 @@ class ExplicitRouteConfig(BountyRouteConfig):
 
 @_serializableBountyRouteConfig
 class ShortestPathRouteConfig(BountyRouteConfig):
-    """Find the shortest path between nodes.
+    """Find the shortest paths between nodes.
     
     :param answer: The answer. Give as `None` to use a uniformally random choice. Can be given either as a system name, or a `BountyAnswerConfig`.
     :param Optional[str] startNode: The first system in the route. Give as `None` to use a uniformally random choice
@@ -211,6 +211,13 @@ class PathOfLengthRouteSegment(bbSerializable):
 
 @_serializableBountyRouteConfig
 class PathOfLengthRouteConfig(BountyRouteConfig):
+    """Find paths of the given lengths between nodes.
+
+    :param answer: The answer. Give as `None` to use a uniformally random choice. Can be given either as a system name, or a `BountyAnswerConfig`.
+    :param Optional[str] startNode: The first system in the route. Give as `None` to use a uniformally random choice
+    :param firstSegment: The first route segment, defining the next system, and the length of the segment. Give the next node as `None` to use a uniformally random choice
+    :param segments: The remaining segments in the route, each defining the next system, and the length of the segment. Give the next node as `None` to use a uniformally random choice
+    """
     def __init__(
         self,
         answer: Optional[Union[str, BountyAnswerConfig]],
