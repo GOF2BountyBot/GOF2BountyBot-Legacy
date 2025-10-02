@@ -106,6 +106,10 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
             try:
                 msg = await self.channel.fetch_message(id)
                 self.bountyMessages[criminal.faction][criminal] = msg
+            except Forbidden:
+                bbLogger.log("BBC", "init", "Forbidden exception thrown when fetching listing for criminal: " + criminal.name, category='bountyBoards', eventType="LISTING_LOAD-FORBIDDENERR")
+            except NotFound:
+                bbLogger.log("BBC", "init", "Listing message for criminal no longer exists: " + criminal.name, category='bountyBoards', eventType="LISTING_LOAD-NOT_FOUND")
             except HTTPException:
                 succeeded = False
                 for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -119,10 +123,6 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     break
                 if not succeeded:
                     bbLogger.log("BBC", "init", "HTTPException thrown when fetching listing for criminal: " + criminal.name, category='bountyBoards', eventType="LISTING_LOAD-HTTPERR")
-            except Forbidden:
-                bbLogger.log("BBC", "init", "Forbidden exception thrown when fetching listing for criminal: " + criminal.name, category='bountyBoards', eventType="LISTING_LOAD-FORBIDDENERR")
-            except NotFound:
-                bbLogger.log("BBC", "init", "Listing message for criminal no longer exists: " + criminal.name, category='bountyBoards', eventType="LISTING_LOAD-NOT_FOUND")
 
         if self.noBountiesMsgToBeLoaded == -1:
             self.noBountiesMessage = None
@@ -131,6 +131,9 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     # self.noBountiesMessage = await self.channel.send(bbConfig.bbcNoBountiesMsg)
                     self.noBountiesMessage = await self.channel.send(embed=noBountiesEmbed)
 
+                except Forbidden:
+                    bbLogger.log("BBC", "init", "Forbidden exception thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
+                    self.noBountiesMessage = None
                 except HTTPException:
                     succeeded = False
                     for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -144,13 +147,15 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     if not succeeded:
                         bbLogger.log("BBC", "init", "HTTPException thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-HTTPERR")
                     self.noBountiesMessage = None
-                except Forbidden:
-                    bbLogger.log("BBC", "init", "Forbidden exception thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
-                    self.noBountiesMessage = None
             
         else:
             try:
                 self.noBountiesMessage = await self.channel.fetch_message(self.noBountiesMsgToBeLoaded)
+            except Forbidden:
+                bbLogger.log("BBC", "init", "Forbidden exception thrown when fetching no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
+            except NotFound:
+                bbLogger.log("BBC", "init", "No bounties message no longer exists", category='bountyBoards', eventType="NOBTYMSG_LOAD-NOT_FOUND")
+                self.noBountiesMessage = None
             except HTTPException:
                 succeeded = False
                 for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -163,11 +168,6 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     break
                 if not succeeded:
                     bbLogger.log("BBC", "init", "HTTPException thrown when fetching no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-HTTPERR")
-            except Forbidden:
-                bbLogger.log("BBC", "init", "Forbidden exception thrown when fetching no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
-            except NotFound:
-                bbLogger.log("BBC", "init", "No bounties message no longer exists", category='bountyBoards', eventType="NOBTYMSG_LOAD-NOT_FOUND")
-                self.noBountiesMessage = None
         # del self.messagesToBeLoaded
         # del self.channelIDToBeLoaded
         # del self.noBountiesMsgToBeLoaded
@@ -180,7 +180,17 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
         :return: True if this BBC stores a listing for bounty, False otherwise
         :rtype: bool
         """
-        return bounty.criminal in self.bountyMessages[bounty.criminal.faction]
+        return self.hasMessageForCriminal(bounty.criminal)
+
+
+    def hasMessageForCriminal(self, criminal : bbCriminal.Criminal) -> bool:
+        """Decide whether this BBC stores a listing for the given criminal 
+
+        :param Criminal criminal: The criminal to check for listing existence
+        :return: True if this BBC stores a listing for criminal, False otherwise
+        :rtype: bool
+        """
+        return criminal in self.bountyMessages[criminal.faction]
 
 
     def getMessageForBounty(self, bounty : bbBounty.Bounty) -> Message:
@@ -225,6 +235,8 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
         if removeMsg:
             try:
                 await self.noBountiesMessage.delete()
+            except Forbidden:
+                print("addBounty Forbidden")
             except HTTPException:
                 succeeded = False
                 for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -237,11 +249,9 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     break
                 if not succeeded:
                     print("addBounty HTTPException")
-            except Forbidden:
-                print("addBounty Forbidden")
             except AttributeError:
                 print("addBounty no message")
-    
+
 
     async def removeBounty(self, bounty : bbBounty.Bounty):
         """Remove the listing message stored for the given bounty from the database. This does not attempt to delete the message from discord.
@@ -251,16 +261,30 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
         :param Bounty bounty: The bounty whose listing should be removed from the database
         :raise KeyError: If the database does not store a listing for the given bounty
         """
-        if not self.hasMessageForBounty(bounty):
-            raise KeyError("BNTY_BRD_CH-REM-BNTY_NOT_EXST: Attempted to remove a bounty from a bountyboardchannel, but the bounty is not listed")
-            bbLogger.log("BBC", "remBty", "Attempted to remove a bounty from a bountyboardchannel, but the bounty is not listed: " + bounty.criminal.name, category='bountyBoards', eventType="LISTING_REM-NO_EXST")
-        del self.bountyMessages[bounty.criminal.faction][bounty.criminal]
+        await self.removeCriminal(bounty.criminal)
+    
+
+    async def removeCriminal(self, criminal : bbCriminal.Criminal):
+        """Remove the listing message stored for the given criminal from the database. This does not attempt to delete the message from discord.
+        If the BBC is now empty, send an empty bounty board message.
+        If a HTTP error is thrown when sending the empty BBC message, wait and retry the removal for the number of times defined in bbConfig
+
+        :param Criminal criminal: The criminal whose listing should be removed from the database
+        :raise KeyError: If the database does not store a listing for the given criminal
+        """
+        if not self.hasMessageForCriminal(criminal):
+            raise KeyError("BNTY_BRD_CH-REM-BNTY_NOT_EXST: Attempted to remove a criminal from a bountyboardchannel, but the criminal is not listed")
+            bbLogger.log("BBC", "remBty", "Attempted to remove a criminal from a bountyboardchannel, but the criminal is not listed: " + criminal.name, category='bountyBoards', eventType="LISTING_REM-NO_EXST")
+        del self.bountyMessages[criminal.faction][criminal]
 
         if self.isEmpty():
             try:
                 # self.noBountiesMessage = await self.channel.send(bbConfig.bbcNoBountiesMsg)
                 self.noBountiesMessage = await self.channel.send(embed=noBountiesEmbed)
 
+            except Forbidden:
+                bbLogger.log("BBC", "remBty", "Forbidden exception thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
+                self.noBountiesMessage = None
             except HTTPException:
                 succeeded = False
                 for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -273,9 +297,6 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                     break
                 if not succeeded:
                     bbLogger.log("BBC", "remBty", "HTTPException thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-HTTPERR")
-                self.noBountiesMessage = None
-            except Forbidden:
-                bbLogger.log("BBC", "remBty", "Forbidden exception thrown when sending no bounties message", category='bountyBoards', eventType="NOBTYMSG_LOAD-FORBIDDENERR")
                 self.noBountiesMessage = None
 
 
@@ -293,6 +314,11 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
         content = self.bountyMessages[bounty.criminal.faction][bounty.criminal].content
         try:
             await self.bountyMessages[bounty.criminal.faction][bounty.criminal].edit(content=content, embed=makeBountyEmbed(bounty))
+        except Forbidden:
+            bbLogger.log("BBC", "updBtyMsg", "Forbidden exception thrown when updating bounty listing for criminal: " + bounty.criminal.name, category='bountyBoards', eventType="UPD_LSTING-FORBIDDENERR")
+        except NotFound:
+            bbLogger.log("BBC", "updBtyMsg", "Bounty listing message no longer exists, BBC entry removed: " + bounty.criminal.name, category='bountyBoards', eventType="UPD_LSTING-NOT_FOUND")
+            await self.removeBounty(bounty)
         except HTTPException:
             succeeded = False
             for tryNum in range(bbConfig.bbcHTTPErrRetries):
@@ -305,19 +331,14 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
                 break
             if not succeeded:
                 bbLogger.log("BBC", "updBtyMsg", "HTTPException thrown when updating bounty listing for criminal: " + bounty.criminal.name, category='bountyBoards', eventType="UPD_LSTING-HTTPERR")
-        except Forbidden:
-            bbLogger.log("BBC", "updBtyMsg", "Forbidden exception thrown when updating bounty listing for criminal: " + bounty.criminal.name, category='bountyBoards', eventType="UPD_LSTING-FORBIDDENERR")
-        except NotFound:
-            bbLogger.log("BBC", "updBtyMsg", "Bounty listing message no longer exists, BBC entry removed: " + bounty.criminal.name, category='bountyBoards', eventType="UPD_LSTING-NOT_FOUND")
-            await self.removeBounty(bounty)
 
 
     async def clear(self):
         """Clear all bounty listings on the board.
         """
         for fac in self.bountyMessages:
-            for bounty in self.bountyMessages[fac].values():
-                await self.removeBounty(bounty)
+            for criminal in self.bountyMessages[fac].keys():
+                await self.removeCriminal(criminal)
 
 
     def toDict(self, **kwargs) -> dict:
