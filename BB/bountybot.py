@@ -12,14 +12,14 @@ import traceback
 import os
 import signal
 import operator
-from typing import Dict, Union, List
+from typing import Dict, Iterable, Union, List
 import json
 
 # BountyBot Imports
 
 from .bbConfig import bbConfig, bbData, bbPRIVATE
 from .bbObjects import bbShipSkin
-from .bbObjects.bounties import bbCriminal, bbSystem
+from .bbObjects.bounties import bbCriminal, bbSystem, bbBounty
 from .bbObjects.items import bbModuleFactory, bbShipUpgrade, bbTurret, bbWeapon, bbItem
 from .bbObjects.items.tools import bbShipSkinTool, bbToolItemFactory
 from .scheduling import TimedTask
@@ -108,6 +108,27 @@ class bbClient(ClientBaseClass):
         await self.logout()
         self.bb_saveAllDBs()
         print(datetime.now(timezone.utc).strftime("%H:%M:%S: Data saved!"))
+
+
+    async def expireBounties(self):
+        now = datetime.now(tz=timezone.utc)
+        g: "bbGuild.bbGuild"
+        factionBounties: List[bbBounty.Bounty]
+        for g in bbGlobals.guildsDB.getGuilds() if bbGlobals.guildsDB is not None else []:
+            for factionBounties in g.bountiesDB.bounties.values():
+                expiredBounties: List[int] = []
+                for i, bounty in enumerate(factionBounties):
+                    if bounty.endTime not in (None, -1) and datetime.fromtimestamp(bounty.endTime, timezone.utc) <= now:
+                        try:
+                            succeeded = await g.announceBountyExpired(bounty)
+                            if not succeeded:
+                                continue
+                        except Exception:
+                            pass
+                        else:
+                            expiredBounties.append(i)
+                for i in expiredBounties[::-1]:
+                    factionBounties.pop(i)
 
     
     async def userDataArchive(self):
@@ -676,6 +697,13 @@ async def on_ready():
         autoReschedule=True
     )
     bbGlobals.botOperationsTTDB.scheduleTask(userDataArchiveTT)
+
+    endExpiredBountiesTT = TimedTask.TimedTask(
+        expiryDelta=timedelta(minutes=5),
+        expiryFunction=bbGlobals.client.expireBounties,
+        autoReschedule=True
+    )
+    bbGlobals.botOperationsTTDB.scheduleTask(endExpiredBountiesTT)
 
     endStatRacesTT = TimedTask.DynamicRescheduleTask(
         getTimeUntilTomorrow,

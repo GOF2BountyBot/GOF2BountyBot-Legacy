@@ -522,6 +522,32 @@ class bbGuild(bbSerializable.bbSerializable):
                 self.id).name + "#" + str(self.id) + " in channel ?#" + str(self.getPlayChannel().id), eventType="DCGUILD_NONE")
 
 
+    async def announceBountyExpired(self, bounty : bbBounty.Bounty):
+        """Announce the expiration of a bounty
+        Messages will be sent to the playChannel if one is set
+
+        :param bbBounty bounty: the bounty to announce
+        """
+        if self.dcGuild is not None:
+            if self.hasPlayChannel():
+                # Create the announcement embed
+                rewardsEmbed = lib.discordUtil.makeEmbed(
+                    authorName=lib.discordUtil.criminalNameOrDiscrim(bounty.criminal) + " Got Away!",
+                    icon=bounty.criminal.icon,
+                    col=bbData.factionColours[bounty.faction],
+                    desc="Out of time!\n`Suspect was located in '" + bounty.answer + "'`")
+
+                # Send the announcement to the guild's playChannel
+                await self.getPlayChannel().send(embed=rewardsEmbed)
+
+        else:
+            bbLogger.log(
+                "Main", 
+                "AnncBtyWn", 
+                "None dcGuild received when posting bounty expired to guild " + bbGlobals.client.get_guild(self.id).name + "#" + str(self.id) + " in channel ?#" + str(self.getPlayChannel().id), 
+                eventType="DCGUILD_NONE")
+
+
     def enableBounties(self):
         """Enable bounties for this guild.
         Sets up a new bounties DB and bounty spawning TimedTask.
