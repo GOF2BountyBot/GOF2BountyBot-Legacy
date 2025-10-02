@@ -316,7 +316,7 @@ class BountyBoardChannel(bbSerializable.bbSerializable):
         """Clear all bounty listings on the board.
         """
         for fac in self.bountyMessages:
-            for bounty in self.bountyMessages[fac]:
+            for bounty in self.bountyMessages[fac].values():
                 await self.removeBounty(bounty)
 
 
