@@ -102,7 +102,13 @@ class ShortestPathRouteConfig(BountyRouteConfig):
     :param Optional[str] node2: The second system in the route. Give as `None` to use a uniformally random choice
     :param Optional[str] nodes: The remaining systems in the route. Give as `None` to use a uniformally random choice
     """
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: Optional[str], node2: Optional[str], *nodes: Optional[str]):
+    def __init__(
+        self, 
+        answer: Optional[Union[str, BountyAnswerConfig]],
+        startNode: Optional[str],
+        node2: Optional[str],
+        *nodes: Optional[str]
+    ) -> None:
         super().__init__(answer)
         self.nodes = [startNode, node2] + list(nodes)
         self.allowDuplicateEntries = bbConfig.shortestPathRouteConfig_allowDuplicateNodes
@@ -116,37 +122,44 @@ class ShortestPathRouteConfig(BountyRouteConfig):
         }
 
         systems: List[bbSystem.System] = []
-        systemChoices = list(graph.keys())
+        
+        if not any(n is None for n in self.nodes):
+            for node in self.nodes:
+                systems.append(graph[cast(str, node)])
+        else:
+            systemChoices = list(graph.keys())
 
-        for i, node in enumerate(self.nodes):
-            if node is not None:
-                systems.append(graph[node])
-                continue
-            
-            node = random.choice(systemChoices)
+            for i, node in enumerate(self.nodes):
+                if node is not None:
+                    systems.append(graph[node])
+                    continue
+                
+                node = random.choice(systemChoices)
 
-            if i != 0:
-                attempt = 1
-                while attempt < self.nodeGenerationAttempts:
-                    routeAttempt = lib.pathfinding.bbAStar(
-                        systems[i - 1].name,
-                        node,
-                        graph,
-                        excludeSystems=[] if self.allowDuplicateEntries else [s.name for s in systems])
-                    
-                    if len(routeAttempt) != 0 and not routeAttempt[0].startswith("!") and not routeAttempt[0].startswith("#"):
-                        break
-
+                if i == 0:
                     systemChoices.remove(node)
-                    node = random.choice(systemChoices)
-                    attempt += 1
+                else:
+                    attempt = 1
+                    while attempt < self.nodeGenerationAttempts:
+                        routeAttempt = lib.pathfinding.bbAStar(
+                            systems[i - 1].name,
+                            node,
+                            graph,
+                            excludeSystems=[] if self.allowDuplicateEntries else [s.name for s in systems])
+                        
+                        if len(routeAttempt) != 0 and not routeAttempt[0].startswith("!") and not routeAttempt[0].startswith("#"):
+                            break
 
-                if attempt == self.nodeGenerationAttempts:
-                    return f"Failed to generate node #{i}. Could not find route from {systems[i - 1].name} " + \
-                            f"to any of {self.nodeGenerationAttempts} randomly selected systems, " + \
-                            ("allowing duplicates" if self.allowDuplicateEntries else "disallowing duplicates")
-            
-            systems.append(graph[node])
+                        systemChoices.remove(node)
+                        node = random.choice(systemChoices)
+                        attempt += 1
+
+                    if attempt == self.nodeGenerationAttempts:
+                        return f"Failed to generate node #{i}. Could not find route from {systems[i - 1].name} " + \
+                                f"to any of {self.nodeGenerationAttempts} randomly selected systems, " + \
+                                ("allowing duplicates" if self.allowDuplicateEntries else "disallowing duplicates")
+                
+                systems.append(graph[node])
         
         previousNode = systems[0]
         route = [systems[0].name]
@@ -177,7 +190,7 @@ class ShortestPathRouteConfig(BountyRouteConfig):
 
 
 class PathOfLengthRouteSegment(bbSerializable):
-    def __init__(self, nextNode: str, segmentLength: int) -> None:
+    def __init__(self, nextNode: Optional[str], segmentLength: int) -> None:
         self.nextNode = nextNode
         self.segmentLength = segmentLength
 
@@ -189,27 +202,102 @@ class PathOfLengthRouteSegment(bbSerializable):
         return PathOfLengthRouteSegment(data["nextNode"], data["segmentLength"])
     
     @classmethod
-    def fromInstanceOrTuple(cls, inst: Union[Tuple[str, int], PathOfLengthRouteSegment]) -> PathOfLengthRouteSegment:
+    def fromInstanceOrTuple(
+        cls,
+        inst: Union[Tuple[Optional[str], int], PathOfLengthRouteSegment]
+    ) -> PathOfLengthRouteSegment:
         return inst if isinstance(inst, PathOfLengthRouteSegment) else PathOfLengthRouteSegment(inst[0], inst[1])
 
 
 @_serializableBountyRouteConfig
 class PathOfLengthRouteConfig(BountyRouteConfig):
-    @overload
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: str, firstSegment: PathOfLengthRouteSegment, *segments: PathOfLengthRouteSegment): ...
-    @overload
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: str, firstSegment: Tuple[str, int], *segments: Tuple[str, int]): ...
-    
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: str, firstSegment: Union[Tuple[str, int], PathOfLengthRouteSegment], *segments: Union[Tuple[str, int], PathOfLengthRouteSegment]):
+    def __init__(
+        self,
+        answer: Optional[Union[str, BountyAnswerConfig]],
+        startNode: Optional[str],
+        firstSegment: Union[Tuple[Optional[str], int], PathOfLengthRouteSegment],
+        *segments: Union[Tuple[Optional[str], int], PathOfLengthRouteSegment]
+    ) -> None:
         super().__init__(answer)
         self.startNode = startNode
         self.segments = [PathOfLengthRouteSegment.fromInstanceOrTuple(firstSegment)] + \
             [PathOfLengthRouteSegment.fromInstanceOrTuple(s) for s in segments]
+        self.allowDuplicateEntries = bbConfig.pathOfLengthRouteConfig_allowDuplicateNodes
+        self.nodeGenerationAttempts = bbConfig.pathOfLengthRouteConfig_nodeGenerationAttempts
 
     def generate(self) -> Union[Tuple[List[str], str], str]:
-        graph = cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs)
-        segmentsWithSystems = [(graph[n.nextNode], n.segmentLength) for n in self.segments]
-        previousNode = graph[self.startNode]
+        graph = {
+            k: v
+            for k, v in cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs).items()
+            if v.hasJumpGate()
+        }
+
+        segmentsWithSystems: List[Tuple[bbSystem.System, int]] = []
+        
+        if self.startNode is not None and not any(s.nextNode is None for s in self.segments):
+            startNode = self.startNode
+            for segment in self.segments:
+                segmentsWithSystems.append((graph[cast(str, segment.nextNode)], segment.segmentLength))
+        else:
+            systemChoices = list(graph.keys())
+
+            if self.startNode is not None:
+                startNode = self.startNode
+            else:
+                startNode = random.choice(systemChoices)
+                if self.segments[0].nextNode is not None:
+                    attempt = 1
+                    while attempt < self.nodeGenerationAttempts:
+                        routeAttempt = lib.pathfinding.pathOfLength(
+                            graph,
+                            startNode,
+                            self.segments[0].nextNode,
+                            self.segments[0].segmentLength,
+                            excludeSystems=[] if self.allowDuplicateEntries else [s[0].name for s in segmentsWithSystems])
+                        
+                        if routeAttempt is not None:
+                            break
+
+                        systemChoices.remove(startNode)
+                        startNode = random.choice(systemChoices)
+                        attempt += 1
+
+                    if attempt == self.nodeGenerationAttempts:
+                        return f"Failed to generate node #0. Could not find route to {self.segments[0].nextNode} " + \
+                                f"from any of {self.nodeGenerationAttempts} randomly selected systems"
+
+            for i, segment in enumerate(self.segments):
+                if segment.nextNode is not None:
+                    segmentsWithSystems.append((graph[segment.nextNode], segment.segmentLength))
+                    continue
+                
+                previousNode = startNode if i == 0 else segmentsWithSystems[i - 1][0].name
+                node = random.choice(systemChoices)
+
+                attempt = 1
+                while attempt < self.nodeGenerationAttempts:
+                    routeAttempt = lib.pathfinding.pathOfLength(
+                        graph,
+                        previousNode,
+                        node,
+                        segment.segmentLength,
+                        excludeSystems=[] if self.allowDuplicateEntries else [s[0].name for s in segmentsWithSystems])
+                    
+                    if routeAttempt is not None:
+                        break
+
+                    systemChoices.remove(node)
+                    node = random.choice(systemChoices)
+                    attempt += 1
+
+                if attempt == self.nodeGenerationAttempts:
+                    return f"Failed to generate node #{i}. Could not find route from {previousNode} " + \
+                            f"to any of {self.nodeGenerationAttempts} randomly selected systems, " + \
+                            ("allowing duplicates" if self.allowDuplicateEntries else "disallowing duplicates")
+                
+                segmentsWithSystems.append((graph[node], segment.segmentLength))
+
+        previousNode = graph[startNode]
         route = [segmentsWithSystems[0][0].name]
 
         for segment in segmentsWithSystems:
@@ -223,7 +311,9 @@ class PathOfLengthRouteConfig(BountyRouteConfig):
         return (route, self.answerConfig.generate(route))
     
     def validate(self) -> List[str]:
-        knownNodes = [self.startNode] + [s.nextNode for s in self.segments]
+        knownNodes = ([self.startNode] if self.startNode is not None else []) + \
+            [s.nextNode for s in self.segments if s.nextNode is not None]
+        
         errs = [f"Unknown system in route: '{n}'" for n in knownNodes if n not in bbData.builtInSystemObjs]
         self.answerConfig.validateInRoute(knownNodes, errs)
         return errs
