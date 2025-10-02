@@ -9,7 +9,7 @@ import random
 from enum import Enum
 from abc import ABC, abstractmethod
 
-from ....bbConfig import bbData
+from ....bbConfig import bbData, bbConfig
 from .... import lib
 from ....baseClasses.bbSerializable import bbSerializable
 from . bountyAnswerConfig import *
@@ -95,13 +95,59 @@ class ExplicitRouteConfig(BountyRouteConfig):
 
 @_serializableBountyRouteConfig
 class ShortestPathRouteConfig(BountyRouteConfig):
-    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: str, node2: str, *nodes: str):
+    """Find the shortest path between nodes.
+    
+    :param answer: The answer. Give as `None` to use a uniformally random choice. Can be given either as a system name, or a `BountyAnswerConfig`.
+    :param Optional[str] startNode: The first system in the route. Give as `None` to use a uniformally random choice
+    :param Optional[str] node2: The second system in the route. Give as `None` to use a uniformally random choice
+    :param Optional[str] nodes: The remaining systems in the route. Give as `None` to use a uniformally random choice
+    """
+    def __init__(self, answer: Optional[Union[str, BountyAnswerConfig]], startNode: Optional[str], node2: Optional[str], *nodes: Optional[str]):
         super().__init__(answer)
         self.nodes = [startNode, node2] + list(nodes)
+        self.allowDuplicateEntries = bbConfig.shortestPathRouteConfig_allowDuplicateNodes
+        self.nodeGenerationAttempts = bbConfig.shortestPathRouteConfig_nodeGenerationAttempts
 
     def generate(self) -> Union[Tuple[List[str], str], str]:
-        graph = cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs)
-        systems = [graph[n] for n in self.nodes]
+        graph = {
+            k: v
+            for k, v in cast(Dict[str, "bbSystem.System"], bbData.builtInSystemObjs).items()
+            if v.hasJumpGate()
+        }
+
+        systems: List[bbSystem.System] = []
+        systemChoices = list(graph.keys())
+
+        for i, node in enumerate(self.nodes):
+            if node is not None:
+                systems.append(graph[node])
+                continue
+            
+            node = random.choice(systemChoices)
+
+            if i != 0:
+                attempt = 1
+                while attempt < self.nodeGenerationAttempts:
+                    routeAttempt = lib.pathfinding.bbAStar(
+                        systems[i - 1].name,
+                        node,
+                        graph,
+                        excludeSystems=[] if self.allowDuplicateEntries else [s.name for s in systems])
+                    
+                    if len(routeAttempt) != 0 and not routeAttempt[0].startswith("!") and not routeAttempt[0].startswith("#"):
+                        break
+
+                    systemChoices.remove(node)
+                    node = random.choice(systemChoices)
+                    attempt += 1
+
+                if attempt == self.nodeGenerationAttempts:
+                    return f"Failed to generate node #{i}. Could not find route from {systems[i - 1].name} " + \
+                            f"to any of {self.nodeGenerationAttempts} randomly selected systems, " + \
+                            ("allowing duplicates" if self.allowDuplicateEntries else "disallowing duplicates")
+            
+            systems.append(graph[node])
+        
         previousNode = systems[0]
         route = [systems[0].name]
 
@@ -113,8 +159,8 @@ class ShortestPathRouteConfig(BountyRouteConfig):
         return (route, self.answerConfig.generate(route))
     
     def validate(self) -> List[str]:
-        errs = [f"Unknown system in route: '{n}'" for n in self.nodes if n not in bbData.builtInSystemObjs]
-        self.answerConfig.validateInRoute(self.nodes, errs)
+        errs = [f"Unknown system in route: '{n}'" for n in self.nodes if n is not None and n not in bbData.builtInSystemObjs]
+        self.answerConfig.validateInRoute((n for n in self.nodes if n is not None), errs)
         return errs
     
     def toDict(self, **kwargs) -> Dict:
