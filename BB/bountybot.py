@@ -115,6 +115,8 @@ class bbClient(ClientBaseClass):
         g: "bbGuild.bbGuild"
         factionBounties: List[bbBounty.Bounty]
         for g in bbGlobals.guildsDB.getGuilds() if bbGlobals.guildsDB is not None else []:
+            if g.bountiesDisabled or g.bountiesDB is None:
+                continue
             for factionBounties in g.bountiesDB.bounties.values():
                 expiredBounties: List[int] = []
                 for i, bounty in enumerate(factionBounties):
