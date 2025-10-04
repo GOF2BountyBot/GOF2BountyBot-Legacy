@@ -1,6 +1,6 @@
 # Typing imports
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict, Optional
+from typing import TYPE_CHECKING, List, Dict, Optional, Set
 if TYPE_CHECKING:
     from ...bbDatabases import bbBountyDB
     from ..items import bbShip
@@ -56,7 +56,8 @@ class BountyConfig:
                     start : str = "", end : str = "", answer : str = "",
                     route : Optional[BountyRouteConfig] = None, checked : Dict[str, int] = {}, reward : int = -1,
                     issueTime : float = -1.0, endTime : float = -1.0, icon : str = "",
-                    aliases : List[str] = [], wiki : str = "", ship : Optional[bbShip.bbShip] = None):
+                    aliases : List[str] = [], wiki : str = "", ship : Optional[bbShip.bbShip] = None,
+                    quirkIdentifiers : Optional[Set[str]] = None):
         """All parameters are optional. If a parameter is not given, it will be randomly generated.
 
         :param faction: The faction owning this bounty
@@ -108,6 +109,7 @@ class BountyConfig:
         self.wiki = wiki
 
         self.ship = ship
+        self.quirkIdentifiers = quirkIdentifiers or set()
         
     
     def generate(self, bountyDB : bbBountyDB.bbBountyDB, noCriminal : bool = True, forceKeepChecked : bool = False, forceNoDBCheck : bool = False):

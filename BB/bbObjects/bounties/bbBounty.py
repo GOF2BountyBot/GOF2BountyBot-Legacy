@@ -1,6 +1,6 @@
 # Typing imports
 from __future__ import annotations
-from typing import Dict, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, TYPE_CHECKING
 if TYPE_CHECKING:
     from ...bbDatabases import bbBountyDB
 
@@ -32,7 +32,13 @@ class Bounty(bbSerializable.bbSerializable):
     :vartype answer: str
     """
 
-    def __init__(self, criminalObj : bbCriminal.Criminal = None, config : bbBountyConfig.BountyConfig = None, bountyDB : bbBountyDB.bbBountyDB = None, dbReload : bool = False, doDailyWinsLimit : bool = True):
+    def __init__(
+        self,
+        criminalObj : bbCriminal.Criminal = None,
+        config : bbBountyConfig.BountyConfig = None,
+        bountyDB : bbBountyDB.bbBountyDB = None,
+        dbReload : bool = False,
+        doDailyWinsLimit : bool = True):
         """
         :param criminalObj: The criminal to be wanted. Give None to randomly generate a criminal. (Default None)
         :type criminalObj: bbCriminal or None
@@ -86,6 +92,7 @@ class Bounty(bbSerializable.bbSerializable):
         self.checked = config.checked
         self.answer = generatedAnswer
         self.doDailyWinsLimit = doDailyWinsLimit
+        self.quirkIdentifiers = config.quirkIdentifiers
 
         
     # return 0 => system not in route
@@ -151,9 +158,23 @@ class Bounty(bbSerializable.bbSerializable):
         :return: A dictionary representation of this bounty.
         :rtype: dict
         """
-        d = {"faction": self.faction, "route": self.route, "answer": self.answer, "checked": self.checked, "reward": self.reward, "issueTime": self.issueTime, "endTime": self.endTime, "criminal": self.criminal.toDict(**kwargs)}
+        d = {
+            "faction": self.faction,
+            "route": self.route,
+            "answer": self.answer,
+            "checked": self.checked,
+            "reward": self.reward,
+            "issueTime": self.issueTime,
+            "endTime": self.endTime,
+            "criminal": self.criminal.toDict(**kwargs)
+        }
+
+        if self.quirkIdentifiers:
+            d["quirkIdentifiers"] = self.quirkIdentifiers
+
         if not self.doDailyWinsLimit:
             d["doDailyWinsLimit"] = False
+
         return d
 
 
@@ -172,7 +193,8 @@ class Bounty(bbSerializable.bbSerializable):
             checked=bounty["checked"], 
             reward=bounty["reward"], 
             issueTime=bounty["issueTime"], 
-            endTime=bounty["endTime"],)
+            endTime=bounty["endTime"],
+            quirkIdentifiers = set(bounty["quirkIdentifiers"]) if "quirkIdentifiers" in bounty else None)
         
         return Bounty(dbReload=dbReload,
             criminalObj=bbCriminal.Criminal.fromDict(bounty["criminal"]), 
