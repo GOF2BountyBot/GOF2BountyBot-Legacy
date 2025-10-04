@@ -11,7 +11,7 @@ from typing import List, Dict, Union, Optional
 from ..bbConfig import bbConfig, bbData
 from .. import bbGlobals, lib
 from ..scheduling import TimedTask
-from .bounties import bbBounty
+from .bounties import bbBounty, bbBountyConfig
 from ..logging import bbLogger
 from datetime import timedelta
 from ..baseClasses import bbSerializable
@@ -480,6 +480,20 @@ class bbGuild(bbSerializable.bbSerializable):
         # ensure a new bounty can be created
         if self.bountiesDB.canMakeBounty():
             newBounty = bbBounty.Bounty(bountyDB=self.bountiesDB)
+            newBounty.issueTime = (datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)).timestamp()
+            # activate and announce the bounty
+            self.bountiesDB.addBounty(newBounty)
+            await self.announceNewBounty(newBounty)
+
+    async def spawnAndAnnounceNewBounty(self, config: "bbBountyConfig.BountyConfig"):
+        """Spawn a new bounty with the given config, and announce it if this guild has
+        an appropriate channel selected.
+        """
+        if self.bountiesDisabled:
+            raise ValueError("Attempted to spawn a bounty into a guild where bounties are disabled")
+        # ensure a new bounty can be created
+        if self.bountiesDB.canMakeBounty():
+            newBounty = bbBounty.Bounty(config=config, bountyDB=self.bountiesDB)
             newBounty.issueTime = (datetime.now(timezone.utc) + timedelta(seconds=bbConfig.newBountyWarningTimeSeconds)).timestamp()
             # activate and announce the bounty
             self.bountiesDB.addBounty(newBounty)

@@ -1,5 +1,11 @@
-from . import bbBountyConfig
+from . import bbBountyConfig, bbBounty
 
-class BountySeasonalBehaviour:
-    def configWillGenerate(self, config: bbBountyConfig.BountyConfig):
+class BountyBehaviourModifier:
+    def configWillGenerate(self, config: "bbBountyConfig.BountyConfig"):
         pass
+
+    def bountyWasDefeated(self, bounty: "bbBounty.Bounty"):
+        pass
+
+class BountyBehaviourSpecification:
+    

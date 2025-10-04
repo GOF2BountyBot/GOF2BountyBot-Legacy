@@ -261,6 +261,12 @@ bbcHTTPErrRetries = 3
 # The number of seconds to wait between BBC listing update retries upon HTTP exception catching
 bbcHTTPErrRetryDelaySeconds = 1
 
+shortestPathRouteConfig_nodeGenerationAttempts = 10
+shortestPathRouteConfig_allowDuplicateNodes = 10
+
+pathOfLengthRouteConfig_nodeGenerationAttempts = 10
+pathOfLengthRouteConfig_allowDuplicateNodes = 10
+
 
 ##### SAVING #####
 

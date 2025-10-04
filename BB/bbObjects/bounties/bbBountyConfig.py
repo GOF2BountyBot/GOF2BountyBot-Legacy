@@ -9,7 +9,6 @@ import random
 from datetime import datetime, timedelta, timezone
 
 from ...bbConfig import bbData, bbConfig
-from ... import lib
 from .bountyRoutes.bountyRouteConfig import BountyRouteConfig, ShortestPathRouteConfig, ExplicitRouteConfig
 
 
