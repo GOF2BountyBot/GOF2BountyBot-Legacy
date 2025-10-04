@@ -117,20 +117,18 @@ class bbClient(ClientBaseClass):
         for g in bbGlobals.guildsDB.getGuilds() if bbGlobals.guildsDB is not None else []:
             if g.bountiesDisabled or g.bountiesDB is None:
                 continue
+            expiredBounties: List[bbBounty.Bounty] = []
             for factionBounties in g.bountiesDB.bounties.values():
-                expiredBounties: List[int] = []
-                for i, bounty in enumerate(factionBounties):
+                for bounty in factionBounties:
                     if bounty.endTime not in (None, -1) and datetime.fromtimestamp(bounty.endTime, timezone.utc) <= now:
                         try:
-                            succeeded = await g.announceBountyExpired(bounty)
-                            if not succeeded:
-                                continue
+                            await g.announceBountyExpired(bounty)
                         except Exception:
                             pass
                         else:
-                            expiredBounties.append(i)
-                for i in expiredBounties[::-1]:
-                    factionBounties.pop(i)
+                            expiredBounties.append(bounty)
+            for b in expiredBounties[::-1]:
+                g.bountiesDB.removeBountyObj(b)
 
     
     async def userDataArchive(self):

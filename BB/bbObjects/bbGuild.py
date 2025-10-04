@@ -525,6 +525,7 @@ class bbGuild(bbSerializable.bbSerializable):
     async def announceBountyExpired(self, bounty : bbBounty.Bounty):
         """Announce the expiration of a bounty
         Messages will be sent to the playChannel if one is set
+        Listing will be removed from the bounty board channel if the guild has one
 
         :param bbBounty bounty: the bounty to announce
         """
@@ -539,6 +540,8 @@ class bbGuild(bbSerializable.bbSerializable):
 
                 # Send the announcement to the guild's playChannel
                 await self.getPlayChannel().send(embed=rewardsEmbed)
+            if self.hasBountyBoardChannel and self.bountyBoardChannel is not None:
+                await self.bountyBoardChannel.removeBounty(bounty)
 
         else:
             bbLogger.log(
