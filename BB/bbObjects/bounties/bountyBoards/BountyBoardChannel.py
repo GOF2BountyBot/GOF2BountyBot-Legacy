@@ -22,9 +22,12 @@ def makeBountyEmbed(bounty : bbBounty.Bounty) -> Embed:
     embed = Embed(title=bounty.criminal.name, colour=bbData.factionColours[bounty.faction] if bounty.faction in bbData.factionColours else bbData.factionColours["neutral"])
     embed.set_footer(text=bounty.faction.title())
     embed.set_thumbnail(url=bounty.criminal.icon)
-    embed.add_field(name="**Reward:**", value=lib.stringTyping.commaSplitNum(str(bounty.reward)) + " Credits")
+    embed.add_field(name="**Reward:**", value=lib.stringTyping.commaSplitNum(str(bounty.reward)) + " Credits", inline=True)
+    if bounty.endTime not in (-1, None):
+        intTs = int(bounty.endTime)
+        embed.add_field(name="**Expires:**", value=f"<t:{intTs}:R>", inline=True)
     if datetime.fromtimestamp(bounty.issueTime, timezone.utc) > datetime.now(timezone.utc):
-        embed.add_field(name="**Route:**", value=f"*Releases <t:{int(bounty.issueTime)}:R>!*")
+        embed.add_field(name="**Route:**", value=f"*Releases <t:{int(bounty.issueTime)}:R>!*", inline=False)
     else:
         routeStr = ""
         for system in bounty.route:
@@ -39,7 +42,7 @@ def makeBountyEmbed(bounty : bbBounty.Bounty) -> Embed:
                 routeStr += system
             routeStr += ", "
         embed.add_field(name="**Route:**", value=routeStr[:-2], inline=False)
-    embed.add_field(name="-", value="> ~~Already checked systems~~\n> **Criminal spotted here recently**") #"‎"
+    embed.add_field(name="-", value="> ~~Already checked systems~~\n> **Criminal spotted here recently**", inline=False) #"‎"
     # embed.add_field(value="`Stars indicate systems where the criminal has recently been spotted.`", name="`Crossed-through systems have already been checked.`")
     # embed.add_field(name="**Difficulty:**", value=str(bounty.criminal.techLevel))
     # embed.add_field(name="**See the culprit's loadout with:**", value="`" + bbConfig.commandPrefix + "loadout criminal " + bounty.criminal.name + "`")
