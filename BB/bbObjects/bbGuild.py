@@ -541,6 +541,18 @@ class bbGuild(bbSerializable.bbSerializable):
                 # Send the announcement to the guild's playChannel
                 await self.getPlayChannel().send(embed=rewardsEmbed)
             if self.hasBountyBoardChannel and self.bountyBoardChannel is not None:
+                if self.bountyBoardChannel.hasMessageForBounty(bounty):
+                    try:
+                        await self.bountyBoardChannel.getMessageForBounty(bounty).delete()
+                    except Forbidden:
+                        bbLogger.log(bbGuild.__name__, bbGuild.announceBountyExpired.__name__, "Forbidden exception thrown when removing bounty listing message for criminal: " +
+                                    bounty.criminal.name, category='bountyBoards', eventType="RM_LISTING-FORBIDDENERR")
+                    except NotFound:
+                        bbLogger.log(bbGuild.__name__, bbGuild.announceBountyExpired.__name__, "Bounty listing message no longer exists, BBC entry removed: " +
+                                    bounty.criminal.name, category='bountyBoards', eventType="RM_LISTING-NOT_FOUND")
+                    except HTTPException:
+                        bbLogger.log(bbGuild.__name__, bbGuild.announceBountyExpired.__name__, "HTTPException thrown when removing bounty listing message for criminal: " +
+                                    bounty.criminal.name, category='bountyBoards', eventType="RM_LISTING-HTTPERR")
                 await self.bountyBoardChannel.removeBounty(bounty)
 
         else:
